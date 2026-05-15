@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.routers import billing as billing_router
 from app.routers import me as me_router
 
 
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
         return {"status": "ok", "service": "multiverse-fm", "env": settings.APP_ENV}
 
     app.include_router(me_router.router)
+    app.include_router(billing_router.router)
     return app
 
 

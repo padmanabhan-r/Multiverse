@@ -2,14 +2,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Literal
 
 import httpx
 import jwt
 from fastapi import Depends, Header, HTTPException, status
 from jwt import PyJWKClient
+from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
+from app.db.models import User
+from app.db.session import get_db
+
+TierName = Literal["free", "explorer", "architect"]
+_TIER_RANK: dict[str, int] = {"free": 0, "explorer": 1, "architect": 2}
 
 
 @dataclass(slots=True)
@@ -65,3 +71,28 @@ def get_current_user(
 
 
 CurrentUser = Annotated[AuthUser, Depends(get_current_user)]
+
+
+def load_user_tier(
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> AuthUser:
+    db_user = db.get(User, user.user_id)
+    if db_user is not None:
+        user.tier = db_user.tier
+    return user
+
+
+def requires_tier(min_tier: TierName):
+    """Return a FastAPI dependency that 403s if the user is below ``min_tier``."""
+    min_rank = _TIER_RANK[min_tier]
+
+    def _dep(user: Annotated[AuthUser, Depends(load_user_tier)]) -> AuthUser:
+        if _TIER_RANK.get(user.tier, 0) < min_rank:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                f"requires tier '{min_tier}', user has '{user.tier}'",
+            )
+        return user
+
+    return _dep
