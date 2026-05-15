@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import billing as billing_router
 from app.routers import me as me_router
+from app.routers import stations as stations_router
 
 
 def create_app() -> FastAPI:
@@ -26,6 +27,7 @@ def create_app() -> FastAPI:
 
     app.include_router(me_router.router)
     app.include_router(billing_router.router)
+    app.include_router(stations_router.router)
     return app
 
 
