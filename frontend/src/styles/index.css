@@ -11,4 +11,53 @@
   #root {
     height: 100%;
   }
+  body {
+    background: radial-gradient(
+        1200px 600px at 20% -10%,
+        rgba(255, 106, 31, 0.06),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 500px at 100% 110%,
+        rgba(62, 90, 102, 0.08),
+        transparent 60%
+      ),
+      var(--mvfm-bg-base);
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .mvfm-glass {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0.01) 100%
+      ),
+      var(--mvfm-bg-elev-2);
+    border: 1px solid var(--mvfm-border-glass);
+    backdrop-filter: blur(var(--mvfm-blur-panel));
+    -webkit-backdrop-filter: blur(var(--mvfm-blur-panel));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+  .mvfm-glass-top-edge {
+    position: relative;
+  }
+  .mvfm-glass-top-edge::before {
+    content: "";
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.18),
+      transparent
+    );
+    pointer-events: none;
+  }
 }
