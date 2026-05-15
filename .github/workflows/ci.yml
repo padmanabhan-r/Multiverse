@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: multiverse_fm_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Lint
+        working-directory: backend
+        run: uv run ruff check .
+      - name: Test
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/multiverse_fm_test
+          DATABASE_URL_SYNC: postgresql+psycopg://postgres:postgres@localhost:5432/multiverse_fm_test
+          REDIS_URL: redis://localhost:6379/0
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+          STRIPE_SECRET_KEY: sk_test_dummy
+          CLERK_SECRET_KEY: sk_test_dummy
+          CLERK_JWT_ISSUER: https://example.clerk.accounts.dev
+          ELEVENLABS_API_KEY: xi_test_dummy
+          ANTHROPIC_API_KEY: sk-ant-test
+          GEMINI_API_KEY: test
+          OPENAI_API_KEY: sk-test
+          R2_ACCOUNT_ID: test
+          R2_ACCESS_KEY_ID: test
+          R2_SECRET_ACCESS_KEY: test
+          R2_BUCKET: test
+        run: uv run pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm --filter frontend test --run
+      - run: pnpm --filter frontend build

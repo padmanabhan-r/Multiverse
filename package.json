@@ -1,0 +1,21 @@
+{
+  "name": "multiverse-fm",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Reality-and-time tuning radio — procedural audio world engine.",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:fe": "pnpm --filter frontend dev",
+    "build:fe": "pnpm --filter frontend build",
+    "test:fe": "pnpm --filter frontend test",
+    "test:e2e": "pnpm --filter frontend test:e2e",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4"
+  }
+}
