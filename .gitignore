@@ -98,3 +98,4 @@ service-account*.json
 .tmp/
 misc/
 handoff/
+design/

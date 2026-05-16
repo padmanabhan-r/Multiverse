@@ -35,8 +35,8 @@ class Settings(BaseSettings):
 
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
-    STRIPE_PRICE_EXPLORER: str = ""
-    STRIPE_PRICE_ARCHITECT: str = ""
+    STRIPE_PRICE_CREATOR: str = ""
+    STRIPE_PRICE_PRO_STUDIO: str = ""
     STRIPE_SUCCESS_URL: str = "http://localhost:5173/billing/success"
     STRIPE_CANCEL_URL: str = "http://localhost:5173/billing/cancel"
 

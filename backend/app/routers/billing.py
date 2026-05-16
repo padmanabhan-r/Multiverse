@@ -16,7 +16,7 @@ router = APIRouter(tags=["billing"])
 
 
 class CheckoutBody(BaseModel):
-    tier: Literal["explorer", "architect"]
+    tier: Literal["creator", "pro_studio"]
 
 
 class UrlResponse(BaseModel):

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-Tier = Literal["free", "explorer", "architect"]
+Tier = Literal["free", "creator", "pro_studio"]
 
 
 class User(Base):

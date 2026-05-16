@@ -17,8 +17,8 @@ os.environ["DATABASE_URL"] = "sqlite:///./test_multiverse.db"
 os.environ["DATABASE_URL_SYNC"] = "sqlite:///./test_multiverse.db"
 os.environ.setdefault("STRIPE_WEBHOOK_SECRET", "whsec_test_dummy")
 os.environ.setdefault("STRIPE_SECRET_KEY", "sk_test_dummy")
-os.environ.setdefault("STRIPE_PRICE_EXPLORER", "price_explorer_test")
-os.environ.setdefault("STRIPE_PRICE_ARCHITECT", "price_architect_test")
+os.environ.setdefault("STRIPE_PRICE_CREATOR", "price_creator_test")
+os.environ.setdefault("STRIPE_PRICE_PRO_STUDIO", "price_pro_studio_test")
 
 
 @pytest.fixture(scope="session", autouse=True)

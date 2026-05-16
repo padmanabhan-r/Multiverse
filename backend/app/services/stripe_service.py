@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings
 from app.db.models import ProcessedEvent, User
 
-Tier = Literal["free", "explorer", "architect"]
+Tier = Literal["free", "creator", "pro_studio"]
 
 
 @dataclass(slots=True)
@@ -26,10 +26,10 @@ def _client(settings: Settings) -> stripe.StripeClient:
 
 
 def _price_for_tier(settings: Settings, tier: Tier) -> str:
-    if tier == "explorer":
-        return settings.STRIPE_PRICE_EXPLORER
-    if tier == "architect":
-        return settings.STRIPE_PRICE_ARCHITECT
+    if tier == "creator":
+        return settings.STRIPE_PRICE_CREATOR
+    if tier == "pro_studio":
+        return settings.STRIPE_PRICE_PRO_STUDIO
     raise ValueError("free tier has no price")
 
 
@@ -103,7 +103,7 @@ def _metadata_get(obj: Any, key: str) -> str | None:
 def _tier_from_event(event: stripe.Event) -> Tier | None:
     obj: Any = event.data.object  # type: ignore[attr-defined]
     tier = _metadata_get(obj, "tier")
-    if tier in ("explorer", "architect", "free"):
+    if tier in ("creator", "pro_studio", "free"):
         return tier  # type: ignore[return-value]
     return None
 
@@ -129,7 +129,7 @@ def handle_event(db: Session, event: stripe.Event) -> dict[str, str]:
     if etype == "checkout.session.completed":
         clerk_id = _clerk_user_id_from_event(event)
         customer_id = _customer_id_from_event(event)
-        tier = _tier_from_event(event) or "explorer"
+        tier = _tier_from_event(event) or "creator"
         if clerk_id:
             user = db.get(User, clerk_id)
             if user is None:

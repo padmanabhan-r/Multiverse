@@ -11,7 +11,7 @@ def _checkout_completed_event(
     event_id: str = "evt_test_1",
     clerk_user_id: str = "user_test_123",
     customer_id: str = "cus_test_abc",
-    tier: str = "explorer",
+    tier: str = "creator",
 ) -> dict:
     return {
         "id": event_id,
@@ -45,14 +45,14 @@ def test_webhook_rejects_bad_signature(client: TestClient) -> None:
 
 
 def test_checkout_completed_sets_tier(client: TestClient, db_session: Session) -> None:
-    body, header = stripe_sign(_checkout_completed_event(tier="explorer"))
+    body, header = stripe_sign(_checkout_completed_event(tier="creator"))
     r = client.post("/stripe/webhook", content=body, headers={"Stripe-Signature": header})
     assert r.status_code == 200, r.text
     assert r.json()["status"] == "ok"
 
     user = db_session.get(User, "user_test_123")
     assert user is not None
-    assert user.tier == "explorer"
+    assert user.tier == "creator"
     assert user.stripe_customer_id == "cus_test_abc"
 
     processed = db_session.get(ProcessedEvent, "evt_test_1")
@@ -60,17 +60,17 @@ def test_checkout_completed_sets_tier(client: TestClient, db_session: Session) -
 
 
 def test_webhook_idempotent_on_duplicate(client: TestClient, db_session: Session) -> None:
-    body, header = stripe_sign(_checkout_completed_event(event_id="evt_dup", tier="architect"))
+    body, header = stripe_sign(_checkout_completed_event(event_id="evt_dup", tier="pro_studio"))
     r1 = client.post("/stripe/webhook", content=body, headers={"Stripe-Signature": header})
     assert r1.status_code == 200
-    body2, header2 = stripe_sign(_checkout_completed_event(event_id="evt_dup", tier="architect"))
+    body2, header2 = stripe_sign(_checkout_completed_event(event_id="evt_dup", tier="pro_studio"))
     r2 = client.post("/stripe/webhook", content=body2, headers={"Stripe-Signature": header2})
     assert r2.status_code == 200
     assert r2.json()["status"] == "duplicate"
 
     users = db_session.query(User).all()
     assert len(users) == 1
-    assert users[0].tier == "architect"
+    assert users[0].tier == "pro_studio"
 
 
 def test_subscription_deleted_downgrades_to_free(client: TestClient, db_session: Session) -> None:

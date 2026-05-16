@@ -14,8 +14,8 @@ from app.config import Settings, get_settings
 from app.db.models import User
 from app.db.session import get_db
 
-TierName = Literal["free", "explorer", "architect"]
-_TIER_RANK: dict[str, int] = {"free": 0, "explorer": 1, "architect": 2}
+TierName = Literal["free", "creator", "pro_studio"]
+_TIER_RANK: dict[str, int] = {"free": 0, "creator": 1, "pro_studio": 2}
 
 
 @dataclass(slots=True)
