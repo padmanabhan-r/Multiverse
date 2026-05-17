@@ -30,14 +30,16 @@ def me(
     elif user.email and db_user.email != user.email:
         db_user.email = user.email
 
-    # Enrich from Clerk on first login OR when we're still missing a username.
-    # Best-effort: failure is silent — JWT-only data is still usable.
-    if is_new or not db_user.username:
-        profile = clerk_service.fetch_user_profile(user.user_id, settings)
-        if profile.email and not db_user.email:
-            db_user.email = profile.email
-        if profile.username and not db_user.username:
-            db_user.username = profile.username
+    # Sync from Clerk on every /me so a username/profile change in Clerk shows
+    # up immediately. Best-effort: failure is silent — JWT-only data is still
+    # usable. One ~100ms Clerk API call per /me is acceptable (called once at
+    # sign-in by AuthSync, not per page).
+    profile = clerk_service.fetch_user_profile(user.user_id, settings)
+    if profile.email and not db_user.email:
+        db_user.email = profile.email
+    if profile.username and profile.username != db_user.username:
+        db_user.username = profile.username
+    _ = is_new  # kept for future first-login-only logic
 
     # Grant 5 trial credits on first login — idempotent (no-op if row exists).
     credit_service.grant_trial(db, user.user_id)

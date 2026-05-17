@@ -46,9 +46,10 @@ describe("App", () => {
     );
   });
 
-  it("renders Stub page at /library", () => {
+  it("mounts real Library page at /library", () => {
+    vi.spyOn(api, "library").mockResolvedValue([]);
     renderAt("/library");
-    expect(screen.getByTestId("page-library")).toBeInTheDocument();
+    expect(screen.getByTestId("library-loading")).toBeInTheDocument();
   });
 
   it("mounts real Creator dashboard at /creator", () => {

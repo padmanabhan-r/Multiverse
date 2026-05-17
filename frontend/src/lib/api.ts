@@ -126,6 +126,33 @@ export interface ApiClient {
   listMyBundles: () => Promise<Bundle[]>;
   creatorMe: () => Promise<CreatorMe>;
   creatorSales: () => Promise<CreatorSale[]>;
+  library: () => Promise<LibraryItem[]>;
+  creatorPublic: (creatorId: string) => Promise<PublicCreatorPage>;
+}
+
+export interface LibraryItem {
+  purchase_id: string;
+  pack_id: string;
+  title: string;
+  description: string;
+  category: string;
+  cover_art_url: string | null;
+  license_kind: string;
+  price_paid_cents: number;
+  purchased_at: string | null;
+}
+
+export interface PublicCreatorPage {
+  creator: {
+    creator_id: string;
+    display_name: string;
+    bio: string | null;
+    avatar_url: string | null;
+    published_pack_count: number;
+    bundle_count: number;
+  };
+  packs: Pack[];
+  bundles: Bundle[];
 }
 
 export interface CreatorSale {
@@ -249,6 +276,11 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
     listMyBundles: () => request<Bundle[]>("/bundles/mine"),
     creatorMe: () => request<CreatorMe>("/creator/me"),
     creatorSales: () => request<CreatorSale[]>("/creator/me/sales"),
+    library: () => request<LibraryItem[]>("/library"),
+    creatorPublic: (creatorId) =>
+      request<PublicCreatorPage>(
+        `/creators/${encodeURIComponent(creatorId)}`,
+      ),
   };
 }
 

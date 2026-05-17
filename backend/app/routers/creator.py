@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models import Bundle, CreatorProfile, Pack, Purchase
+from app.db.models import Bundle, CreatorProfile, Pack, Purchase, User
 from app.db.session import get_db
 from app.deps import CurrentUser
 from app.routers.bundles import BundleDTO
@@ -51,6 +51,24 @@ def me_endpoint(
     db: Annotated[Session, Depends(get_db)],
 ) -> CreatorProfileDTO:
     profile = db.get(CreatorProfile, user.user_id)
+    db_user = db.get(User, user.user_id)
+
+    # Prefer Clerk-synced username over any older CreatorProfile.display_name
+    # value (early reassign_packs.py runs seeded display_name with an email
+    # prefix; Clerk username is the source of truth for identity).
+    display_name = (
+        db_user.username
+        if db_user and db_user.username
+        else profile.display_name
+        if profile
+        else None
+    )
+
+    # Lazy sync: keep CreatorProfile.display_name in step with Clerk username
+    # so the public storefront (/creators/{id}) shows the current name too.
+    if profile is not None and db_user and db_user.username and profile.display_name != db_user.username:
+        profile.display_name = db_user.username
+        db.commit()
 
     draft_count = db.execute(
         select(func.count(Pack.id)).where(
@@ -80,7 +98,7 @@ def me_endpoint(
 
     return CreatorProfileDTO(
         creator_id=user.user_id,
-        display_name=profile.display_name if profile else None,
+        display_name=display_name,
         bio=profile.bio if profile else None,
         avatar_url=profile.avatar_url if profile else None,
         draft_count=int(draft_count or 0),

@@ -54,10 +54,12 @@ def _pick_target(session, explicit_id: str | None) -> User:
 def _ensure_creator_profile(session, user: User) -> None:
     profile = session.get(CreatorProfile, user.id)
     if profile is None:
+        # Prefer Clerk username; fall back to opaque user_id. Never the email
+        # prefix — that's PII leakage on the public storefront.
         session.add(
             CreatorProfile(
                 user_id=user.id,
-                display_name=user.email.split("@")[0] if user.email else user.id,
+                display_name=user.username or user.id,
             )
         )
 

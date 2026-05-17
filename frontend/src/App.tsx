@@ -9,12 +9,13 @@ import { Home } from "@/pages/Home";
 import { Pack } from "@/pages/Pack";
 import { Pricing } from "@/pages/Pricing";
 import { Creator } from "@/pages/Creator";
+import { CreatorStorefront } from "@/pages/CreatorStorefront";
+import { Library } from "@/pages/Library";
 import { Studio } from "@/pages/Studio";
 import { StudioBundleNew } from "@/pages/StudioBundleNew";
 import { StudioDraft } from "@/pages/StudioDraft";
 import { StudioNew } from "@/pages/StudioNew";
 import { StudioPublish } from "@/pages/StudioPublish";
-import { Stub } from "@/pages/Stub";
 import { World } from "@/pages/World";
 import { DUMMY_STATIONS } from "@/data/dummyStations";
 import { useAuth } from "@clerk/clerk-react";
@@ -77,32 +78,10 @@ export function App() {
         <Route path="/studio/publish" element={<StudioPublish />} />
         <Route path="/studio/bundle/new" element={<StudioBundleNew />} />
         <Route path="/cart" element={<Cart />} />
-        <Route
-          path="/library"
-          element={
-            <Stub
-              testId="page-library"
-              title="Your library."
-              subtitle="Purchased packs and download history will land here. Buy a pack from Discover to see it appear."
-              shippingIn="Shipping in Si"
-              backTo={{ label: "Browse the marketplace", to: "/browse" }}
-            />
-          }
-        />
+        <Route path="/library" element={<Library />} />
         <Route path="/creator" element={<Creator />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route
-          path="/u/:creatorId"
-          element={
-            <Stub
-              testId="page-creator-storefront"
-              title="Creator storefront."
-              subtitle="Public profile + the creator's published packs. Lands in Si."
-              shippingIn="Shipping in Si"
-              backTo={{ label: "Back to marketplace", to: "/browse" }}
-            />
-          }
-        />
+        <Route path="/u/:creatorId" element={<CreatorStorefront />} />
         <Route path="/w/:stationId" element={<World />} />
         <Route path="*" element={<Home />} />
       </Routes>

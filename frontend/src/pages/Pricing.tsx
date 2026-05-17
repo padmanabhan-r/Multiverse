@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
 interface Tier {
@@ -76,6 +78,26 @@ const CREDIT_COSTS = [
 ];
 
 export function Pricing() {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handleCta(key: string) {
+    setErr(null);
+    if (key === "free") {
+      window.location.href = "/browse";
+      return;
+    }
+    const tier = key === "creator" ? "creator" : "pro_studio";
+    setBusy(key);
+    try {
+      const { url } = await api.subscribe(tier);
+      window.location.href = url;
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "checkout failed");
+      setBusy(null);
+    }
+  }
+
   return (
     <section data-testid="page-pricing" className="max-w-5xl mx-auto space-y-16 py-8">
       {/* Header */}
@@ -159,16 +181,18 @@ export function Pricing() {
             <button
               type="button"
               data-testid={tier.ctaTestId}
+              onClick={() => handleCta(tier.key)}
+              disabled={busy === tier.key}
               className={cn(
                 "w-full py-2.5 rounded-pill font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold",
-                "transition-colors duration-fast ease-tune",
+                "transition-colors duration-fast ease-tune disabled:opacity-50",
                 tier.highlight
                   ? "bg-molten hover:bg-molten-glow shadow-bloom"
                   : "bg-elev-2/60 border border-glass-soft text-silver hover:text-warm hover:border-glass",
               )}
               style={tier.highlight ? { color: "#1a0700" } : undefined}
             >
-              {tier.cta}
+              {busy === tier.key ? "…" : tier.cta}
             </button>
           </div>
         ))}
@@ -249,6 +273,12 @@ export function Pricing() {
           Roadmap
         </span>
       </div>
+
+      {err && (
+        <div data-testid="pricing-error" className="text-molten text-center text-[13px]">
+          {err}
+        </div>
+      )}
 
       {/* Back CTA */}
       <div className="text-center pb-4">
