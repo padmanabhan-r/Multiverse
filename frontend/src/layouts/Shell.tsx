@@ -1,27 +1,44 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useAuth,
+} from "@clerk/clerk-react";
+import { CreditBadge } from "@/components/CreditBadge";
 import { cn } from "@/lib/cn";
+import { useMyCredits } from "@/lib/queries";
+import { useCart } from "@/stores/cartStore";
+
+// True only when a real Clerk publishable key is configured.
+// When false, Clerk components are never rendered (avoids missing-provider errors in dev).
+const HAS_CLERK = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export interface ShellProps {
   /** Main content area (route children plug in here). */
   children?: ReactNode;
-  /** Optional right-panel content. When null, panel is *not mounted* (elevenmusic.io rule). */
+  /** Optional right-panel content. When null, panel is *not mounted*. */
   rightPanel?: ReactNode | null;
   /** Optional bottom player. Lazy: not rendered until something plays. */
   bottomPlayer?: ReactNode | null;
 }
 
 const NAV_ITEMS = [
-  { key: "discover", label: "Discover", to: "/" },
+  { key: "discover", label: "Discover", to: "/browse" },
   { key: "studio", label: "Studio", to: "/studio" },
   { key: "library", label: "Library", to: "/library" },
   { key: "creator", label: "Creator", to: "/creator" },
   { key: "pricing", label: "Pricing", to: "/pricing" },
 ] as const;
 
-const MOBILE_NAV = NAV_ITEMS.slice(0, 4); // drop Pricing on mobile bottom bar
+const MOBILE_NAV = NAV_ITEMS.slice(0, 4);
 
 export function Shell({ children, rightPanel = null, bottomPlayer = null }: ShellProps) {
+  const cartCount = useCart((s) => s.items.length);
+
   return (
     <div
       data-testid="shell"
@@ -35,37 +52,64 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
         data-testid="topbar"
         className="
           sticky top-0 z-30
-          h-topbar flex items-center justify-between
+          h-topbar flex items-center
           px-4 sm:px-6 lg:px-8
           bg-base/80 backdrop-blur-panel border-b border-glass-soft
+          gap-4 lg:gap-6
         "
       >
-        <NavLink to="/" className="flex items-center gap-3" aria-label="Multiverse home">
+        <NavLink
+          to="/"
+          className="flex items-center gap-3 flex-shrink-0"
+          aria-label="Multiverse home"
+        >
           <span className="size-2 rounded-full bg-molten shadow-bloom" aria-hidden />
           <span className="font-display text-[11px] tracking-[0.32em] text-warm">
             MULTIVERSE
           </span>
         </NavLink>
 
-        {/* Cart + credits + new pack + profile */}
-        <div className="flex items-center gap-2">
-          <SignalMeter bars={4} />
-          <span
-            data-testid="topbar-credits"
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-elev-2/60 border border-glass-soft text-[9px] tracking-[0.22em] uppercase text-silver"
-          >
-            <span className="size-1 rounded-full bg-silver2" aria-hidden />
-            Free
-          </span>
+        <nav
+          data-testid="topbar-nav"
+          aria-label="Primary"
+          className="hidden lg:flex items-center gap-1 ml-2"
+        >
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.key}
+              to={item.to}
+              data-testid={`nav-${item.key}`}
+              className={({ isActive }) =>
+                cn(
+                  "px-3 py-1.5 rounded-md",
+                  "font-mono text-[10.5px] tracking-[0.22em] uppercase",
+                  "transition-colors duration-fast ease-tune",
+                  isActive
+                    ? "text-molten bg-molten-tint"
+                    : "text-silver hover:text-warm hover:bg-white/[0.03]",
+                )
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="flex-1" />
+
+        {/* Right cluster */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+
+          {/* Cart — always visible; guests get prompted to sign in at checkout */}
           <NavLink
             to="/cart"
             data-testid="topbar-cart"
+            aria-label={`Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
             className="
-              size-7 rounded-md grid place-items-center
+              relative size-7 rounded-md grid place-items-center
               bg-elev-2/60 border border-glass-soft text-silver hover:text-warm hover:border-glass
               transition-colors duration-fast ease-tune
             "
-            aria-label="Cart"
           >
             <svg viewBox="0 0 12 12" fill="none" aria-hidden className="size-3">
               <path
@@ -78,80 +122,103 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
               <circle cx="4.5" cy="10" r="0.6" fill="currentColor" />
               <circle cx="9" cy="10" r="0.6" fill="currentColor" />
             </svg>
+            {cartCount > 0 && (
+              <span
+                data-testid="topbar-cart-count"
+                aria-hidden
+                className="
+                  absolute -top-1 -right-1 min-w-3.5 h-3.5 px-1 rounded-pill
+                  bg-molten font-mono text-[8px] font-semibold leading-[14px] text-center
+                "
+                style={{ color: "#1a0700" }}
+              >
+                {cartCount}
+              </span>
+            )}
           </NavLink>
-          <NavLink
-            to="/studio"
-            data-testid="topbar-new"
-            style={{ color: "var(--mvfm-bg-base)" }}
-            className="
-              hidden sm:inline-flex items-center gap-1.5
-              px-3 py-1.5 rounded-pill
-              bg-molten hover:bg-molten-glow
-              text-[10px] tracking-[0.22em] uppercase font-display font-semibold
-              shadow-bloom transition-colors duration-fast ease-tune
-            "
-          >
-            <span aria-hidden>+</span> New pack
-          </NavLink>
-          <button
-            type="button"
-            aria-label="Profile"
-            className="size-7 rounded-pill mvfm-glass grid place-items-center text-[10px] text-silver"
-          >
-            P
-          </button>
+
+          {/* Auth section */}
+          {HAS_CLERK ? (
+            <>
+              <SignedIn>
+                <SignedInCredits />
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    data-testid="topbar-signin"
+                    className="
+                      h-7 px-3 rounded-md
+                      bg-elev-2/60 border border-glass-soft
+                      font-mono text-[10px] tracking-[0.18em] uppercase text-silver
+                      hover:text-warm hover:border-glass
+                      transition-colors duration-fast ease-tune
+                    "
+                  >
+                    Sign in
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    type="button"
+                    data-testid="topbar-join"
+                    style={{ color: "#1a0700" }}
+                    className="
+                      h-7 px-3 rounded-pill
+                      bg-molten hover:bg-molten-glow
+                      font-mono text-[10px] tracking-[0.18em] uppercase font-semibold
+                      shadow-bloom transition-colors duration-fast ease-tune
+                    "
+                  >
+                    Join free
+                  </button>
+                </SignUpButton>
+              </SignedOut>
+            </>
+          ) : (
+            /* Dev fallback — Clerk not configured; same test IDs for test coverage */
+            <>
+              <button
+                type="button"
+                data-testid="topbar-signin"
+                className="
+                  h-7 px-3 rounded-md
+                  bg-elev-2/60 border border-glass-soft
+                  font-mono text-[10px] tracking-[0.18em] uppercase text-silver
+                  hover:text-warm hover:border-glass
+                  transition-colors duration-fast ease-tune
+                "
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                data-testid="topbar-join"
+                style={{ color: "#1a0700" }}
+                className="
+                  h-7 px-3 rounded-pill
+                  bg-molten hover:bg-molten-glow
+                  font-mono text-[10px] tracking-[0.18em] uppercase font-semibold
+                  shadow-bloom transition-colors duration-fast ease-tune
+                "
+              >
+                Join free
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      {/* Body grid */}
+      {/* Body — 2-col (main + optional right panel) */}
       <div
         className="
           grid w-full min-h-[calc(100dvh-var(--mvfm-topbar-h))]
           grid-cols-1
-          lg:[grid-template-columns:var(--mvfm-sidebar-w)_minmax(0,1fr)_auto]
+          lg:[grid-template-columns:minmax(0,1fr)_auto]
         "
       >
-        {/* Sidebar (desktop only) */}
-        <aside
-          data-testid="sidebar"
-          className="hidden lg:flex flex-col py-4 border-r border-glass-soft"
-        >
-          <nav aria-label="Primary" className="flex flex-col gap-0.5 px-2">
-            {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.key}
-                to={item.to}
-                end={item.to === "/"}
-                data-testid={`nav-${item.key}`}
-                className={({ isActive }) =>
-                  cn(
-                    "group flex items-center gap-3 px-3 py-2 rounded-md",
-                    "text-left text-[13.5px] font-medium tracking-[0.005em]",
-                    "border-l-2 border-transparent",
-                    "transition-all duration-fast ease-tune",
-                    isActive
-                      ? "border-l-molten bg-molten-tint text-warm"
-                      : "text-silver hover:bg-white/[0.03] hover:text-warm",
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "size-4 rounded-xs border border-glass",
-                        isActive && "bg-molten/20 border-molten/40",
-                      )}
-                    />
-                    {item.label}
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
-
         <main data-testid="main" className="min-w-0 px-3 sm:px-6 lg:px-8 py-6">
           {children}
         </main>
@@ -179,7 +246,6 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
         </footer>
       ) : null}
 
-      {/* Mobile bottom tab bar — hidden when player mounted */}
       {!bottomPlayer ? (
         <nav
           data-testid="mobile-tabs"
@@ -195,7 +261,6 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
             <NavLink
               key={item.key}
               to={item.to}
-              end={item.to === "/"}
               data-testid={`mobile-nav-${item.key}`}
               className={({ isActive }) =>
                 cn(
@@ -214,16 +279,12 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
   );
 }
 
-function SignalMeter({ bars }: { bars: number }) {
-  return (
-    <div className="flex items-end gap-0.5" aria-label="Signal strength">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span
-          key={i}
-          className={`w-[3px] rounded-xs ${i <= bars ? "bg-molten" : "bg-white/10"}`}
-          style={{ height: 4 + i * 2 }}
-        />
-      ))}
-    </div>
-  );
+// Mounted only inside <SignedIn> — safe to call useAuth + useMyCredits here.
+function SignedInCredits() {
+  const { isSignedIn } = useAuth();
+  const credits = useMyCredits({ enabled: !!isSignedIn });
+  const balance = credits.data?.balance ?? 0;
+  const tierGrant = credits.data?.tier_monthly_grant ?? 0;
+  return <CreditBadge balance={balance} tierGrant={tierGrant} />;
 }
+

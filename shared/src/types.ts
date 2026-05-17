@@ -93,3 +93,71 @@ export interface MeResponse {
   tier: Tier;
   tier_expires_at: string | null;
 }
+
+// ─── V3 marketplace types ──────────────────────────────────────────────────
+
+export type PackCategory =
+  | "sfx"
+  | "music"
+  | "voice_packs"
+  | "ambient"
+  | "radio_packs"
+  | "broadcast_packs";
+
+export const PACK_CATEGORIES: ReadonlyArray<PackCategory> = [
+  "sfx",
+  "music",
+  "voice_packs",
+  "ambient",
+  "radio_packs",
+  "broadcast_packs",
+];
+
+export type PackStatus = "draft" | "published" | "removed";
+export type LicenseKind = "personal" | "commercial";
+export type PackSort = "new" | "price_asc" | "price_desc" | "popular";
+
+export interface Pack {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string;
+  category: PackCategory;
+  tags: string[];
+  moods: string[];
+  price_cents: number;
+  credit_cost: number;
+  license_personal: boolean;
+  license_commercial_multiplier: number;
+  status: PackStatus;
+  cover_art_url: string | null;
+  hero_art_url: string | null;
+  preview_url: string | null;
+  duration_ms: number;
+  sample_count: number;
+  plays: number;
+  purchases_count: number;
+  style_profile: Record<string, unknown>;
+  published_at: string | null;
+}
+
+export interface PackListFilters {
+  category?: PackCategory;
+  tags?: string[];
+  moods?: string[];
+  price_min_cents?: number;
+  price_max_cents?: number;
+  q?: string;
+  sort?: PackSort;
+  limit?: number;
+  offset?: number;
+}
+
+export interface CartItem {
+  pack_id: string;
+  title: string;
+  category: PackCategory;
+  cover_art_url: string | null;
+  unit_price_cents: number; // price for the selected license
+  license_kind: LicenseKind;
+}

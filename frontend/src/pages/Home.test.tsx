@@ -1,66 +1,129 @@
-import { render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { Pack } from "@multiverse-fm/shared";
+import { api } from "@/lib/api";
 import { Home } from "./Home";
+
+const samplePack = (over: Partial<Pack>): Pack => ({
+  id: "p-x",
+  creator_id: "u_curated",
+  title: "Sample",
+  description: "",
+  category: "sfx",
+  tags: [],
+  moods: [],
+  price_cents: 500,
+  credit_cost: 1,
+  license_personal: true,
+  license_commercial_multiplier: 3.0,
+  status: "published",
+  cover_art_url: null,
+  hero_art_url: null,
+  preview_url: null,
+  duration_ms: 30000,
+  sample_count: 5,
+  plays: 0,
+  purchases_count: 0,
+  style_profile: {},
+  published_at: "2026-05-17T00:00:00Z",
+  ...over,
+});
 
 beforeEach(() => {
   Element.prototype.scrollBy = vi.fn();
+  vi.spyOn(api, "listPacks");
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+function listPacksSpy() {
+  return vi.mocked(api.listPacks);
+}
+
 function renderHome() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={["/"]}>
-      <Home />
-    </MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
-describe("Home page", () => {
-  it("renders hero band with Brooklyn 88.7 station", () => {
+describe("Home (marketplace landing)", () => {
+  it("renders pitch line + category ribbon", () => {
+    listPacksSpy().mockResolvedValue([]);
     renderHome();
-    expect(screen.getByTestId("hero-band")).toBeInTheDocument();
-    expect(screen.getByTestId("hero-title")).toHaveTextContent("Brooklyn 88.7 Night Cab");
+    expect(screen.getByTestId("home-hero")).toBeInTheDocument();
+    expect(screen.getByTestId("home-hero-search")).toBeInTheDocument();
+    expect(screen.getByTestId("category-ribbon")).toBeInTheDocument();
   });
 
-  it("renders three cover shelves", () => {
+  it("category ribbon links to each of the 6 categories", () => {
+    listPacksSpy().mockResolvedValue([]);
     renderHome();
-    expect(screen.getByTestId("shelf-hero-stations")).toBeInTheDocument();
-    expect(screen.getByTestId("shelf-recently-created")).toBeInTheDocument();
-    expect(screen.getByTestId("shelf-start-from-a-template")).toBeInTheDocument();
-  });
-
-  it("Hero stations shelf shows all 6 V2 station ids", () => {
-    renderHome();
-    const rail = screen.getByTestId("rail-hero-stations");
-    for (const id of [
-      "brooklyn_887",
-      "city_fm_1986",
-      "wartime_1940",
-      "orbital_2089",
-      "imperium_steamwire",
-      "sunset_collapse_1086",
-    ]) {
-      expect(within(rail).getByTestId(`cover-tile-${id}`)).toBeInTheDocument();
+    for (const cat of [
+      "sfx",
+      "music",
+      "voice_packs",
+      "ambient",
+      "radio_packs",
+      "broadcast_packs",
+    ] as const) {
+      expect(screen.getByTestId(`category-${cat}`)).toHaveAttribute(
+        "href",
+        `/browse/${cat}`,
+      );
     }
   });
 
-  it("Recently created shelf uses creator chip", () => {
+  it("renders hero skeleton while featured pack loads", () => {
+    listPacksSpy().mockReturnValue(new Promise(() => {})); // never resolves
     renderHome();
-    const rail = screen.getByTestId("rail-recently-created");
-    expect(within(rail).getAllByText(/creator/i).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("marketplace-hero-skeleton")).toBeInTheDocument();
   });
 
-  it("Start from a template shelf renders 5 templates", () => {
+  it("renders hero with featured pack once API resolves", async () => {
+    listPacksSpy().mockResolvedValue([
+      samplePack({ id: "feat", title: "Geosync drift", category: "music", price_cents: 2200 }),
+    ]);
     renderHome();
-    const rail = screen.getByTestId("rail-start-from-a-template");
-    for (const id of [
-      "tpl-cyberpunk",
-      "tpl-detective",
-      "tpl-orbital",
-      "tpl-tavern",
-      "tpl-wartime",
-    ]) {
-      expect(within(rail).getByTestId(`template-${id}`)).toBeInTheDocument();
-    }
+    await waitFor(() =>
+      expect(screen.getByTestId("marketplace-hero")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("marketplace-hero-title")).toHaveTextContent(
+      "Geosync drift",
+    );
+    expect(screen.getByTestId("marketplace-hero-open")).toHaveAttribute(
+      "href",
+      "/p/feat",
+    );
+  });
+
+  it("does NOT mention the Brooklyn 88.7 radio identity", async () => {
+    listPacksSpy().mockResolvedValue([
+      samplePack({ id: "anything", title: "Anything" }),
+    ]);
+    renderHome();
+    await waitFor(() =>
+      expect(screen.getByTestId("marketplace-hero")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/brooklyn 88\.7/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/night cab/i)).not.toBeInTheDocument();
+  });
+
+  it("renders pitch headline as marketplace, not radio", () => {
+    listPacksSpy().mockResolvedValue([]);
+    renderHome();
+    expect(screen.getByTestId("home-hero-headline")).toHaveTextContent(
+      /production-ready audio/i,
+    );
   });
 });

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Station } from "@multiverse-fm/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
@@ -6,10 +7,10 @@ export interface StudioRevealProps {
   station: Station;
   onPlay?: (id: string) => void;
   onSave?: (id: string) => void;
-  onExport?: (id: string) => void;
 }
 
-export function StudioReveal({ station, onPlay, onSave, onExport }: StudioRevealProps) {
+export function StudioReveal({ station, onPlay, onSave }: StudioRevealProps) {
+  const navigate = useNavigate();
   const plate = plateFor(station.id);
   const realityLabel = station.reality_type.replace("_", " ");
 
@@ -118,8 +119,16 @@ export function StudioReveal({ station, onPlay, onSave, onExport }: StudioReveal
         </button>
         <button
           type="button"
-          data-testid="studio-reveal-export"
-          onClick={() => onExport?.(station.id)}
+          data-testid="studio-reveal-publish"
+          onClick={() =>
+            navigate("/studio/publish", {
+              state: {
+                title: station.station_name,
+                category: "radio_packs",
+                description: station.station_slogan,
+              },
+            })
+          }
           className="
             inline-flex items-center gap-2 px-4 py-2.5 rounded-md
             text-silver font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold
@@ -127,7 +136,7 @@ export function StudioReveal({ station, onPlay, onSave, onExport }: StudioReveal
             transition-colors duration-fast ease-tune
           "
         >
-          Export world pack
+          Publish to marketplace →
         </button>
       </div>
     </div>

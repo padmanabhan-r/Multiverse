@@ -9,6 +9,8 @@ from hashlib import sha256
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 
 # Set env BEFORE importing app modules so Settings picks them up.
@@ -19,6 +21,16 @@ os.environ.setdefault("STRIPE_WEBHOOK_SECRET", "whsec_test_dummy")
 os.environ.setdefault("STRIPE_SECRET_KEY", "sk_test_dummy")
 os.environ.setdefault("STRIPE_PRICE_CREATOR", "price_creator_test")
 os.environ.setdefault("STRIPE_PRICE_PRO_STUDIO", "price_pro_studio_test")
+
+
+# SQLite ignores foreign-key cascade unless PRAGMA is enabled per-connection.
+# Register a global listener so every new connection gets the pragma applied.
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, _conn_record) -> None:  # type: ignore[no-untyped-def]
+    if dbapi_connection.__class__.__module__.startswith("sqlite3"):
+        cur = dbapi_connection.cursor()
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.close()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -43,13 +55,36 @@ def _create_schema() -> Iterator[None]:
 
 @pytest.fixture(autouse=True)
 def _clean_tables() -> Iterator[None]:
+    """Wipe all marketplace + auth tables between tests.
+
+    Order matters: child tables first to avoid FK conflicts where SQLite
+    foreign-key enforcement is on.
+    """
     from sqlalchemy import delete
 
-    from app.db.models import ProcessedEvent, User
+    from app.db.models import (
+        AudioAsset,
+        BroadcastBlock,
+        CreatorProfile,
+        CreditBalance,
+        Pack,
+        ProcessedEvent,
+        Purchase,
+        Station,
+        User,
+    )
     from app.db.session import get_engine
 
     engine = get_engine()
     with engine.begin() as conn:
+        # Order: leaves → roots
+        conn.execute(delete(Purchase))
+        conn.execute(delete(AudioAsset))
+        conn.execute(delete(BroadcastBlock))
+        conn.execute(delete(Pack))
+        conn.execute(delete(CreditBalance))
+        conn.execute(delete(CreatorProfile))
+        conn.execute(delete(Station))
         conn.execute(delete(ProcessedEvent))
         conn.execute(delete(User))
     yield

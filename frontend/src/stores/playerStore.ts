@@ -8,8 +8,10 @@ export interface PlayerState {
   /** Synthetic progress 0..1 used by waveform + scrubber until real WebAudio lands. */
   progress: number;
 
-  /** Right-panel selection. null = panel NOT mounted. Independent of playback. */
+  /** Right-panel selection (legacy radio-station flow). */
   selectedStationId: string | null;
+  /** V3 right-panel selection (marketplace pack flow). null = panel NOT mounted. */
+  selectedPackId: string | null;
 
   play: (stationId: string) => void;
   pause: () => void;
@@ -19,6 +21,9 @@ export interface PlayerState {
 
   select: (stationId: string) => void;
   closePanel: () => void;
+
+  selectPack: (packId: string) => void;
+  closePackPanel: () => void;
 }
 
 export const usePlayer = create<PlayerState>()((set, get) => ({
@@ -26,6 +31,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   isPlaying: false,
   progress: 0,
   selectedStationId: null,
+  selectedPackId: null,
 
   play: (stationId) =>
     set((s) =>
@@ -38,6 +44,11 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   stop: () => set({ currentStationId: null, isPlaying: false, progress: 0 }),
   setProgress: (p) => set({ progress: Math.max(0, Math.min(1, p)) }),
 
-  select: (stationId) => set({ selectedStationId: stationId }),
+  select: (stationId) =>
+    set({ selectedStationId: stationId, selectedPackId: null }),
   closePanel: () => set({ selectedStationId: null }),
+
+  selectPack: (packId) =>
+    set({ selectedPackId: packId, selectedStationId: null }),
+  closePackPanel: () => set({ selectedPackId: null }),
 }));

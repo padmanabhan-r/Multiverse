@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     CORS_ORIGINS: str = "http://localhost:5173"
 
-    DATABASE_URL: str = "postgresql+psycopg://multiverse:multiverse@localhost:5433/multiverse_fm"
+    # Zero-config local dev → sqlite. Production override via env.
+    DATABASE_URL: str = "sqlite:///./dev.db"
     DATABASE_URL_SYNC: str | None = None
     REDIS_URL: str = "redis://localhost:6379/0"
 

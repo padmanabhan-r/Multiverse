@@ -1,142 +1,182 @@
 import { useNavigate } from "react-router-dom";
-import type { Station } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse-fm/shared";
+import { CategoryRibbon } from "@/components/CategoryRibbon";
 import { CoverShelf } from "@/components/CoverShelf";
-import { CoverTile } from "@/components/CoverTile";
-import { HeroBand } from "@/components/HeroBand";
-import { templatePlate } from "@/lib/stationArt";
-import { DUMMY_STATIONS, TEMPLATES, type Template } from "@/data/dummyStations";
-import { usePlayer } from "@/stores/playerStore";
+import { HomeSearchHero } from "@/components/HomeSearchHero";
+import { MarketplaceHero } from "@/components/MarketplaceHero";
+import { PackTile } from "@/components/PackTile";
+import { ValuePropSplit } from "@/components/ValuePropSplit";
+import { usePacks } from "@/lib/queries";
 
 export function Home() {
-  const stations = DUMMY_STATIONS;
-  const hero = stations[0]; // Brooklyn 88.7 Night Cab
-  const recents = stations.slice(2, 6);
   const navigate = useNavigate();
-  const activeId = usePlayer((s) => s.currentStationId);
-  const selectedId = usePlayer((s) => s.selectedStationId);
-  const select = usePlayer((s) => s.select);
-  const play = usePlayer((s) => s.play);
-  const highlightId = activeId ?? selectedId ?? hero.id;
 
-  // Tap behaviour:
-  //  • Desktop (≥1024 px) opens the right panel via select().
-  //  • Below that, the panel is hidden, so navigate to the World page instead.
-  const onTileSelect = (id: string) => {
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      navigate(`/w/${id}`);
-    } else {
-      select(id);
-    }
-  };
+  // Fetch a window so we can filter radio_packs out of generic shelves
+  // client-side. Radio packs are heavy multi-stem assets — they get their own
+  // dedicated shelf at the very end + a category page.
+  const featured = usePacks({ sort: "popular", limit: 30 });
+  const trending = usePacks({ sort: "popular", limit: 30 });
+  const fresh = usePacks({ sort: "new", limit: 30 });
+  const music = usePacks({ category: "music", sort: "new", limit: 8 });
+  const radio = usePacks({ category: "radio_packs", sort: "new", limit: 8 });
+
+  // Featured pack should NEVER be a radio pack — those read like radio
+  // stations ("Brooklyn 88.7 Night Cab"), not generic marketplace assets.
+  const heroPack =
+    featured.data?.find((p) => p.category !== "radio_packs") ??
+    featured.data?.[0] ??
+    null;
+
+  const trendingFiltered = (trending.data ?? []).filter(
+    (p) => p.category !== "radio_packs",
+  );
+  const freshFiltered = (fresh.data ?? []).filter(
+    (p) => p.category !== "radio_packs",
+  );
+
+  const onTileSelect = (id: string) => navigate(`/p/${id}`);
 
   return (
-    <div data-testid="home-page" className="-mx-3 sm:-mx-6 lg:-mx-8 -mt-6 space-y-8 sm:space-y-12">
-      <HeroBand
-        station={hero}
-        onPlay={play}
-        onExport={(id) => onTileSelect(id)}
+    <div data-testid="home-page" className="space-y-6 sm:space-y-8">
+      <HomeSearchHero />
+
+      <ValuePropSplit />
+
+      <section className="space-y-3">
+        <h2 className="font-mono text-warm text-[12px] tracking-[0.18em] uppercase font-semibold">
+          Browse by category
+        </h2>
+        <CategoryRibbon />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-mono text-warm text-[12px] tracking-[0.18em] uppercase font-semibold">
+          Featured pack
+        </h2>
+        <MarketplaceHero
+          pack={heroPack}
+          loading={featured.isLoading}
+          onPreview={onTileSelect}
+        />
+      </section>
+
+      <ShelfBlock
+        title="Trending"
+        countLabel={`${pad(trendingFiltered.length)} packs`}
+        link={{ label: "See all", onClick: () => navigate("/browse?sort=popular") }}
+        loading={trending.isLoading}
+        error={trending.isError}
+        items={trendingFiltered}
+        highlightId={undefined}
+        onSelect={onTileSelect}
       />
 
-      <div className="px-3 sm:px-6 lg:px-8 pt-2 space-y-12 sm:space-y-16">
-        <CoverShelf
-          title="Hero stations"
-          countLabel={`CURATED · ${pad(stations.length)}`}
-          linkLabel="See all"
-          items={stations}
-          renderItem={(s: Station) => (
-            <CoverTile
-              station={s}
-              size="lg"
-              active={s.id === highlightId}
-              onSelect={onTileSelect}
-              onPlay={play}
-            />
-          )}
-        />
+      <ShelfBlock
+        title="New this week"
+        countLabel={`${pad(freshFiltered.length)} packs`}
+        link={{ label: "See all", onClick: () => navigate("/browse") }}
+        loading={fresh.isLoading}
+        error={fresh.isError}
+        items={freshFiltered}
+        highlightId={undefined}
+        onSelect={onTileSelect}
+      />
 
-        <CoverShelf
-          title="Recently created"
-          countLabel={`YOUR WORKS · ${pad(recents.length)}`}
-          linkLabel="Library"
-          items={recents}
-          renderItem={(s: Station) => (
-            <CoverTile
-              station={s}
-              size="md"
-              creator
-              active={s.id === highlightId}
-              onSelect={onTileSelect}
-              onPlay={play}
-            />
-          )}
-        />
+      <ShelfBlock
+        title="Music"
+        countLabel={music.data ? `${pad(music.data.length)} packs` : undefined}
+        link={{ label: "Explore music", onClick: () => navigate("/browse/music") }}
+        loading={music.isLoading}
+        error={music.isError}
+        items={music.data ?? []}
+        highlightId={undefined}
+        onSelect={onTileSelect}
+      />
 
-        <CoverShelf
-          title="Start from a template"
-          countLabel={`STUDIO · ${pad(TEMPLATES.length)}`}
-          linkLabel="Open Studio"
-          items={TEMPLATES}
-          renderItem={(t: Template) => <TemplateTile template={t} />}
-        />
-      </div>
+      <ShelfBlock
+        title="Radio packs"
+        countLabel={radio.data ? `${pad(radio.data.length)} packs` : undefined}
+        link={{
+          label: "Explore radio",
+          onClick: () => navigate("/browse/radio_packs"),
+        }}
+        loading={radio.isLoading}
+        error={radio.isError}
+        items={radio.data ?? []}
+        highlightId={undefined}
+        onSelect={onTileSelect}
+      />
     </div>
   );
 }
 
-function TemplateTile({ template }: { template: Template }) {
-  const plate = templatePlate(template.id);
+function ShelfBlock({
+  title,
+  countLabel,
+  link,
+  loading,
+  error,
+  items,
+  highlightId,
+  onSelect,
+}: {
+  title: string;
+  countLabel?: string;
+  link: { label: string; onClick: () => void };
+  loading: boolean;
+  error: boolean;
+  items: Pack[];
+  highlightId?: string;
+  onSelect: (id: string) => void;
+}) {
+  if (loading) return <ShelfSkeleton title={title} />;
+  if (error || items.length === 0) return null;
   return (
-    <article
-      data-testid={`template-${template.id}`}
-      className="
-        flex-shrink-0 snap-start w-[200px] rounded-md overflow-hidden relative
-        shadow-[inset_0_0_0_1px_var(--mvfm-border-soft)]
-        bg-elev-2
-      "
-    >
-      <button
-        type="button"
-        className="block w-full text-left"
-        aria-label={`Use template: ${template.label}`}
-      >
-        <div
-          className="relative w-full h-[140px] overflow-hidden"
-          style={{ background: plate.background }}
-        >
-          <div className="absolute inset-0 mvfm-grain opacity-60 pointer-events-none" />
+    <CoverShelf
+      title={title}
+      countLabel={countLabel}
+      linkLabel={link.label}
+      onLinkClick={link.onClick}
+      items={items}
+      renderItem={(p: Pack) => (
+        <PackTile
+          pack={p}
+          size="lg"
+          active={p.id === highlightId}
+          onSelect={onSelect}
+          onPlay={onSelect}
+        />
+      )}
+    />
+  );
+}
+
+function ShelfSkeleton({ title }: { title: string }) {
+  return (
+    <section data-testid={`shelf-skeleton-${slug(title)}`}>
+      <div className="font-mono text-warm text-[12px] tracking-[0.18em] uppercase font-semibold mb-3 px-1">
+        {title}
+      </div>
+      <div className="flex gap-[18px] overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
-            aria-hidden
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85) 100%)",
-            }}
+            key={i}
+            className="
+              w-[220px] flex-shrink-0
+              aspect-square rounded-md bg-elev-2
+              shadow-[inset_0_0_0_1px_var(--mvfm-border-soft)]
+              animate-pulse
+            "
           />
-          <div className="absolute inset-x-3 bottom-3 z-[2] flex items-end justify-between gap-2">
-            <div className="min-w-0">
-              <div className="font-mono text-silver2 text-[8.5px] tracking-[0.18em] uppercase truncate">
-                {template.overline}
-              </div>
-              <div className="font-mono text-warm text-[12px] tracking-[0.04em] truncate">
-                {template.label}
-              </div>
-            </div>
-            <svg viewBox="0 0 12 12" fill="none" aria-hidden className="size-3 text-molten">
-              <path
-                d="M2.5 6h7m0 0L7 3.5M9.5 6L7 8.5"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        </div>
-      </button>
-    </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
+}
+function slug(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
