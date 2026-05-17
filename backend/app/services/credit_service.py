@@ -61,6 +61,30 @@ def cost_for_sample_kind(kind: str) -> int:
     return _SAMPLE_COSTS[kind]
 
 
+def spend_sample_kind(
+    db: Session, user_id: str, kind: str
+) -> CreditBalance:
+    """Atomically deduct the per-sample cost for one Studio generation.
+
+    Cost table differs from `spend_credits` (which charges per-pack-category):
+    sfx/voice/ambient = 1, music = 2. Same row-lock semantics.
+    """
+    cost = cost_for_sample_kind(kind)
+    row = (
+        db.query(CreditBalance)
+        .filter(CreditBalance.user_id == user_id)
+        .with_for_update(read=False)
+        .one_or_none()
+    )
+    if row is None:
+        raise InsufficientCreditsError(required=cost, available=0)
+    if row.balance < cost:
+        raise InsufficientCreditsError(required=cost, available=row.balance)
+    row.balance -= cost
+    db.flush()
+    return row
+
+
 def refund(db: Session, user_id: str, amount: int) -> CreditBalance:
     """Credit back ``amount`` credits to a user.
 

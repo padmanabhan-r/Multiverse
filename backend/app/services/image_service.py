@@ -5,8 +5,10 @@ from pathlib import Path
 
 import google.genai as genai
 from google.genai import types
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.db.models import Pack
 
 # Output directory — absolute so it works regardless of cwd.
 # Monkeypatch this in tests to redirect output to tmp_path.
@@ -59,16 +61,21 @@ def generate_pack_cover(
     description: str,
     tags: list[str],
     moods: list[str],
+    *,
+    overwrite: bool = False,
 ) -> str:
     """Generate a 1:1 cover image for a pack via Gemini image generation.
 
-    Idempotent: if the file already exists the API is NOT called.
+    By default idempotent: if the file already exists the API is NOT called.
+    Pass ``overwrite=True`` from the Studio cover-regenerate flow so creators
+    can iterate on the cover until they're happy.
+
     Returns the absolute path to the saved image file.
     """
     PACK_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
     output_path = PACK_IMAGE_DIR / f"{pack_id}.png"
 
-    if output_path.exists():
+    if output_path.exists() and not overwrite:
         return str(output_path)
 
     settings = get_settings()
@@ -94,3 +101,45 @@ def generate_pack_cover(
 
     time.sleep(_DELAY_SECONDS)
     return str(output_path)
+
+
+class CoverPermissionError(PermissionError):
+    pass
+
+
+class CoverPackNotFoundError(LookupError):
+    pass
+
+
+def generate_cover_for_pack(
+    db: Session, *, pack_id: str, requesting_user_id: str
+) -> str:
+    """Owner-gated wrapper for creator-side cover generation.
+
+    Writes a new Gemini cover (overwriting any existing PNG so the creator
+    can iterate), updates ``pack.cover_art_url`` to the served URL, and
+    returns the served URL.
+    """
+    pack = db.get(Pack, pack_id)
+    if pack is None:
+        raise CoverPackNotFoundError(f"pack not found: {pack_id}")
+    if pack.creator_id != requesting_user_id:
+        raise CoverPermissionError(
+            f"user {requesting_user_id} does not own pack {pack_id}"
+        )
+
+    generate_pack_cover(
+        pack_id=pack.id,
+        title=pack.title,
+        category=pack.category,
+        description=pack.description or "",
+        tags=list(pack.tags or []),
+        moods=list(pack.moods or []),
+        overwrite=True,
+    )
+
+    # Served via FastAPI StaticFiles mount under /static (see main.py).
+    cover_url = f"/static/images/packs/{pack.id}.png"
+    pack.cover_art_url = cover_url
+    db.flush()
+    return cover_url

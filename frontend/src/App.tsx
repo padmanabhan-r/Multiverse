@@ -8,7 +8,11 @@ import { Cart } from "@/pages/Cart";
 import { Home } from "@/pages/Home";
 import { Pack } from "@/pages/Pack";
 import { Pricing } from "@/pages/Pricing";
+import { Creator } from "@/pages/Creator";
 import { Studio } from "@/pages/Studio";
+import { StudioBundleNew } from "@/pages/StudioBundleNew";
+import { StudioDraft } from "@/pages/StudioDraft";
+import { StudioNew } from "@/pages/StudioNew";
 import { StudioPublish } from "@/pages/StudioPublish";
 import { Stub } from "@/pages/Stub";
 import { World } from "@/pages/World";
@@ -68,7 +72,10 @@ export function App() {
         <Route path="/browse/:category" element={<Browse />} />
         <Route path="/p/:packId" element={<Pack />} />
         <Route path="/studio" element={<Studio />} />
+        <Route path="/studio/new" element={<StudioNew />} />
+        <Route path="/studio/draft/:packId" element={<StudioDraft />} />
         <Route path="/studio/publish" element={<StudioPublish />} />
+        <Route path="/studio/bundle/new" element={<StudioBundleNew />} />
         <Route path="/cart" element={<Cart />} />
         <Route
           path="/library"
@@ -82,18 +89,7 @@ export function App() {
             />
           }
         />
-        <Route
-          path="/creator"
-          element={
-            <Stub
-              testId="page-creator"
-              title="Your universe. Your prices. Your payouts."
-              subtitle="Creator dashboard — published packs, sales, and Stripe Connect onboarding. Publish a pack from Studio to start."
-              shippingIn="Shipping in Si"
-              backTo={{ label: "Open Studio", to: "/studio" }}
-            />
-          }
-        />
+        <Route path="/creator" element={<Creator />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route
           path="/u/:creatorId"

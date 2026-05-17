@@ -46,12 +46,28 @@ describe("App", () => {
     );
   });
 
-  it.each([
-    ["/library", "page-library"],
-    ["/creator", "page-creator"],
-  ])("renders Stub page at %s", (path, testId) => {
-    renderAt(path);
-    expect(screen.getByTestId(testId)).toBeInTheDocument();
+  it("renders Stub page at /library", () => {
+    renderAt("/library");
+    expect(screen.getByTestId("page-library")).toBeInTheDocument();
+  });
+
+  it("mounts real Creator dashboard at /creator", () => {
+    vi.spyOn(api, "creatorMe").mockResolvedValue({
+      creator_id: "u",
+      display_name: null,
+      bio: null,
+      avatar_url: null,
+      draft_count: 0,
+      published_count: 0,
+      bundle_count: 0,
+      sales_count_30d: 0,
+      sales_cents_30d: 0,
+    });
+    vi.spyOn(api, "listMyPacks").mockResolvedValue([]);
+    vi.spyOn(api, "listMyBundles").mockResolvedValue([]);
+    vi.spyOn(api, "creatorSales").mockResolvedValue([]);
+    renderAt("/creator");
+    expect(screen.getByTestId("creator-loading")).toBeInTheDocument();
   });
 
   it("renders Pricing page at /pricing", () => {
