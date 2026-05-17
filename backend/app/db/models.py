@@ -45,6 +45,7 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)  # Clerk user_id
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True)
     stripe_customer_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     tier: Mapped[str] = mapped_column(String(16), default="free", nullable=False)
     tier_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

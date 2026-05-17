@@ -5,10 +5,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.config import Settings, get_settings
 from app.db.models import User
 from app.db.session import get_db
 from app.deps import CurrentUser
-from app.services import credit_service
+from app.services import clerk_service, credit_service
 
 router = APIRouter(tags=["me"])
 
@@ -17,9 +18,11 @@ router = APIRouter(tags=["me"])
 def me(
     user: CurrentUser,
     db: Annotated[Session, Depends(get_db)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict[str, str | None]:
-    # Upsert User row — idempotent on every login.
     db_user = db.get(User, user.user_id)
+    is_new = db_user is None
+
     if db_user is None:
         db_user = User(id=user.user_id, email=user.email, tier="free")
         db.add(db_user)
@@ -27,13 +30,24 @@ def me(
     elif user.email and db_user.email != user.email:
         db_user.email = user.email
 
+    # Enrich from Clerk on first login OR when we're still missing a username.
+    # Best-effort: failure is silent — JWT-only data is still usable.
+    if is_new or not db_user.username:
+        profile = clerk_service.fetch_user_profile(user.user_id, settings)
+        if profile.email and not db_user.email:
+            db_user.email = profile.email
+        if profile.username and not db_user.username:
+            db_user.username = profile.username
+
     # Grant 5 trial credits on first login — idempotent (no-op if row exists).
     credit_service.grant_trial(db, user.user_id)
     db.commit()
 
+    # Email is intentionally NEVER returned over the wire — kept server-side
+    # only for Stripe Customer creation. Frontend uses `username` for display.
     return {
         "user_id": user.user_id,
-        "email": user.email,
+        "username": db_user.username,
         "tier": db_user.tier,
         "tier_expires_at": (
             db_user.tier_expires_at.isoformat() if db_user.tier_expires_at else None

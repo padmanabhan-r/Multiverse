@@ -89,7 +89,7 @@ export interface WorldBible {
 
 export interface MeResponse {
   user_id: string;
-  email: string | null;
+  username: string | null;
   tier: Tier;
   tier_expires_at: string | null;
 }

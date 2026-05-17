@@ -142,7 +142,15 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
             <>
               <SignedIn>
                 <SignedInCredits />
-                <UserButton afterSignOutUrl="/" />
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      // Hide the secondary identifier (email) in the dropdown header
+                      userPreviewSecondaryIdentifier: { display: "none" },
+                    },
+                  }}
+                />
               </SignedIn>
               <SignedOut>
                 <SignInButton mode="modal">
