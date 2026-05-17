@@ -1,0 +1,91 @@
+/* Multiverse FM — canonical design tokens.
+ * Extracted from design/locked/*.html (Claude Design v2 lock, 2026-05-16).
+ * DO NOT hand-tune; instead update locked HTMLs and re-extract. */
+
+:root {
+  /* Surface */
+  --mvfm-bg-base: #0a0a0c;
+  --mvfm-bg-elev: #15161a;
+  --mvfm-bg-elev-2: #1e2026;
+  --mvfm-bg-elev-3: #262931;
+
+  /* Borders / dividers */
+  --mvfm-border: rgba(255, 255, 255, 0.06);
+  --mvfm-border-strong: rgba(255, 255, 255, 0.1);
+  --mvfm-border-soft: rgba(255, 255, 255, 0.04);
+
+  /* Accent (single — never alongside purple/blue) */
+  --mvfm-molten: #ff6a1f;
+  --mvfm-molten-glow: #ff8a3d;
+  --mvfm-molten-dim: rgba(255, 106, 31, 0.32);
+  --mvfm-molten-tint: rgba(255, 106, 31, 0.05);
+
+  /* Text */
+  --mvfm-text: #f5f1ea;
+  --mvfm-text-2: #9aa0ab;
+  --mvfm-text-3: #6a6e78;
+
+  /* Support (data-viz only, never decorative) */
+  --mvfm-teal: #3e5a66;
+
+  /* Typography */
+  --mvfm-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --mvfm-sans: "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Spacing scale (px) */
+  --mvfm-space-1: 4px;
+  --mvfm-space-2: 8px;
+  --mvfm-space-3: 12px;
+  --mvfm-space-4: 16px;
+  --mvfm-space-5: 24px;
+  --mvfm-space-6: 32px;
+  --mvfm-space-7: 48px;
+  --mvfm-space-8: 64px;
+
+  /* Radius */
+  --mvfm-radius-xs: 5px;
+  --mvfm-radius-sm: 6px;
+  --mvfm-radius-md: 8px;
+  --mvfm-radius-lg: 12px;
+  --mvfm-radius-xl: 16px;
+  --mvfm-radius-2xl: 18px;
+  --mvfm-radius-pill: 999px;
+  --mvfm-radius-circle: 50%;
+
+  /* Blur (selective, never on text) */
+  --mvfm-blur-panel: 20px;
+  --mvfm-blur-sheet: 28px;
+
+  /* Motion */
+  --mvfm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --mvfm-dur-fast: 180ms;
+  --mvfm-dur-tune: 280ms;
+  --mvfm-dur-slow: 480ms;
+  --mvfm-dur-lock: 600ms;
+
+  /* Shadows */
+  --mvfm-shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 20px 60px rgba(0, 0, 0, 0.6);
+  --mvfm-shadow-bloom: 0 0 60px 8px rgba(255, 106, 31, 0.35);
+  --mvfm-shadow-tile: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --mvfm-shadow-dial: 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 -10px 30px rgba(0, 0, 0, 0.7);
+
+  /* Layout primitives */
+  --mvfm-sidebar-w: 240px;
+  --mvfm-sidebar-w-collapsed: 64px;
+  --mvfm-topbar-h: 56px;
+  --mvfm-bottomplayer-h: 72px;
+  --mvfm-rightpanel-w: 320px;
+
+  color-scheme: dark;
+}
+
+/* Grain texture for selective use on glass surfaces */
+.mvfm-grain {
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px
+  );
+  background-size: 3px 3px;
+}
