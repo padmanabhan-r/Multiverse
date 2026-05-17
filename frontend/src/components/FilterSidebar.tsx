@@ -29,10 +29,10 @@ const PRICE_BUCKETS: Array<{
   max?: number;
 }> = [
   { label: "Any" },
-  { label: "Under $10", max: 999 },
-  { label: "$10 – $20", min: 1000, max: 2000 },
-  { label: "$20 – $30", min: 2000, max: 3000 },
-  { label: "Over $30", min: 3001 },
+  { label: "Under $1", max: 99 },
+  { label: "$1 – $3", min: 100, max: 300 },
+  { label: "$3 – $7", min: 300, max: 700 },
+  { label: "Over $7", min: 701 },
 ];
 
 export function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
@@ -194,10 +194,10 @@ function FilterRow({
 
 function priceLabelFor(min?: number, max?: number): string {
   if (min == null && max == null) return "Any";
-  if (min == null && max === 999) return "Under $10";
-  if (min === 1000 && max === 2000) return "$10 – $20";
-  if (min === 2000 && max === 3000) return "$20 – $30";
-  if (min === 3001 && max == null) return "Over $30";
+  if (min == null && max === 99) return "Under $1";
+  if (min === 100 && max === 300) return "$1 – $3";
+  if (min === 300 && max === 700) return "$3 – $7";
+  if (min === 701 && max == null) return "Over $7";
   return "Any";
 }
 

@@ -8,7 +8,7 @@ export function ValuePropSplit() {
       className="space-y-3 sm:space-y-4"
     >
       {/* Headline + subtitle */}
-      <div className="space-y-2">
+      <div className="space-y-2 text-center">
         <h1
           data-testid="home-hero-headline"
           className="font-display text-warm text-[24px] sm:text-[32px] lg:text-[38px] leading-[1.05] tracking-[-0.01em]"
@@ -16,7 +16,7 @@ export function ValuePropSplit() {
           Production-ready audio,{" "}
           <span className="text-molten">generated and ready to ship.</span>
         </h1>
-        <p className="text-silver text-[14px] sm:text-[15px] leading-[1.6] max-w-2xl">
+        <p className="text-silver text-[14px] sm:text-[15px] leading-[1.6] max-w-2xl mx-auto">
           Buy packs of{" "}
           <b className="text-warm font-normal">sound effects</b>,{" "}
           <b className="text-warm font-normal">music</b>,{" "}

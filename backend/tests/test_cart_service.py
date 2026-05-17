@@ -35,7 +35,7 @@ def test_price_cart_personal_returns_base_price(seeded: Session) -> None:
         [CartLineRequest(pack_id="pack-sfx-rainy-noir", license_kind="personal")],
     )
     assert len(priced) == 1
-    assert priced[0].unit_amount_cents == 500
+    assert priced[0].unit_amount_cents == 50
     assert priced[0].license_kind == "personal"
 
 
@@ -48,8 +48,8 @@ def test_price_cart_commercial_applies_multiplier(seeded: Session) -> None:
             )
         ],
     )
-    # default multiplier is 3.0, base is $5 → $15
-    assert priced[0].unit_amount_cents == 1500
+    # default multiplier is 3.0, base is $0.50 → $1.50
+    assert priced[0].unit_amount_cents == 150
 
 
 def test_price_cart_dedupes_same_pack_license(seeded: Session) -> None:
@@ -104,4 +104,4 @@ def test_total_cents(seeded: Session) -> None:
             CartLineRequest(pack_id="pack-sfx-neon-stings", license_kind="personal"),
         ],
     )
-    assert cart_service.total_cents(priced) == 1000
+    assert cart_service.total_cents(priced) == 100

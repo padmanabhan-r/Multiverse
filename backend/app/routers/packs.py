@@ -79,7 +79,7 @@ class DraftBody(BaseModel):
     description: str = ""
     tags: list[str] = Field(default_factory=list)
     moods: list[str] = Field(default_factory=list)
-    price_cents: int = Field(default=500, ge=100, le=5000)
+    price_cents: int = Field(default=200, ge=50, le=1500)
     license_commercial_multiplier: float = Field(default=3.0, ge=1.0, le=10.0)
     duration_ms: int = Field(default=0, ge=0)
     sample_count: int = Field(default=0, ge=0)

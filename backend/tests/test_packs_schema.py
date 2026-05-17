@@ -97,14 +97,14 @@ def test_pack_rejects_invalid_status(db_session: Session) -> None:
 def test_pack_rejects_price_below_minimum(db_session: Session) -> None:
     _user(db_session)
     with pytest.raises(IntegrityError):
-        _pack(db_session, creator_id="u_creator", price_cents=50)
+        _pack(db_session, creator_id="u_creator", price_cents=25)
     db_session.rollback()
 
 
 def test_pack_rejects_price_above_maximum(db_session: Session) -> None:
     _user(db_session)
     with pytest.raises(IntegrityError):
-        _pack(db_session, creator_id="u_creator", price_cents=9999)
+        _pack(db_session, creator_id="u_creator", price_cents=2000)
     db_session.rollback()
 
 

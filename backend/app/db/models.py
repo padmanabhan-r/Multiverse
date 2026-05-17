@@ -149,7 +149,7 @@ class Pack(Base):
     category: Mapped[str] = mapped_column(String(32), nullable=False)
     tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
-    price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=500)
+    price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=200)
     credit_cost: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     license_personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     license_commercial_multiplier: Mapped[float] = mapped_column(
@@ -190,8 +190,8 @@ class Pack(Base):
             "status in ('draft','published','removed')",
             name="ck_packs_status",
         ),
-        CheckConstraint("price_cents >= 100", name="ck_packs_price_min"),
-        CheckConstraint("price_cents <= 5000", name="ck_packs_price_max"),
+        CheckConstraint("price_cents >= 50", name="ck_packs_price_min"),
+        CheckConstraint("price_cents <= 1500", name="ck_packs_price_max"),
         CheckConstraint("credit_cost between 1 and 5", name="ck_packs_credit_range"),
         Index("ix_packs_category_status", "category", "status"),
         Index("ix_packs_published_at", "published_at"),

@@ -90,9 +90,9 @@ def test_checkout_returns_session_url(
     params = call.kwargs["params"]
     assert params["mode"] == "payment"
     assert len(params["line_items"]) == 2
-    # personal $5 + commercial $5 * 3 = $15  →  20.00 total
+    # personal $0.50 + commercial $0.50 * 3 = $1.50  →  $2.00 total
     amounts = [li["price_data"]["unit_amount"] for li in params["line_items"]]
-    assert sorted(amounts) == [500, 1500]
+    assert sorted(amounts) == [50, 150]
     assert params["metadata"]["kind"] == "marketplace_cart"
     assert params["metadata"]["clerk_user_id"] == "u_alice"
-    assert params["metadata"]["total_cents"] == "2000"
+    assert params["metadata"]["total_cents"] == "200"

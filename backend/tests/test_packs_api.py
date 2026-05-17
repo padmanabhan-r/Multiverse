@@ -57,11 +57,11 @@ def test_list_packs_rejects_unknown_category(seeded_client: TestClient) -> None:
 def test_list_packs_price_window(seeded_client: TestClient) -> None:
     r = seeded_client.get(
         "/packs",
-        params={"price_min_cents": 2000, "price_max_cents": 2500, "limit": 100},
+        params={"price_min_cents": 100, "price_max_cents": 300, "limit": 100},
     )
     assert r.status_code == 200
     for p in r.json():
-        assert 2000 <= p["price_cents"] <= 2500
+        assert 100 <= p["price_cents"] <= 300
 
 
 def test_list_packs_sort_price_asc(seeded_client: TestClient) -> None:

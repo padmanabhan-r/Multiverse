@@ -28,7 +28,7 @@ export function StudioPublish() {
   const [title, setTitle] = useState(prefill.title ?? "");
   const [category, setCategory] = useState<PackCategory>(prefill.category ?? "sfx");
   const [description, setDescription] = useState(prefill.description ?? "");
-  const [priceDollars, setPriceDollars] = useState("7");
+  const [priceDollars, setPriceDollars] = useState("2");
   const [tagsRaw, setTagsRaw] = useState("");
   const [multiplier, setMultiplier] = useState("3");
   const [busy, setBusy] = useState(false);
@@ -44,8 +44,8 @@ export function StudioPublish() {
     }
 
     const price = Math.round(parseFloat(priceDollars) * 100);
-    if (isNaN(price) || price < 100 || price > 5000) {
-      setError("Price must be between $1 and $50.");
+    if (isNaN(price) || price < 50 || price > 1500) {
+      setError("Price must be between $0.50 and $15.");
       return;
     }
 
@@ -137,7 +137,7 @@ export function StudioPublish() {
         </Field>
 
         {/* Price */}
-        <Field label="Price (USD)" htmlFor="pub-price" hint="$1 – $50">
+        <Field label="Price (USD)" htmlFor="pub-price" hint="$0.50 – $15">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-silver2 text-[13px]">
               $
@@ -146,9 +146,9 @@ export function StudioPublish() {
               id="pub-price"
               data-testid="publish-price"
               type="number"
-              min="1"
-              max="50"
-              step="1"
+              min="0.50"
+              max="15"
+              step="0.50"
               value={priceDollars}
               onChange={(e) => setPriceDollars(e.target.value)}
               className={cn(inputCls, "pl-7")}

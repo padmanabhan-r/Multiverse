@@ -101,7 +101,7 @@ class DraftInput:
     description: str = ""
     tags: list[str] = field(default_factory=list)
     moods: list[str] = field(default_factory=list)
-    price_cents: int = 500
+    price_cents: int = 200
     license_commercial_multiplier: float = 3.0
     duration_ms: int = 0
     sample_count: int = 0
@@ -118,15 +118,13 @@ def _credit_cost_for_price(price_cents: int) -> int:
     that gets debited at Studio-time lives in `credit_service`. Keep this
     deterministic so creator UX shows a stable badge.
     """
-    if price_cents <= 500:
+    if price_cents <= 150:
         return 1
-    if price_cents <= 1500:
+    if price_cents <= 500:
         return 2
-    if price_cents <= 3000:
+    if price_cents <= 1000:
         return 3
-    if price_cents <= 4500:
-        return 4
-    return 5
+    return 4
 
 
 def create_draft(db: Session, data: DraftInput) -> Pack:

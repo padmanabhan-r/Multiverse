@@ -69,9 +69,9 @@ def test_list_filters_by_category(seeded: Session) -> None:
 
 def test_list_filters_by_price_range(seeded: Session) -> None:
     out = pack_service.list_packs(
-        seeded, PackFilters(price_min_cents=2000, price_max_cents=2500, limit=100)
+        seeded, PackFilters(price_min_cents=100, price_max_cents=300, limit=100)
     )
-    assert all(2000 <= p.price_cents <= 2500 for p in out)
+    assert all(100 <= p.price_cents <= 300 for p in out)
     assert len(out) > 0
 
 
@@ -167,7 +167,7 @@ def test_create_draft_starts_in_draft_status(db_session: Session) -> None:
     db_session.commit()
     assert pack.status == "draft"
     assert pack.creator_id == "u_creator"
-    assert pack.credit_cost == 1
+    assert pack.credit_cost == 2
 
 
 def test_create_draft_derives_credit_cost_from_price(db_session: Session) -> None:
@@ -175,11 +175,11 @@ def test_create_draft_derives_credit_cost_from_price(db_session: Session) -> Non
     db_session.commit()
     p1 = pack_service.create_draft(
         db_session,
-        DraftInput(creator_id="u_creator", title="cheap", category="sfx", price_cents=300),
+        DraftInput(creator_id="u_creator", title="cheap", category="sfx", price_cents=100),
     )
     p2 = pack_service.create_draft(
         db_session,
-        DraftInput(creator_id="u_creator", title="mid", category="music", price_cents=2500),
+        DraftInput(creator_id="u_creator", title="mid", category="music", price_cents=800),
     )
     p3 = pack_service.create_draft(
         db_session,
@@ -187,13 +187,13 @@ def test_create_draft_derives_credit_cost_from_price(db_session: Session) -> Non
             creator_id="u_creator",
             title="premium",
             category="music",
-            price_cents=4800,
+            price_cents=1500,
         ),
     )
     db_session.commit()
     assert p1.credit_cost == 1
     assert p2.credit_cost == 3
-    assert p3.credit_cost == 5
+    assert p3.credit_cost == 4
 
 
 def test_create_draft_rejects_unknown_creator(db_session: Session) -> None:

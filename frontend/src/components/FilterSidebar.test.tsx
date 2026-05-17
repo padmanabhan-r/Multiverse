@@ -55,11 +55,11 @@ describe("FilterSidebar", () => {
   it("price bucket click dispatches min/max", async () => {
     const onChange = vi.fn();
     render(<FilterSidebar filters={{}} onChange={onChange} />);
-    await userEvent.click(screen.getByTestId("filter-price-10-20"));
+    await userEvent.click(screen.getByTestId("filter-price-1-3"));
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        price_min_cents: 1000,
-        price_max_cents: 2000,
+        price_min_cents: 100,
+        price_max_cents: 300,
       }),
     );
   });
