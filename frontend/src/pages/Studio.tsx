@@ -16,7 +16,6 @@ const TOTAL_MS = STAGE_MS.reduce((a, b) => a + b, 0);
 export function Studio() {
   const [state, setState] = useState<StudioState>({ kind: "idle" });
   const cancelRef = useRef<(() => void) | null>(null);
-  const select = usePlayer((s) => s.select);
   const play = usePlayer((s) => s.play);
 
   useEffect(() => () => cancelRef.current?.(), []);
@@ -63,7 +62,6 @@ export function Studio() {
             station={state.station}
             onPlay={(id) => play(id)}
             onSave={() => undefined}
-            onExport={(id) => select(id)}
           />
         )}
       </section>
