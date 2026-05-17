@@ -51,13 +51,16 @@ def fetch_user_profile(user_id: str, settings: Settings) -> ClerkUserProfile:
     if email is None and data.get("email_addresses"):
         email = data["email_addresses"][0].get("email_address")
 
-    username = data.get("username") or None
-    if not username:
-        first = (data.get("first_name") or "").strip()
-        last = (data.get("last_name") or "").strip()
-        full = f"{first} {last}".strip()
-        if full:
-            username = full
+    # Prefer the user-set profile name (first + last) over `username` —
+    # `username` is often an OAuth-imported handle (e.g. Twitter) that the
+    # user never explicitly chose, while first/last is what they type
+    # in the Clerk profile UI.
+    first = (data.get("first_name") or "").strip()
+    last = (data.get("last_name") or "").strip()
+    full_name = f"{first} {last}".strip()
+    clerk_username = (data.get("username") or "").strip() or None
+
+    username = full_name or clerk_username
     if not username and email:
         username = email.split("@", 1)[0]
 

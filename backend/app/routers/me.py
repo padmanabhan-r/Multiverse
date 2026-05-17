@@ -39,6 +39,9 @@ def me(
         db_user.email = profile.email
     if profile.username and profile.username != db_user.username:
         db_user.username = profile.username
+    elif not profile.username and db_user.username:
+        # Clerk returned empty — keep what we have.
+        pass
     _ = is_new  # kept for future first-login-only logic
 
     # Grant 5 trial credits on first login — idempotent (no-op if row exists).
