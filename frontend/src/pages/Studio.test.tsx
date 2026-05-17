@@ -37,6 +37,7 @@ describe("Studio landing", () => {
       {
         id: "d1",
         creator_id: "u",
+        creator_name: "Test Creator",
         title: "Draft One",
         description: "",
         category: "sfx",
@@ -60,6 +61,7 @@ describe("Studio landing", () => {
       {
         id: "p1",
         creator_id: "u",
+        creator_name: "Test Creator",
         title: "Published One",
         description: "",
         category: "sfx",

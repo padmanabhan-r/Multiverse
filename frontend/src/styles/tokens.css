@@ -31,6 +31,7 @@
   /* Typography */
   --mvfm-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --mvfm-sans: "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mvfm-display: "Bricolage Grotesque", "Inter Tight", ui-sans-serif, system-ui, sans-serif;
 
   /* Spacing scale (px) */
   --mvfm-space-1: 4px;
@@ -88,4 +89,127 @@
     transparent 1px
   );
   background-size: 3px 3px;
+}
+
+/* Horizontal scan-line — molten 1px line w/ soft glow. Section divider. */
+.mvfm-scanline {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--mvfm-molten-dim) 18%,
+    var(--mvfm-molten) 50%,
+    var(--mvfm-molten-dim) 82%,
+    transparent 100%
+  );
+  box-shadow: 0 0 6px var(--mvfm-molten-dim);
+}
+
+/* Atmospheric ambient backdrop — body-level slow shifting radial.
+ * Anchored top-right corner, very low opacity, slow movement.
+ * Applied via Shell wrapper. */
+.mvfm-stage {
+  position: relative;
+}
+.mvfm-stage::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(
+      ellipse 60% 50% at 85% 10%,
+      rgba(255, 106, 31, 0.07) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 40% 40% at 15% 95%,
+      rgba(62, 90, 102, 0.05) 0%,
+      transparent 60%
+    );
+}
+
+/* Display family helper — variable-width axis fixed at 80 (condensed). */
+.mvfm-display {
+  font-family: var(--mvfm-display);
+  font-variation-settings: "wdth" 80, "opsz" 96;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+/* Editorial heading sizes via clamp() so they scale on viewport.  */
+.mvfm-display-hero {
+  font-size: clamp(32px, 5vw, 72px);
+}
+.mvfm-display-section {
+  font-size: clamp(28px, 4vw, 48px);
+}
+.mvfm-display-tagline {
+  font-size: clamp(36px, 5vw, 72px);
+  font-style: italic;
+}
+
+/* Marquee + ken-burns + bloom-pulse + fade-rise — defined here so they
+ * stay reduced-motion-aware via a single guard. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes mvfm-ken-burns {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.06);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes mvfm-marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes mvfm-bloom-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 106, 31, 0);
+    }
+    50% {
+      box-shadow: 0 0 32px 4px rgba(255, 106, 31, 0.35);
+    }
+  }
+  @keyframes mvfm-fade-rise {
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mvfm-animate-ken-burns {
+    animation: mvfm-ken-burns 30s ease-in-out infinite;
+  }
+  .mvfm-animate-marquee {
+    animation: mvfm-marquee 60s linear infinite;
+  }
+  .mvfm-animate-marquee-fast {
+    animation: mvfm-marquee 25s linear infinite;
+  }
+  .mvfm-animate-marquee:hover,
+  .mvfm-animate-marquee-fast:hover {
+    animation-play-state: paused;
+  }
+  .mvfm-animate-bloom-pulse {
+    animation: mvfm-bloom-pulse 3s ease-in-out infinite;
+  }
+  .mvfm-animate-fade-rise {
+    animation: mvfm-fade-rise 600ms var(--mvfm-ease) both;
+  }
 }

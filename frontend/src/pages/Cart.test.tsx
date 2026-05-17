@@ -10,6 +10,7 @@ import { Cart } from "./Cart";
 const samplePack: Pack = {
   id: "p-1",
   creator_id: "u_curated",
+  creator_name: "Test Creator",
   title: "Sample pack",
   description: "",
   category: "sfx",

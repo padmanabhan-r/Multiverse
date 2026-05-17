@@ -34,12 +34,17 @@ function AuthSync() {
 
   useEffect(() => {
     setTokenGetter(() => getToken());
-    if (isSignedIn) {
-      // Bootstrap: create User row + grant trial credits, then invalidate credits query.
-      api.me().then(() => {
-        qc.invalidateQueries({ queryKey: ["me", "credits"] });
-      }).catch(() => {/* ignore — token may not be ready yet */});
-    }
+    if (!isSignedIn) return;
+
+    // Race fix: useMyCredits (mounted by SignedInCredits) fires on the same
+    // tick this effect runs, BEFORE setTokenGetter has been observed by the
+    // api singleton. That first request goes unauthenticated → 401 →
+    // retry=false → query stuck. Explicitly invalidate after the token is
+    // wired so the retry carries the JWT.
+    qc.invalidateQueries({ queryKey: ["me", "credits"] });
+    api.me()
+      .then(() => qc.invalidateQueries({ queryKey: ["me", "credits"] }))
+      .catch(() => {/* token may still be settling */});
   }, [getToken, isSignedIn, qc]);
 
   return null;

@@ -39,7 +39,7 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
     ["Duration", formatDuration(pack.duration_ms)],
     ["Tags", (pack.tags || []).join(" · ") || "—"],
     ["Moods", (pack.moods || []).join(" · ") || "—"],
-    ["Creator", shortCreator(pack.creator_id)],
+    ["Creator", pack.creator_name],
     ["Personal license", formatPrice(pack.price_cents)],
     [
       "Commercial license",
@@ -307,11 +307,6 @@ const CATEGORY_LABEL = {
   radio_packs: "Radio packs",
   broadcast_packs: "Broadcast packs",
 } as const;
-
-function shortCreator(creatorId: string): string {
-  if (creatorId === "u_curated") return "Multiverse Curated";
-  return creatorId.replace(/^u_/, "");
-}
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;

@@ -12,20 +12,27 @@ _TINY_PNG_BYTES = (
 
 
 def _fake_gemini_response() -> MagicMock:
+    """Single chunk that yields one inline_data PNG part. Matches the new
+    streaming API: each chunk exposes .parts[idx].inline_data.data.
+    """
+    chunk = MagicMock()
     part = MagicMock()
     part.inline_data = MagicMock()
     part.inline_data.data = _TINY_PNG_BYTES
-    candidate = MagicMock()
-    candidate.content.parts = [part]
-    response = MagicMock()
-    response.candidates = [candidate]
-    return response
+    chunk.parts = [part]
+    return chunk
+
+
+def _fake_stream(*chunks: MagicMock):
+    """Wrap chunks so they're consumed as an iterator (one pass)."""
+    return iter(chunks)
 
 
 def test_generate_pack_cover_creates_file(tmp_path: Path) -> None:
-    fake_response = _fake_gemini_response()
     mock_client = MagicMock()
-    mock_client.models.generate_content.return_value = fake_response
+    mock_client.models.generate_content_stream.return_value = _fake_stream(
+        _fake_gemini_response()
+    )
 
     with (
         patch("app.services.image_service.genai") as mock_genai,
@@ -45,7 +52,7 @@ def test_generate_pack_cover_creates_file(tmp_path: Path) -> None:
 
     assert Path(path).exists()
     assert Path(path).suffix == ".png"
-    mock_client.models.generate_content.assert_called_once()
+    mock_client.models.generate_content_stream.assert_called_once()
 
 
 def test_generate_pack_cover_idempotent(tmp_path: Path) -> None:
@@ -70,13 +77,14 @@ def test_generate_pack_cover_idempotent(tmp_path: Path) -> None:
         )
 
     assert Path(path).exists()
-    mock_client.models.generate_content.assert_not_called()
+    mock_client.models.generate_content_stream.assert_not_called()
 
 
 def test_prompt_contains_title_and_category(tmp_path: Path) -> None:
-    fake_response = _fake_gemini_response()
     mock_client = MagicMock()
-    mock_client.models.generate_content.return_value = fake_response
+    mock_client.models.generate_content_stream.return_value = _fake_stream(
+        _fake_gemini_response()
+    )
 
     with (
         patch("app.services.image_service.genai") as mock_genai,
@@ -94,6 +102,11 @@ def test_prompt_contains_title_and_category(tmp_path: Path) -> None:
             moods=["cinematic"],
         )
 
-    call_kwargs = mock_client.models.generate_content.call_args
-    contents_arg = call_kwargs.kwargs.get("contents") or ""
-    assert "Gritty Narrator" in contents_arg
+    call_kwargs = mock_client.models.generate_content_stream.call_args
+    contents = call_kwargs.kwargs.get("contents") or []
+    # Contents is a list of Content objects; check the prompt text inside.
+    flat = ""
+    for c in contents:
+        for part in c.parts:
+            flat += getattr(part, "text", "") or ""
+    assert "Gritty Narrator" in flat

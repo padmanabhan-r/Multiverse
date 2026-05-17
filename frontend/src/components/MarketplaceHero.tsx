@@ -9,23 +9,32 @@ export interface MarketplaceHeroProps {
   onPreview?: (id: string) => void;
 }
 
-const CATEGORY_LABEL = {
+const CATEGORY_LABEL: Record<string, string> = {
   sfx: "Sound effects",
   music: "Music",
   voice_packs: "Voice packs",
   ambient: "Ambient",
   radio_packs: "Radio packs",
   broadcast_packs: "Broadcast packs",
-} as const;
+};
 
-export function MarketplaceHero({ pack, loading, onPreview }: MarketplaceHeroProps) {
+/**
+ * Cinematic hero — 60–90 dvh full-bleed with slow ken-burns on the
+ * gpt-image-2 hero plate (falls back to cover, then procedural plate).
+ * Massive Bricolage title overlay. Two CTAs at bottom.
+ */
+export function MarketplaceHero({
+  pack,
+  loading,
+  onPreview,
+}: MarketplaceHeroProps) {
   if (loading || !pack) {
     return (
       <section
         data-testid="marketplace-hero-skeleton"
         className={cn(
           "relative w-full overflow-hidden rounded-xl",
-          "h-[280px] sm:h-[340px] lg:h-[380px]",
+          "h-[320px] sm:h-[400px] lg:h-[480px]",
           "bg-elev-2 animate-pulse",
         )}
       />
@@ -33,6 +42,7 @@ export function MarketplaceHero({ pack, loading, onPreview }: MarketplaceHeroPro
   }
 
   const plate = plateFor(pack.id);
+  const heroImage = pack.hero_art_url || pack.cover_art_url;
   const formattedPrice = `$${(pack.price_cents / 100).toFixed(
     pack.price_cents % 100 === 0 ? 0 : 2,
   )}`;
@@ -42,84 +52,73 @@ export function MarketplaceHero({ pack, loading, onPreview }: MarketplaceHeroPro
       data-testid="marketplace-hero"
       className={cn(
         "relative w-full overflow-hidden rounded-xl",
-        "h-[300px] sm:h-[360px] lg:h-[420px]",
-        "border border-glass-soft",
+        "h-[320px] sm:h-[400px] lg:h-[480px]",
+        "border border-glass-soft shadow-panel",
       )}
     >
-      {/* Plate */}
+      {/* Plate w/ slow ken-burns */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 mvfm-animate-ken-burns"
         style={{
-          background: pack.cover_art_url
-            ? `center / cover no-repeat url('${pack.cover_art_url}'), ${plate.background}`
+          background: heroImage
+            ? `center / cover no-repeat url('${heroImage}'), ${plate.background}`
             : plate.background,
         }}
       />
-      <div aria-hidden className="absolute inset-0 mvfm-grain opacity-60 pointer-events-none" />
+
+      {/* Triple overlay: radial vignette + linear floor + film grain */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
           background: [
-            "radial-gradient(ellipse at 30% 60%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 90%, rgba(0,0,0,0.85) 100%)",
-            "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 50%, rgba(10,10,12,0.85) 100%)",
+            "radial-gradient(ellipse 80% 60% at 20% 100%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 60%)",
+            "linear-gradient(180deg, rgba(10,10,12,0.45) 0%, rgba(10,10,12,0) 25%, rgba(10,10,12,0) 50%, rgba(10,10,12,0.92) 100%)",
           ].join(", "),
         }}
       />
+      <div
+        aria-hidden
+        className="absolute inset-0 mvfm-grain opacity-60 pointer-events-none"
+      />
 
-      {/* Top-left badge */}
-      <div className="absolute top-3 left-4 sm:top-4 sm:left-6 z-[3] flex items-center gap-2.5 font-mono text-silver2 text-[9.5px] tracking-[0.22em] uppercase">
+      {/* Top-left eyebrow */}
+      <div className="absolute top-5 left-5 sm:top-7 sm:left-9 z-[3] flex items-center gap-2.5 font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase">
         <span
           className="inline-block size-2 bg-molten"
-          style={{ boxShadow: "0 0 5px var(--mvfm-molten-glow)" }}
+          style={{ boxShadow: "0 0 6px var(--mvfm-molten-glow)" }}
           aria-hidden
         />
-        Featured pack
-        <span className="opacity-50">/</span>
-        {CATEGORY_LABEL[pack.category]}
+        Featured · {CATEGORY_LABEL[pack.category] ?? pack.category}
       </div>
 
-      {/* Top-right price + creator */}
-      <div className="hidden sm:flex absolute top-4 right-6 z-[3] gap-3 font-mono text-silver2 text-[9.5px] tracking-[0.18em] uppercase">
+      {/* Top-right metadata */}
+      <div className="hidden sm:flex absolute top-7 right-9 z-[3] gap-3 font-mono text-silver2 text-[10px] tracking-[0.22em] uppercase">
         <span>
-          Creator <b className="font-normal text-silver">{shortCreator(pack.creator_id)}</b>
+          By <b className="font-normal text-silver">{pack.creator_name}</b>
         </span>
         <span className="opacity-50">·</span>
         <span>
-          Price <b className="font-normal text-molten">{formattedPrice}</b>
+          {pack.sample_count} sample{pack.sample_count === 1 ? "" : "s"}
         </span>
       </div>
 
-      {/* Bottom overlay */}
-      <div
-        className="
-          absolute left-4 sm:left-6 lg:left-10 z-[3]
-          bottom-5 sm:bottom-8 max-w-[88%] sm:max-w-[640px]
-        "
-      >
-        <div className="flex items-center gap-2.5 mb-3 font-mono text-silver2 text-[10px] tracking-[0.16em] uppercase">
-          <span>{pack.sample_count} samples</span>
-          <span className="size-0.5 rounded-full bg-silver2/60" aria-hidden />
-          <span>{formatDuration(pack.duration_ms)}</span>
-          <span className="size-0.5 rounded-full bg-silver2/60" aria-hidden />
-          <span>Personal + commercial license</span>
-        </div>
-
+      {/* Bottom block */}
+      <div className="absolute left-5 sm:left-9 lg:left-12 z-[3] bottom-9 sm:bottom-12 right-5 sm:right-9 lg:right-12 max-w-[1100px]">
         <h1
           data-testid="marketplace-hero-title"
-          className="font-mono font-semibold text-warm text-[28px] sm:text-[40px] lg:text-[52px] leading-[0.98] tracking-[-0.01em] mb-3"
-          style={{ fontFeatureSettings: '"ss01","ss02"' }}
+          className="mvfm-display mvfm-display-hero text-warm mb-4"
         >
           {pack.title}
         </h1>
 
         {pack.description && (
-          <p className="text-warm/85 text-[13px] sm:text-[15px] leading-[1.45] max-w-[480px] mb-4">
+          <p className="text-warm/85 text-[14px] sm:text-[16px] leading-[1.5] max-w-[560px] mb-6 font-body">
             {pack.description}
           </p>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/p/${pack.id}`}
             data-testid="marketplace-hero-open"
@@ -129,7 +128,7 @@ export function MarketplaceHero({ pack, loading, onPreview }: MarketplaceHeroPro
               boxShadow:
                 "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
             }}
-            className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-md font-mono text-[10.5px] sm:text-[11px] tracking-[0.12em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-md font-mono text-[11px] tracking-[0.18em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
           >
             Open pack · {formattedPrice}
           </Link>
@@ -138,8 +137,8 @@ export function MarketplaceHero({ pack, loading, onPreview }: MarketplaceHeroPro
             data-testid="marketplace-hero-preview"
             onClick={() => onPreview?.(pack.id)}
             className="
-              inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-md
-              text-warm font-mono text-[10.5px] sm:text-[11px] tracking-[0.12em] uppercase font-semibold
+              inline-flex items-center gap-2 px-5 py-3 rounded-md
+              text-warm font-mono text-[11px] tracking-[0.18em] uppercase font-semibold
               transition-all duration-fast ease-tune hover:brightness-110
             "
             style={{
@@ -153,27 +152,22 @@ export function MarketplaceHero({ pack, loading, onPreview }: MarketplaceHeroPro
               aria-hidden
               className="block w-0 h-0 -ml-0.5"
               style={{
-                borderLeft: "7px solid currentColor",
-                borderTop: "5px solid transparent",
-                borderBottom: "5px solid transparent",
+                borderLeft: "8px solid currentColor",
+                borderTop: "6px solid transparent",
+                borderBottom: "6px solid transparent",
               }}
             />
-            <span>Preview 30 s</span>
+            Preview 30 s
           </button>
         </div>
       </div>
+
+      {/* Bottom scan-line */}
+      <div
+        aria-hidden
+        className="absolute left-0 right-0 bottom-0 mvfm-scanline"
+      />
     </section>
   );
 }
 
-function shortCreator(creatorId: string): string {
-  if (creatorId === "u_curated") return "Multiverse";
-  return creatorId.replace(/^u_/, "");
-}
-
-function formatDuration(ms: number): string {
-  const s = Math.round(ms / 1000);
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${r.toString().padStart(2, "0")}`;
-}

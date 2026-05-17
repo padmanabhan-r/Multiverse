@@ -112,6 +112,7 @@ export interface ApiClient {
     title: string;
   }) => Promise<PackSample>;
   generateCover: (packId: string) => Promise<{ cover_art_url: string }>;
+  generateHero: (packId: string) => Promise<{ hero_art_url: string }>;
   listVoices: () => Promise<VoiceLibraryEntry[]>;
   designVoice: (
     body: { prompt: string; name: string },
@@ -255,6 +256,11 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
       }),
     generateCover: (packId) =>
       request<{ cover_art_url: string }>("/studio/generate/cover", {
+        method: "POST",
+        body: JSON.stringify({ pack_id: packId }),
+      }),
+    generateHero: (packId) =>
+      request<{ hero_art_url: string }>("/studio/generate/hero", {
         method: "POST",
         body: JSON.stringify({ pack_id: packId }),
       }),

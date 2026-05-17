@@ -10,6 +10,7 @@ import { PackDetailPanel } from "./PackDetailPanel";
 const pack: Pack = {
   id: "pack-sfx-rainy-noir",
   creator_id: "u_curated",
+  creator_name: "Multiverse",
   title: "Rainy noir stings",
   description: "10 short stings recorded under sodium lamps.",
   category: "sfx",
@@ -78,7 +79,7 @@ describe("PackDetailPanel", () => {
     const panel = screen.getByTestId("pack-details-tab");
     expect(within(panel).getByText(/sound effects/i)).toBeInTheDocument();
     expect(within(panel).getByText("noir · rain")).toBeInTheDocument();
-    expect(within(panel).getByText(/multiverse curated/i)).toBeInTheDocument();
+    expect(within(panel).getByText(/multiverse/i)).toBeInTheDocument();
   });
 
   it("License tab shows picker with personal default + Add to cart price", async () => {

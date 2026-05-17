@@ -24,6 +24,7 @@ export function StudioDraft() {
   const [pack, setPack] = useState<Pack | null>(null);
   const [samples, setSamples] = useState<PackSample[]>([]);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -36,6 +37,7 @@ export function StudioDraft() {
       setPack(p);
       setSamples(ss);
       setCoverUrl(p.cover_art_url);
+      setHeroUrl(p.hero_art_url);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "load failed");
     }
@@ -101,7 +103,9 @@ export function StudioDraft() {
             <CoverArtPicker
               packId={pack.id}
               currentUrl={coverUrl}
+              currentHeroUrl={heroUrl}
               onChange={setCoverUrl}
+              onHeroChange={setHeroUrl}
             />
           </section>
           <button

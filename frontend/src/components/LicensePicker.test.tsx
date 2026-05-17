@@ -7,6 +7,7 @@ import { LicensePicker } from "./LicensePicker";
 const pack: Pack = {
   id: "p",
   creator_id: "u",
+  creator_name: "Test Creator",
   title: "T",
   description: "",
   category: "sfx",

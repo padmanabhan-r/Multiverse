@@ -207,7 +207,7 @@ function DetailsTab({ pack }: { pack: Pack }) {
     ["Duration", formatDuration(pack.duration_ms)],
     ["Tags", (pack.tags || []).join(" · ") || "—"],
     ["Moods", (pack.moods || []).join(" · ") || "—"],
-    ["Creator", shortCreator(pack.creator_id)],
+    ["Creator", pack.creator_name],
     [
       "Published",
       pack.published_at ? new Date(pack.published_at).toLocaleDateString() : "—",
@@ -356,11 +356,6 @@ const CATEGORY_LABEL = {
   radio_packs: "Radio packs",
   broadcast_packs: "Broadcast packs",
 } as const;
-
-function shortCreator(creatorId: string): string {
-  if (creatorId === "u_curated") return "Multiverse Curated";
-  return creatorId.replace(/^u_/, "");
-}
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;

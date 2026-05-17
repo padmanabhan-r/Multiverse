@@ -7,6 +7,7 @@ import { PackTile } from "./PackTile";
 const basePack: Pack = {
   id: "pack-sfx-rainy-noir",
   creator_id: "u_curated",
+  creator_name: "Multiverse",
   title: "Rainy noir stings",
   description: "10 short stings",
   category: "sfx",

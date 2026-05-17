@@ -120,6 +120,7 @@ export type PackSort = "new" | "price_asc" | "price_desc" | "popular";
 export interface Pack {
   id: string;
   creator_id: string;
+  creator_name: string;
   title: string;
   description: string;
   category: PackCategory;

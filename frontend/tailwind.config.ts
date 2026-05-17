@@ -21,7 +21,7 @@ export default {
         teal: { instr: "var(--mvfm-teal)" },
       },
       fontFamily: {
-        display: "var(--mvfm-mono)",
+        display: "var(--mvfm-display)",
         mono: "var(--mvfm-mono)",
         body: "var(--mvfm-sans)",
       },

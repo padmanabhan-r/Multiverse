@@ -165,7 +165,7 @@ export function PackTile({
               {pack.title}
             </span>
             <span className="font-mono text-silver2 text-[10px] tracking-[0.1em] uppercase truncate flex items-center gap-1.5">
-              <span className="truncate">{shortCreator(pack.creator_id)}</span>
+              <span className="truncate">{pack.creator_name}</span>
               <span
                 className="size-[2px] rounded-full bg-silver2/70 flex-shrink-0"
                 aria-hidden
@@ -194,8 +194,3 @@ function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }
 
-function shortCreator(creatorId: string): string {
-  if (creatorId === "u_curated") return "Multiverse";
-  // Strip "u_" prefix and shorten.
-  return creatorId.replace(/^u_/, "").slice(0, 18);
-}

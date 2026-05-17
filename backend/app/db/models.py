@@ -187,6 +187,12 @@ class Pack(Base):
         order_by="PackSample.position",
     )
 
+    # Lazy creator join — used by PackDTO to surface display name without
+    # leaking email. Lazy="joined" to avoid N+1 on shelf queries.
+    creator: Mapped["User"] = relationship(
+        foreign_keys=[creator_id], lazy="joined"
+    )
+
     __table_args__ = (
         CheckConstraint(
             "category in ('sfx','music','voice_packs','ambient',"

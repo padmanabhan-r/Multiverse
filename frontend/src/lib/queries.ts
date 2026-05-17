@@ -32,6 +32,9 @@ export function useMyCredits(
     queryFn: () => api.myCredits(),
     staleTime: 15_000,
     enabled: opts.enabled ?? true,
-    retry: false,
+    // Retry twice so transient 401s while the Clerk token is settling
+    // don't leave the badge stuck at "Free".
+    retry: 2,
+    retryDelay: 250,
   });
 }

@@ -9,6 +9,7 @@ import { Home } from "./Home";
 const samplePack = (over: Partial<Pack>): Pack => ({
   id: "p-x",
   creator_id: "u_curated",
+  creator_name: "Test Creator",
   title: "Sample",
   description: "",
   category: "sfx",
@@ -58,15 +59,15 @@ function renderHome() {
 }
 
 describe("Home (marketplace landing)", () => {
-  it("renders pitch line + category ribbon", () => {
+  it("renders the page shell + search hero + category deck", () => {
     listPacksSpy().mockResolvedValue([]);
     renderHome();
+    expect(screen.getByTestId("home-page")).toBeInTheDocument();
     expect(screen.getByTestId("home-hero")).toBeInTheDocument();
-    expect(screen.getByTestId("home-hero-search")).toBeInTheDocument();
     expect(screen.getByTestId("category-ribbon")).toBeInTheDocument();
   });
 
-  it("category ribbon links to each of the 6 categories", () => {
+  it("category deck links to each of the 6 categories", () => {
     listPacksSpy().mockResolvedValue([]);
     renderHome();
     for (const cat of [
@@ -77,7 +78,7 @@ describe("Home (marketplace landing)", () => {
       "radio_packs",
       "broadcast_packs",
     ] as const) {
-      expect(screen.getByTestId(`category-${cat}`)).toHaveAttribute(
+      expect(screen.getByTestId(`category-card-${cat}`)).toHaveAttribute(
         "href",
         `/browse/${cat}`,
       );
@@ -119,11 +120,11 @@ describe("Home (marketplace landing)", () => {
     expect(screen.queryByText(/night cab/i)).not.toBeInTheDocument();
   });
 
-  it("renders pitch headline as marketplace, not radio", () => {
+  it("renders marketplace headline, not radio identity", () => {
     listPacksSpy().mockResolvedValue([]);
     renderHome();
     expect(screen.getByTestId("home-hero-headline")).toHaveTextContent(
-      /production-ready audio/i,
+      /find the sound/i,
     );
   });
 });

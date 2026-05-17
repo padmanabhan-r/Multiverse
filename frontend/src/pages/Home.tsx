@@ -1,28 +1,27 @@
 import { useNavigate } from "react-router-dom";
 import type { Pack } from "@multiverse-fm/shared";
-import { CategoryRibbon } from "@/components/CategoryRibbon";
+import { CategoryDeck } from "@/components/CategoryDeck";
 import { CoverShelf } from "@/components/CoverShelf";
+import { EditorialEyebrow } from "@/components/EditorialEyebrow";
+import { FooterCTA } from "@/components/FooterCTA";
 import { HomeSearchHero } from "@/components/HomeSearchHero";
 import { MarketplaceHero } from "@/components/MarketplaceHero";
 import { PackTile } from "@/components/PackTile";
-import { ValuePropSplit } from "@/components/ValuePropSplit";
 import { usePacks } from "@/lib/queries";
 
 export function Home() {
   const navigate = useNavigate();
 
-  // Fetch a window so we can filter radio_packs out of generic shelves
-  // client-side. Radio packs are heavy multi-stem assets — they get their own
-  // dedicated shelf at the very end + a category page.
   const featured = usePacks({ sort: "popular", limit: 30 });
   const trending = usePacks({ sort: "popular", limit: 30 });
   const fresh = usePacks({ sort: "new", limit: 30 });
   const music = usePacks({ category: "music", sort: "new", limit: 8 });
   const radio = usePacks({ category: "radio_packs", sort: "new", limit: 8 });
 
-  // Featured pack should NEVER be a radio pack — those read like radio
-  // stations ("Brooklyn 88.7 Night Cab"), not generic marketplace assets.
+  // Pin "Noir Rhodes nights" as the curated featured pick. Fall back to the
+  // most-popular non-radio pack if that title was renamed/removed.
   const heroPack =
+    featured.data?.find((p) => p.title === "Noir Rhodes nights") ??
     featured.data?.find((p) => p.category !== "radio_packs") ??
     featured.data?.[0] ??
     null;
@@ -37,22 +36,19 @@ export function Home() {
   const onTileSelect = (id: string) => navigate(`/p/${id}`);
 
   return (
-    <div data-testid="home-page" className="space-y-6 sm:space-y-8">
+    <div data-testid="home-page" className="space-y-8 sm:space-y-12 pb-8">
+      {/* 1. Pixabay-style search hero — enhanced visuals */}
       <HomeSearchHero />
 
-      <ValuePropSplit />
-
-      <section className="space-y-3">
-        <h2 className="font-mono text-warm text-[12px] tracking-[0.18em] uppercase font-semibold">
-          Browse by category
-        </h2>
-        <CategoryRibbon />
+      {/* 2. Compact category deck */}
+      <section>
+        <EditorialEyebrow eyebrow="Browse by category" right="01 → 06" />
+        <CategoryDeck />
       </section>
 
-      <section className="space-y-3">
-        <h2 className="font-mono text-warm text-[12px] tracking-[0.18em] uppercase font-semibold">
-          Featured pack
-        </h2>
+      {/* 3. Featured pack — smaller cinematic hero */}
+      <section>
+        <EditorialEyebrow eyebrow="Featured pack" right="this week" />
         <MarketplaceHero
           pack={heroPack}
           loading={featured.isLoading}
@@ -60,40 +56,35 @@ export function Home() {
         />
       </section>
 
-      <ShelfBlock
+      {/* 4. Standard shelves */}
+      <Shelf
         title="Trending"
         countLabel={`${pad(trendingFiltered.length)} packs`}
         link={{ label: "See all", onClick: () => navigate("/browse?sort=popular") }}
         loading={trending.isLoading}
         error={trending.isError}
         items={trendingFiltered}
-        highlightId={undefined}
         onSelect={onTileSelect}
       />
-
-      <ShelfBlock
+      <Shelf
         title="New this week"
         countLabel={`${pad(freshFiltered.length)} packs`}
         link={{ label: "See all", onClick: () => navigate("/browse") }}
         loading={fresh.isLoading}
         error={fresh.isError}
         items={freshFiltered}
-        highlightId={undefined}
         onSelect={onTileSelect}
       />
-
-      <ShelfBlock
+      <Shelf
         title="Music"
         countLabel={music.data ? `${pad(music.data.length)} packs` : undefined}
         link={{ label: "Explore music", onClick: () => navigate("/browse/music") }}
         loading={music.isLoading}
         error={music.isError}
         items={music.data ?? []}
-        highlightId={undefined}
         onSelect={onTileSelect}
       />
-
-      <ShelfBlock
+      <Shelf
         title="Radio packs"
         countLabel={radio.data ? `${pad(radio.data.length)} packs` : undefined}
         link={{
@@ -103,21 +94,22 @@ export function Home() {
         loading={radio.isLoading}
         error={radio.isError}
         items={radio.data ?? []}
-        highlightId={undefined}
         onSelect={onTileSelect}
       />
+
+      {/* 5. Footer CTA — closing */}
+      <FooterCTA />
     </div>
   );
 }
 
-function ShelfBlock({
+function Shelf({
   title,
   countLabel,
   link,
   loading,
   error,
   items,
-  highlightId,
   onSelect,
 }: {
   title: string;
@@ -126,7 +118,6 @@ function ShelfBlock({
   loading: boolean;
   error: boolean;
   items: Pack[];
-  highlightId?: string;
   onSelect: (id: string) => void;
 }) {
   if (loading) return <ShelfSkeleton title={title} />;
@@ -139,13 +130,7 @@ function ShelfBlock({
       onLinkClick={link.onClick}
       items={items}
       renderItem={(p: Pack) => (
-        <PackTile
-          pack={p}
-          size="lg"
-          active={p.id === highlightId}
-          onSelect={onSelect}
-          onPlay={onSelect}
-        />
+        <PackTile pack={p} size="md" onSelect={onSelect} onPlay={onSelect} />
       )}
     />
   );
@@ -162,7 +147,7 @@ function ShelfSkeleton({ title }: { title: string }) {
           <div
             key={i}
             className="
-              w-[220px] flex-shrink-0
+              w-[180px] flex-shrink-0
               aspect-square rounded-md bg-elev-2
               shadow-[inset_0_0_0_1px_var(--mvfm-border-soft)]
               animate-pulse

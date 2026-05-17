@@ -11,6 +11,7 @@ function mkPack(over: Partial<Pack> = {}): Pack {
   return {
     id: "pack-x",
     creator_id: "u_curated",
+    creator_name: "Test Creator",
     title: "Pack X",
     description: "",
     category: "sfx",

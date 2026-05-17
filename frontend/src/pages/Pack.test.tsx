@@ -11,6 +11,7 @@ import { Pack } from "./Pack";
 const pack: PackT = {
   id: "pack-music-noir-rhodes",
   creator_id: "u_curated",
+  creator_name: "Test Creator",
   title: "Noir Rhodes nights",
   description: "3 instrumental late-night Rhodes-led pieces.",
   category: "music",

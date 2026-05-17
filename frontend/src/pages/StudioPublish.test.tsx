@@ -10,6 +10,7 @@ import { StudioPublish } from "./StudioPublish";
 const STUB_PACK: Pack = {
   id: "test-sfx-pack",
   creator_id: "u_test",
+  creator_name: "Test Creator",
   title: "Jungle SFX Pack",
   description: "Dense jungle soundscape",
   category: "sfx",

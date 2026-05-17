@@ -42,7 +42,7 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
   return (
     <div
       data-testid="shell"
-      className="min-h-dvh w-full text-warm"
+      className="mvfm-stage min-h-dvh w-full text-warm"
       style={{
         paddingBottom: bottomPlayer ? "var(--mvfm-bottomplayer-h)" : 0,
       }}

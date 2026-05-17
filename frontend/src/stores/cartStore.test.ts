@@ -6,6 +6,7 @@ function pk(over: Partial<Pack> = {}): Pack {
   return {
     id: "p1",
     creator_id: "u_curated",
+    creator_name: "Test Creator",
     title: "Sample pack",
     description: "",
     category: "sfx",

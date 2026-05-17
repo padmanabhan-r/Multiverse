@@ -38,7 +38,12 @@ from app.services import (
 )
 from app.services.ambience_service import AmbienceGenerationError
 from app.services.credit_service import InsufficientCreditsError
-from app.services.image_service import CoverPackNotFoundError, CoverPermissionError
+from app.services.image_service import (
+    CoverPackNotFoundError,
+    CoverPermissionError,
+    HeroPackNotFoundError,
+    HeroPermissionError,
+)
 from app.services.music_service import MusicGenerationError
 from app.services.prompt_enhance_service import PromptEnhanceError
 from app.services.sample_service import SamplePermissionError
@@ -331,6 +336,33 @@ def generate_cover_endpoint(
         raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     db.commit()
     return CoverResponse(cover_art_url=url)
+
+
+class HeroGenerateBody(BaseModel):
+    pack_id: str = Field(min_length=1, max_length=96)
+
+
+class HeroResponse(BaseModel):
+    hero_art_url: str
+
+
+@router.post("/generate/hero", response_model=HeroResponse)
+def generate_hero_endpoint(
+    body: HeroGenerateBody,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> HeroResponse:
+    """Free in v1. 16:9 cinematic hero plate via OpenAI gpt-image-2."""
+    try:
+        url = image_service.generate_hero_for_pack(
+            db, pack_id=body.pack_id, requesting_user_id=user.user_id
+        )
+    except HeroPackNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except HeroPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    db.commit()
+    return HeroResponse(hero_art_url=url)
 
 
 # ─── Ambient ───────────────────────────────────────────────────────────────

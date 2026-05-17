@@ -25,6 +25,7 @@ router = APIRouter(tags=["packs"])
 class PackDTO(BaseModel):
     id: str
     creator_id: str
+    creator_name: str  # Display name (User.username → CreatorProfile.display_name → "Multiverse" for u_curated → opaque id)
     title: str
     description: str
     category: str
@@ -50,6 +51,7 @@ class PackDTO(BaseModel):
         return cls(
             id=p.id,
             creator_id=p.creator_id,
+            creator_name=_creator_display_name(p),
             title=p.title,
             description=p.description or "",
             category=p.category,
@@ -70,6 +72,32 @@ class PackDTO(BaseModel):
             style_profile=dict(p.style_profile or {}),
             published_at=p.published_at.isoformat() if p.published_at else None,
         )
+
+
+def _creator_display_name(pack: Pack) -> str:
+    """Resolve a display name from the joined User row (preferred Clerk
+    username) → CreatorProfile.display_name → 'Multiverse' for seed →
+    opaque short id.
+
+    Email is NEVER returned (PII policy).
+    """
+    # The Pack's creator relationship isn't eager-loaded by default; SQLAlchemy
+    # will lazy-load on access if we're still inside a session.
+    if pack.creator_id == "u_curated":
+        return "Multiverse"
+    try:
+        user = getattr(pack, "creator", None)
+    except Exception:  # noqa: BLE001
+        user = None
+    if user is not None and getattr(user, "username", None):
+        return user.username  # type: ignore[no-any-return]
+    # Fallback: shorten opaque clerk id (user_3DqU... → 3DqU…)
+    cid = pack.creator_id
+    if cid.startswith("user_"):
+        return cid[5:13] + "…"
+    if cid.startswith("u_"):
+        return cid[2:]
+    return cid[:12]
 
 
 class DraftBody(BaseModel):

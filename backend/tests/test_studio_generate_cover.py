@@ -27,15 +27,18 @@ _TINY_PNG = (
 )
 
 
-def _fake_gemini_response() -> MagicMock:
+def _fake_chunk() -> MagicMock:
+    """Single streaming chunk holding one inline_data PNG part."""
+    chunk = MagicMock()
     part = MagicMock()
     part.inline_data = MagicMock()
     part.inline_data.data = _TINY_PNG
-    cand = MagicMock()
-    cand.content.parts = [part]
-    resp = MagicMock()
-    resp.candidates = [cand]
-    return resp
+    chunk.parts = [part]
+    return chunk
+
+
+def _fake_stream():
+    return iter([_fake_chunk()])
 
 
 @pytest.fixture()
@@ -84,7 +87,7 @@ def test_generate_cover_writes_file_and_updates_pack(
     alice_client: TestClient, db_session: Session, alices_pack: Pack, tmp_path: Path
 ) -> None:
     mock_client = MagicMock()
-    mock_client.models.generate_content.return_value = _fake_gemini_response()
+    mock_client.models.generate_content_stream.return_value = _fake_stream()
     with (
         patch("app.services.image_service.genai") as mock_genai,
         patch("app.services.image_service.PACK_IMAGE_DIR", tmp_path),
@@ -114,7 +117,7 @@ def test_generate_cover_overwrites_existing_png(
     existing.write_bytes(b"old data")
     new_content = _TINY_PNG
     mock_client = MagicMock()
-    mock_client.models.generate_content.return_value = _fake_gemini_response()
+    mock_client.models.generate_content_stream.return_value = _fake_stream()
     with (
         patch("app.services.image_service.genai") as mock_genai,
         patch("app.services.image_service.PACK_IMAGE_DIR", tmp_path),
@@ -125,7 +128,7 @@ def test_generate_cover_overwrites_existing_png(
         )
     assert r.status_code == 200
     assert existing.read_bytes() == new_content
-    mock_client.models.generate_content.assert_called_once()
+    mock_client.models.generate_content_stream.assert_called_once()
 
 
 def test_generate_cover_requires_auth(client: TestClient, alices_pack: Pack) -> None:

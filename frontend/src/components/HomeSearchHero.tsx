@@ -1,7 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PackCategory } from "@multiverse-fm/shared";
 import { cn } from "@/lib/cn";
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+/** Cycled background images — pulled from the 6 Gemini category thumbnails.
+ * Slow cross-fade every 6 s. Each image is 5:4 1024×819, perfect for a wide
+ * hero band. Failure-tolerant: any 404 hides itself, the layer below still
+ * supplies an atmospheric gradient.
+ */
+const HERO_BG_IMAGES: ReadonlyArray<string> = [
+  `${API_BASE}/static/images/categories/music.png`,
+  `${API_BASE}/static/images/categories/ambient.png`,
+  `${API_BASE}/static/images/categories/radio_packs.png`,
+  `${API_BASE}/static/images/categories/broadcast_packs.png`,
+  `${API_BASE}/static/images/categories/voice_packs.png`,
+  `${API_BASE}/static/images/categories/sfx.png`,
+];
 
 const CATEGORY_LABEL: Record<"all" | PackCategory, string> = {
   all: "All packs",
@@ -36,6 +53,22 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<"all" | PackCategory>("all");
   const [showMenu, setShowMenu] = useState(false);
+  const [bgIdx, setBgIdx] = useState(0);
+
+  // Cycle background images every 6 s with cross-fade. Honours
+  // prefers-reduced-motion when the browser supports matchMedia (jsdom
+  // doesn't, so we skip the test there safely).
+  useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+    const id = window.setInterval(() => {
+      setBgIdx((i) => (i + 1) % HERO_BG_IMAGES.length);
+    }, 6000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,19 +97,50 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
         relative w-full overflow-hidden rounded-xl
         border border-glass-soft
         px-5 sm:px-10 lg:px-14
-        py-8 sm:py-10
+        py-12 sm:py-16 lg:py-20
       "
     >
-      {/* Atmospheric layered background */}
+      {/* Cycling hero background images — slow cross-fade, ken-burns drift. */}
+      <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden">
+        {HERO_BG_IMAGES.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt=""
+            loading={i === 0 ? "eager" : "lazy"}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover transition-opacity",
+              "mvfm-animate-ken-burns",
+            )}
+            style={{
+              opacity: i === bgIdx ? 0.55 : 0,
+              transitionDuration: "1800ms",
+              transitionTimingFunction: "var(--mvfm-ease)",
+            }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ))}
+        {/* Darken overlay for legibility */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(10,10,12,0.55) 0%, rgba(10,10,12,0.75) 60%, rgba(10,10,12,0.92) 100%)",
+          }}
+        />
+      </div>
+
+      {/* Atmospheric layered background — molten/teal, no purple/blue */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
           background: [
-            "radial-gradient(ellipse at 20% 30%, rgba(255,106,31,0.15), transparent 55%)",
-            "radial-gradient(ellipse at 80% 70%, rgba(214,82,60,0.18), transparent 60%)",
-            "radial-gradient(ellipse at 50% 90%, rgba(62,90,102,0.2), transparent 55%)",
-            "linear-gradient(180deg, #15161a 0%, #0a0a0c 100%)",
+            "radial-gradient(ellipse at 20% 30%, rgba(255,106,31,0.18), transparent 55%)",
+            "radial-gradient(ellipse at 80% 70%, rgba(255,138,61,0.16), transparent 60%)",
+            "radial-gradient(ellipse at 50% 100%, rgba(62,90,102,0.20), transparent 55%)",
           ].join(", "),
         }}
       />
@@ -84,17 +148,39 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
         aria-hidden
         className="absolute inset-0 mvfm-grain opacity-50 pointer-events-none -z-10"
       />
-      {/* Soft vignette */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none -z-10"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.45) 100%)",
+            "radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.50) 100%)",
         }}
       />
+      {/* Top + bottom scan-lines */}
+      <div aria-hidden className="absolute top-0 left-0 right-0 mvfm-scanline" />
+      <div aria-hidden className="absolute bottom-0 left-0 right-0 mvfm-scanline" />
 
-      <div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-5">
+      <div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
+        {/* Headline */}
+        <div className="space-y-3">
+          <div
+            data-testid="home-hero-eyebrow"
+            className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase"
+          >
+            The first AI-native music + sound marketplace
+          </div>
+          <h1
+            data-testid="home-hero-headline"
+            className="mvfm-display text-warm leading-[0.95]"
+            style={{ fontSize: "clamp(36px, 5vw, 68px)" }}
+          >
+            Find the sound you need.
+          </h1>
+          <p className="text-silver text-[14px] sm:text-[15px] max-w-2xl mx-auto font-body leading-relaxed">
+            Buy from <span className="text-warm font-medium">thousands of royalty-free AI-generated sounds</span> at the cheapest prices. Don't just create music — create, sell and own it. Subscribe to generate from scratch or download instantly from a growing catalog.
+          </p>
+        </div>
+
         {/* Search row */}
         <form
           onSubmit={handleSubmit}
@@ -208,6 +294,30 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
             <span className="hidden sm:inline">Search</span>
           </button>
         </form>
+
+        {/* Trust badges — small mono pills under the search bar */}
+        <div
+          data-testid="home-hero-trust"
+          className="flex flex-wrap items-center justify-center gap-1.5 mt-3"
+        >
+          {[
+            "Royalty-free",
+            "Commercial license available",
+            "Instant download",
+            "No subscription to buy",
+          ].map((t) => (
+            <span
+              key={t}
+              className="
+                px-2.5 py-1 rounded-pill
+                bg-elev-2/40 border border-glass-soft
+                font-mono text-silver2 text-[9.5px] tracking-[0.18em] uppercase
+              "
+            >
+              {t}
+            </span>
+          ))}
+        </div>
 
         {/* Trending tags */}
         <div
