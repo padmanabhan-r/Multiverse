@@ -65,9 +65,12 @@ def _clean_tables() -> Iterator[None]:
     from app.db.models import (
         AudioAsset,
         BroadcastBlock,
+        Bundle,
+        BundlePack,
         CreatorProfile,
         CreditBalance,
         Pack,
+        PackSample,
         ProcessedEvent,
         Purchase,
         Station,
@@ -78,7 +81,10 @@ def _clean_tables() -> Iterator[None]:
     engine = get_engine()
     with engine.begin() as conn:
         # Order: leaves → roots
+        conn.execute(delete(BundlePack))
+        conn.execute(delete(Bundle))
         conn.execute(delete(Purchase))
+        conn.execute(delete(PackSample))
         conn.execute(delete(AudioAsset))
         conn.execute(delete(BroadcastBlock))
         conn.execute(delete(Pack))

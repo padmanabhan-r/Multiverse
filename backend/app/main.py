@@ -13,6 +13,7 @@ from app.routers import credits as credits_router
 from app.routers import me as me_router
 from app.routers import packs as packs_router
 from app.routers import stations as stations_router
+from app.routers import studio as studio_router
 
 # Absolute path so StaticFiles works regardless of cwd (uvicorn, pytest, etc.)
 _STATIC_DIR: Path = Path(__file__).resolve().parents[1] / "static"
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(packs_router.router)
     app.include_router(checkout_router.router)
     app.include_router(credits_router.router)
+    app.include_router(studio_router.router)
 
     # Mount static files for locally-generated assets (dev images, etc.)
     _STATIC_DIR.mkdir(parents=True, exist_ok=True)

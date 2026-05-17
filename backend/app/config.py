@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     GEMINI_IMAGE_MODEL: str = "gemini-2.5-flash-image-preview"
     OPENAI_API_KEY: str = ""
     OPENAI_IMAGE_MODEL: str = "gpt-image-1"
+    OPENAI_PROMPT_MODEL: str = "gpt-4o-mini"
 
     HERO_BLOCK_MS: int = 210_000
 

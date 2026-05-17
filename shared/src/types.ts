@@ -161,3 +161,49 @@ export interface CartItem {
   unit_price_cents: number; // price for the selected license
   license_kind: LicenseKind;
 }
+
+// ─── Sh.1 — Pack samples + Bundles ─────────────────────────────────────────
+
+export type SampleKind = "sfx" | "music" | "voice" | "ambient";
+
+export interface PackSample {
+  id: string;
+  pack_id: string;
+  position: number;
+  title: string;
+  kind: SampleKind;
+  prompt: string;
+  duration_ms: number;
+  audio_url: string;
+  model_id: string;
+  voice_id: string | null;
+  loop: boolean;
+  credits_spent: number;
+  created_at: string | null;
+}
+
+export interface PackSamplePatch {
+  title?: string;
+  position?: number;
+}
+
+export type BundleStatus = "draft" | "published" | "removed";
+
+export interface Bundle {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string;
+  cover_art_url: string | null;
+  price_cents: number;
+  status: BundleStatus;
+  tags: string[];
+  purchases_count: number;
+  created_at: string | null;
+  published_at: string | null;
+}
+
+export interface BundleWithPacks {
+  bundle: Bundle;
+  packs: Pack[];
+}

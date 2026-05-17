@@ -10,9 +10,11 @@ from app.services.credit_service import (
     TIER_MONTHLY_CREDITS,
     InsufficientCreditsError,
     cost_for_category,
+    cost_for_sample_kind,
     ensure_balance,
     grant_monthly,
     grant_trial,
+    refund,
     spend_credits,
 )
 
@@ -185,6 +187,52 @@ def test_spend_credits_rejects_unknown_category(
     db_session.commit()
     with pytest.raises(ValueError):
         spend_credits(db_session, user.id, "movie")
+
+
+# ─── cost_for_sample_kind (Sh.2 — sample-level pricing) ────────────────────
+
+
+@pytest.mark.parametrize(
+    "kind,expected",
+    [("sfx", 1), ("voice", 1), ("ambient", 1), ("music", 2)],
+)
+def test_cost_for_sample_kind(kind: str, expected: int) -> None:
+    assert cost_for_sample_kind(kind) == expected
+
+
+def test_cost_for_sample_kind_rejects_unknown() -> None:
+    with pytest.raises(ValueError, match="unknown sample kind"):
+        cost_for_sample_kind("podcast")
+
+
+# ─── refund ────────────────────────────────────────────────────────────────
+
+
+def test_refund_adds_credits_back(db_session: Session, user: User) -> None:
+    grant_monthly(db_session, user.id, "creator")  # 20
+    db_session.commit()
+    spend_credits(db_session, user.id, "music")  # -3 → 17
+    db_session.commit()
+    refund(db_session, user.id, 3)
+    db_session.commit()
+    row = db_session.get(CreditBalance, user.id)
+    assert row is not None
+    assert row.balance == 20
+
+
+def test_refund_creates_balance_row_if_missing(
+    db_session: Session, user: User
+) -> None:
+    refund(db_session, user.id, 5)
+    db_session.commit()
+    row = db_session.get(CreditBalance, user.id)
+    assert row is not None
+    assert row.balance == 5
+
+
+def test_refund_rejects_negative_amount(db_session: Session, user: User) -> None:
+    with pytest.raises(ValueError):
+        refund(db_session, user.id, -1)
 
 
 def test_full_cycle_create_drain_topup(db_session: Session, user: User) -> None:

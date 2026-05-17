@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
-from app.db.models import Pack, PACK_CATEGORIES
+from app.db.models import Pack, PACK_CATEGORIES, PackSample
 from app.db.session import get_db
 from app.deps import CurrentUser
-from app.services import pack_service
+from app.services import pack_service, sample_service
 from app.services.pack_service import (
     DraftInput,
     PackFilters,
@@ -17,6 +17,7 @@ from app.services.pack_service import (
     PackNotPublishableError,
     PackPermissionError,
 )
+from app.services.sample_service import SampleNotFoundError, SamplePermissionError
 
 router = APIRouter(tags=["packs"])
 
@@ -89,6 +90,45 @@ class DraftBody(BaseModel):
     preview_url: str | None = None
 
 
+class PackSampleDTO(BaseModel):
+    id: str
+    pack_id: str
+    position: int
+    title: str
+    kind: str
+    prompt: str
+    duration_ms: int
+    audio_url: str
+    model_id: str
+    voice_id: str | None
+    loop: bool
+    credits_spent: int
+    created_at: str | None
+
+    @classmethod
+    def from_model(cls, s: PackSample) -> "PackSampleDTO":
+        return cls(
+            id=s.id,
+            pack_id=s.pack_id,
+            position=s.position,
+            title=s.title,
+            kind=s.kind,
+            prompt=s.prompt,
+            duration_ms=s.duration_ms,
+            audio_url=s.audio_url,
+            model_id=s.model_id,
+            voice_id=s.voice_id,
+            loop=bool(s.loop),
+            credits_spent=s.credits_spent,
+            created_at=s.created_at.isoformat() if s.created_at else None,
+        )
+
+
+class PackSamplePatchBody(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=120)
+    position: int | None = Field(default=None, ge=0)
+
+
 @router.get("/packs", response_model=list[PackDTO])
 def list_packs_endpoint(
     db: Annotated[Session, Depends(get_db)],
@@ -119,6 +159,26 @@ def list_packs_endpoint(
     except ValidationError as exc:  # pragma: no cover — pydantic catches this earlier
         raise HTTPException(status.HTTP_400_BAD_REQUEST, exc.errors()) from exc
     rows = pack_service.list_packs(db, filters)
+    return [PackDTO.from_model(p) for p in rows]
+
+
+@router.get("/packs/mine", response_model=list[PackDTO])
+def list_my_packs_endpoint(
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> list[PackDTO]:
+    """All packs (drafts + published) owned by the current user."""
+    from sqlalchemy import select
+
+    rows = (
+        db.execute(
+            select(Pack)
+            .where(Pack.creator_id == user.user_id)
+            .order_by(Pack.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
     return [PackDTO.from_model(p) for p in rows]
 
 
@@ -181,3 +241,71 @@ def publish_pack_endpoint(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
     db.commit()
     return PackDTO.from_model(pack)
+
+
+# ─── Sample CRUD (Sh.1) ────────────────────────────────────────────────────
+
+
+@router.get("/packs/{pack_id}/samples", response_model=list[PackSampleDTO])
+def list_samples_endpoint(
+    pack_id: str, db: Annotated[Session, Depends(get_db)]
+) -> list[PackSampleDTO]:
+    # Verify pack exists so we 404 instead of returning an empty list for typos.
+    if db.get(Pack, pack_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "pack not found")
+    return [
+        PackSampleDTO.from_model(s)
+        for s in sample_service.list_samples(db, pack_id)
+    ]
+
+
+@router.patch(
+    "/packs/{pack_id}/samples/{sample_id}", response_model=PackSampleDTO
+)
+def patch_sample_endpoint(
+    pack_id: str,
+    sample_id: str,
+    body: PackSamplePatchBody,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> PackSampleDTO:
+    try:
+        sample = sample_service.update_sample(
+            db,
+            pack_id,
+            sample_id,
+            user.user_id,
+            title=body.title,
+            position=body.position,
+        )
+    except LookupError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except SamplePermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except SampleNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    db.commit()
+    return PackSampleDTO.from_model(sample)
+
+
+@router.delete(
+    "/packs/{pack_id}/samples/{sample_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+def delete_sample_endpoint(
+    pack_id: str,
+    sample_id: str,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    try:
+        sample_service.remove_sample(db, pack_id, sample_id, user.user_id)
+    except LookupError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except SamplePermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except SampleNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

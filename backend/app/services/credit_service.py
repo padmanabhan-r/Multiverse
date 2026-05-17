@@ -27,6 +27,16 @@ _COSTS: dict[str, int] = {
     "broadcast_packs": 3,
 }
 
+# Per-sample cost — used by sample-level Studio generators (Sh.2+).
+# Finer-grained than `cost_for_category`: a SFX pack has many samples so
+# we charge one credit per sample, not one credit for the whole pack.
+_SAMPLE_COSTS: dict[str, int] = {
+    "sfx": 1,
+    "voice": 1,
+    "ambient": 1,
+    "music": 2,
+}
+
 
 class InsufficientCreditsError(Exception):
     """Raised when a Studio generation requires more credits than the user holds."""
@@ -37,6 +47,33 @@ class InsufficientCreditsError(Exception):
         )
         self.required = required
         self.available = available
+
+
+def cost_for_sample_kind(kind: str) -> int:
+    """Return the credit cost to generate one sample of this kind.
+
+    SFX / voice / ambient = 1 credit each; music = 2 (longer compute).
+    Raises ValueError on unknown kind so Studio routes can never silently
+    accept a typo.
+    """
+    if kind not in _SAMPLE_COSTS:
+        raise ValueError(f"unknown sample kind: {kind}")
+    return _SAMPLE_COSTS[kind]
+
+
+def refund(db: Session, user_id: str, amount: int) -> CreditBalance:
+    """Credit back ``amount`` credits to a user.
+
+    Used when a Studio generation fails after the credit has been debited
+    (ElevenLabs 5xx, R2 PUT failure, etc.). Creates the balance row if it
+    doesn't exist — refunding always tops up rather than failing.
+    """
+    if amount < 0:
+        raise ValueError(f"refund amount must be non-negative: {amount}")
+    row = ensure_balance(db, user_id)
+    row.balance += amount
+    db.flush()
+    return row
 
 
 def cost_for_category(category: PackCategory | str) -> int:

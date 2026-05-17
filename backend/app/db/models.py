@@ -181,6 +181,12 @@ class Pack(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    samples: Mapped[list["PackSample"]] = relationship(
+        back_populates="pack",
+        cascade="all,delete-orphan",
+        order_by="PackSample.position",
+    )
+
     __table_args__ = (
         CheckConstraint(
             "category in ('sfx','music','voice_packs','ambient',"
@@ -197,6 +203,114 @@ class Pack(Base):
         Index("ix_packs_category_status", "category", "status"),
         Index("ix_packs_published_at", "published_at"),
     )
+
+
+SAMPLE_KINDS: tuple[str, ...] = ("sfx", "music", "voice", "ambient")
+SampleKind = Literal["sfx", "music", "voice", "ambient"]
+
+
+class PackSample(Base):
+    """One generated audio asset attached to a Pack draft (or published pack).
+
+    Creators generate them one at a time via Studio (SFX / Music / Voice /
+    Ambient). Position lets the creator reorder; R2 key + audio_url point at
+    the actual file; generation_meta keeps the raw upstream response for audit.
+    """
+
+    __tablename__ = "pack_samples"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    pack_id: Mapped[str] = mapped_column(
+        ForeignKey("packs.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    r2_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    audio_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    voice_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    loop: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    generation_meta: Mapped[dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
+    credits_spent: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    pack: Mapped[Pack] = relationship(back_populates="samples")
+
+    __table_args__ = (
+        CheckConstraint(
+            "kind in ('sfx','music','voice','ambient')",
+            name="ck_pack_samples_kind",
+        ),
+        UniqueConstraint("pack_id", "position", name="uq_pack_samples_position"),
+    )
+
+
+class Bundle(Base):
+    """Multiple Packs sold together at a single creator-set bundle price.
+
+    Member packs remain individually purchasable; bundles are cross-sell only.
+    On bundle purchase, the webhook creates one Purchase row per member pack
+    so the buyer's Library shows individual packs (cleaner UX) while
+    Purchase.bundle_id keeps the analytics trail.
+    """
+
+    __tablename__ = "bundles"
+
+    id: Mapped[str] = mapped_column(String(96), primary_key=True)
+    creator_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    cover_art_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
+    tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    purchases_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    members: Mapped[list["BundlePack"]] = relationship(
+        back_populates="bundle",
+        cascade="all,delete-orphan",
+        order_by="BundlePack.position",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('draft','published','removed')",
+            name="ck_bundles_status",
+        ),
+        CheckConstraint("price_cents >= 50", name="ck_bundles_price_min"),
+        CheckConstraint("price_cents <= 5000", name="ck_bundles_price_max"),
+    )
+
+
+class BundlePack(Base):
+    """Junction row mapping a Pack into a Bundle with an explicit order."""
+
+    __tablename__ = "bundle_packs"
+
+    bundle_id: Mapped[str] = mapped_column(
+        ForeignKey("bundles.id", ondelete="CASCADE"), primary_key=True
+    )
+    pack_id: Mapped[str] = mapped_column(
+        ForeignKey("packs.id", ondelete="RESTRICT"), primary_key=True
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    bundle: Mapped[Bundle] = relationship(back_populates="members")
 
 
 class Purchase(Base):
