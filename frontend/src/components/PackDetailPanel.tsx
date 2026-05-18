@@ -1,13 +1,12 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { LicenseKind, Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse-fm/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
-import { LicensePicker } from "@/components/LicensePicker";
 import { useCart } from "@/stores/cartStore";
 import { usePlayer } from "@/stores/playerStore";
 
-export type PackPanelTab = "preview" | "details" | "license";
+export type PackPanelTab = "preview" | "details";
 
 export interface PackDetailPanelProps {
   pack: Pack;
@@ -18,7 +17,6 @@ export interface PackDetailPanelProps {
 const TABS: ReadonlyArray<{ key: PackPanelTab; label: string }> = [
   { key: "preview", label: "Preview" },
   { key: "details", label: "Details" },
-  { key: "license", label: "License" },
 ];
 
 export function PackDetailPanel({
@@ -27,23 +25,12 @@ export function PackDetailPanel({
   onPreview,
 }: PackDetailPanelProps) {
   const [tab, setTab] = useState<PackPanelTab>(initialTab);
-  const [license, setLicense] = useState<LicenseKind>("personal");
   const closePackPanel = usePlayer((s) => s.closePackPanel);
   const navigate = useNavigate();
 
   const addItem = useCart((s) => s.add);
   const removeItem = useCart((s) => s.remove);
-  const inCart = useCart((s) =>
-    s.items.some((i) => i.pack_id === pack.id && i.license_kind === license),
-  );
-
-  const unitPrice = useMemo(
-    () =>
-      license === "commercial"
-        ? Math.round(pack.price_cents * (pack.license_commercial_multiplier || 1))
-        : pack.price_cents,
-    [pack.price_cents, pack.license_commercial_multiplier, license],
-  );
+  const inCart = useCart((s) => s.items.some((i) => i.pack_id === pack.id));
 
   const dismiss = () => closePackPanel();
 
@@ -100,23 +87,20 @@ export function PackDetailPanel({
 
       {/* Body */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {tab === "preview" && <PreviewTab pack={pack} onPreview={onPreview} />}
-        {tab === "details" && <DetailsTab pack={pack} />}
-        {tab === "license" && (
-          <LicenseTab
+        {tab === "preview" && (
+          <PreviewTab
             pack={pack}
-            value={license}
-            onChange={setLicense}
-            unitPriceCents={unitPrice}
+            onPreview={onPreview}
             inCart={inCart}
-            onAddToCart={() => addItem(pack, license)}
-            onRemoveFromCart={() => removeItem(pack.id, license)}
+            onAddToCart={() => addItem(pack, "personal")}
+            onRemoveFromCart={() => removeItem(pack.id, "personal")}
             onOpenCart={() => {
               dismiss();
               navigate("/cart");
             }}
           />
         )}
+        {tab === "details" && <DetailsTab pack={pack} />}
       </div>
     </div>
   );
@@ -125,9 +109,17 @@ export function PackDetailPanel({
 function PreviewTab({
   pack,
   onPreview,
+  inCart,
+  onAddToCart,
+  onRemoveFromCart,
+  onOpenCart,
 }: {
   pack: Pack;
   onPreview?: (id: string) => void;
+  inCart: boolean;
+  onAddToCart: () => void;
+  onRemoveFromCart: () => void;
+  onOpenCart: () => void;
 }) {
   const plate = plateFor(pack.id);
   return (
@@ -160,7 +152,7 @@ function PreviewTab({
           {pack.title}
         </div>
         <div className="font-mono text-silver2 text-[10px] tracking-[0.14em] uppercase mt-0.5">
-          {pack.sample_count} samples ·{" "}
+          {sampleWord(pack.sample_count, pack.category)} ·{" "}
           {formatDuration(pack.duration_ms)}
         </div>
       </div>
@@ -193,94 +185,6 @@ function PreviewTab({
       {pack.description && (
         <p className="text-warm/85 text-[13px] leading-[1.5]">{pack.description}</p>
       )}
-    </div>
-  );
-}
-
-function DetailsTab({ pack }: { pack: Pack }) {
-  const fields: Array<[string, string]> = [
-    ["Category", CATEGORY_LABEL[pack.category]],
-    ["Samples", String(pack.sample_count)],
-    ["Duration", formatDuration(pack.duration_ms)],
-    ["Tags", (pack.tags || []).join(" · ") || "—"],
-    ["Moods", (pack.moods || []).join(" · ") || "—"],
-    ["Creator", pack.creator_name],
-    [
-      "Published",
-      pack.published_at ? new Date(pack.published_at).toLocaleDateString() : "—",
-    ],
-  ];
-
-  return (
-    <div data-testid="pack-details-tab" className="p-4 sm:p-5">
-      <div className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase mb-3">
-        About this pack
-      </div>
-      <dl className="grid grid-cols-1 gap-3">
-        {fields.map(([k, v], i) => (
-          <div
-            key={k}
-            className="border-b border-glass-soft pb-3 last:border-b-0"
-          >
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
-                {k}
-              </dt>
-              <span className="font-mono text-silver2 text-[8.5px] tracking-[0.22em]">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-            </div>
-            <dd className="mt-1 text-warm text-[13px] leading-[1.45]">{v}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
-function LicenseTab({
-  pack,
-  value,
-  onChange,
-  unitPriceCents,
-  inCart,
-  onAddToCart,
-  onRemoveFromCart,
-  onOpenCart,
-}: {
-  pack: Pack;
-  value: LicenseKind;
-  onChange: (v: LicenseKind) => void;
-  unitPriceCents: number;
-  inCart: boolean;
-  onAddToCart: () => void;
-  onRemoveFromCart: () => void;
-  onOpenCart: () => void;
-}) {
-  return (
-    <div data-testid="pack-license-tab" className="p-4 sm:p-5 space-y-4">
-      <div>
-        <div className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
-          License
-        </div>
-        <div className="font-mono text-warm text-[14px] truncate mt-1">
-          {pack.title}
-        </div>
-      </div>
-
-      <LicensePicker pack={pack} value={value} onChange={onChange} />
-
-      <div className="flex items-baseline justify-between border-t border-glass-soft pt-3">
-        <span className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
-          Total
-        </span>
-        <span
-          data-testid="pack-license-total"
-          className="font-mono text-warm text-[18px] tracking-[-0.005em] font-semibold"
-        >
-          {formatPrice(unitPriceCents)}
-        </span>
-      </div>
 
       {inCart ? (
         <div className="flex flex-col gap-2">
@@ -333,14 +237,50 @@ function LicenseTab({
             hover:brightness-110 transition-all duration-fast ease-tune
           "
         >
-          Add to cart · {formatPrice(unitPriceCents)}
+          Add to cart · {formatPrice(pack.price_cents)}
         </button>
       )}
+    </div>
+  );
+}
 
-      <p className="text-silver2 text-[10.5px] leading-[1.5]">
-        Personal licenses cover non-commercial use. Commercial unlocks resale +
-        product release. All packs are delivered instantly after purchase.
-      </p>
+function DetailsTab({ pack }: { pack: Pack }) {
+  const fields: Array<[string, string]> = [
+    ["Category", CATEGORY_LABEL[pack.category]],
+    [pack.category === "sfx" ? "Sounds" : "Samples", String(pack.sample_count)],
+    ["Duration", formatDuration(pack.duration_ms)],
+    ["Tags", (pack.tags || []).join(" · ") || "—"],
+    ["Moods", (pack.moods || []).join(" · ") || "—"],
+    ["Creator", pack.creator_name],
+    [
+      "Published",
+      pack.published_at ? new Date(pack.published_at).toLocaleDateString() : "—",
+    ],
+  ];
+
+  return (
+    <div data-testid="pack-details-tab" className="p-4 sm:p-5">
+      <div className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase mb-3">
+        About this pack
+      </div>
+      <dl className="grid grid-cols-1 gap-3">
+        {fields.map(([k, v], i) => (
+          <div
+            key={k}
+            className="border-b border-glass-soft pb-3 last:border-b-0"
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
+                {k}
+              </dt>
+              <span className="font-mono text-silver2 text-[8.5px] tracking-[0.22em]">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+            </div>
+            <dd className="mt-1 text-warm text-[13px] leading-[1.45]">{v}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -353,6 +293,11 @@ const CATEGORY_LABEL = {
   radio_packs: "Radio packs",
   broadcast_packs: "Broadcast packs",
 } as const;
+
+function sampleWord(count: number, category: Pack["category"]): string {
+  const noun = category === "sfx" ? "sound" : "sample";
+  return `${count} ${count === 1 ? noun : `${noun}s`}`;
+}
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;

@@ -81,30 +81,11 @@ describe("Pack page", () => {
     expect(screen.getByTestId("pack-buy")).toBeInTheDocument();
   });
 
-  it("default total reflects personal license price ($25)", async () => {
+  it("sidebar shows credit price", async () => {
     getPackSpy().mockResolvedValueOnce(pack);
     renderAt("/p/pack-music-noir-rhodes");
     await waitFor(() => screen.getByTestId("pack-buy-total"));
-    expect(screen.getByTestId("pack-buy-total")).toHaveTextContent("$25");
-  });
-
-  it("switching license to commercial updates total + add CTA (3×)", async () => {
-    getPackSpy().mockResolvedValueOnce(pack);
-    renderAt("/p/pack-music-noir-rhodes");
-    await waitFor(() => screen.getByTestId("pack-buy-add"));
-    await userEvent.click(screen.getByTestId("license-commercial"));
-    expect(screen.getByTestId("pack-buy-total")).toHaveTextContent("$75");
-    expect(screen.getByTestId("pack-buy-add")).toHaveTextContent(/\$75/);
-  });
-
-  it("Add to cart inserts the line + flips CTA to View cart link", async () => {
-    getPackSpy().mockResolvedValueOnce(pack);
-    renderAt("/p/pack-music-noir-rhodes");
-    await waitFor(() => screen.getByTestId("pack-buy-add"));
-    await userEvent.click(screen.getByTestId("pack-buy-add"));
-    expect(useCart.getState().items).toHaveLength(1);
-    expect(screen.getByTestId("pack-buy-cart")).toBeInTheDocument();
-    expect(screen.queryByTestId("pack-buy-add")).not.toBeInTheDocument();
+    expect(screen.getByTestId("pack-buy-total")).toHaveTextContent("250");
   });
 
   it("Back link routes to /browse", async () => {

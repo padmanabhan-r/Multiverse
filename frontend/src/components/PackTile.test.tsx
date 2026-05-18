@@ -35,7 +35,7 @@ describe("PackTile", () => {
     expect(screen.getByText("Rainy noir stings")).toBeInTheDocument();
     expect(screen.getByTestId("pack-tile-category")).toHaveTextContent("SFX");
     expect(screen.getByTestId("pack-tile-price")).toHaveTextContent("$5");
-    expect(screen.getByTestId("pack-tile-meta")).toHaveTextContent(/10 samples/);
+    expect(screen.getByTestId("pack-tile-meta")).toHaveTextContent(/10 sounds/);
   });
 
   it("price badge formats fractional dollars", () => {

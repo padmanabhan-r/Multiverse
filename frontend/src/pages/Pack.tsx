@@ -21,16 +21,11 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
 
   const fields: Array<[string, string]> = [
     ["Category", CATEGORY_LABEL[pack.category]],
-    ["Samples", String(pack.sample_count)],
+    [pack.category === "sfx" ? "Sounds" : "Samples", String(pack.sample_count)],
     ["Duration", formatDuration(pack.duration_ms)],
     ["Tags", (pack.tags || []).join(" · ") || "—"],
     ["Moods", (pack.moods || []).join(" · ") || "—"],
     ["Creator", pack.creator_name],
-    ["Personal license", formatPrice(pack.price_cents)],
-    [
-      "Commercial license",
-      formatPrice(Math.round(pack.price_cents * (pack.license_commercial_multiplier || 1))),
-    ],
   ];
 
   return (
@@ -110,7 +105,7 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
               {CATEGORY_LABEL[pack.category]}
             </span>
             <span className="size-0.5 rounded-full bg-silver2/60" aria-hidden />
-            <span>{pack.sample_count} samples</span>
+            <span>{pack.sample_count} {pack.category === "sfx" ? "sounds" : "samples"}</span>
             <span className="size-0.5 rounded-full bg-silver2/60" aria-hidden />
             <span>{formatDuration(pack.duration_ms)}</span>
           </div>
@@ -252,10 +247,6 @@ const CATEGORY_LABEL = {
   radio_packs: "Radio packs",
   broadcast_packs: "Broadcast packs",
 } as const;
-
-function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
-}
 
 function formatDuration(ms: number): string {
   const s = Math.round(ms / 1000);

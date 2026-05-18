@@ -171,7 +171,7 @@ export function PackTile({
                 aria-hidden
               />
               <span className="truncate">
-                {pack.sample_count} {pack.sample_count === 1 ? "sample" : "samples"}
+                {sampleWord(pack.sample_count, pack.category)}
               </span>
             </span>
           </div>
@@ -179,6 +179,11 @@ export function PackTile({
       </button>
     </article>
   );
+}
+
+function sampleWord(count: number, category: PackCategory): string {
+  const noun = category === "sfx" ? "sound" : "sample";
+  return `${count} ${count === 1 ? noun : `${noun}s`}`;
 }
 
 /** Use the pack id as the plate seed so each card has stable, distinct art. */

@@ -55,25 +55,32 @@ function renderPanel() {
 }
 
 describe("PackDetailPanel", () => {
-  it("renders 3 tabs and defaults to Preview", () => {
+  it("renders 2 tabs and defaults to Preview", () => {
     renderPanel();
     expect(screen.getByTestId("pack-tab-preview")).toHaveAttribute(
       "aria-selected",
       "true",
     );
     expect(screen.getByTestId("pack-preview-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("pack-tab-license")).not.toBeInTheDocument();
   });
 
-  it("Preview tab shows title + sample count + duration + play CTA", () => {
+  it("Preview tab shows title + sound count + duration + play CTA", () => {
     renderPanel();
     const panel = screen.getByTestId("pack-preview-tab");
     expect(within(panel).getByText("Rainy noir stings")).toBeInTheDocument();
-    expect(within(panel).getByText(/10 samples/)).toBeInTheDocument();
+    expect(within(panel).getByText(/10 sounds/)).toBeInTheDocument();
     expect(within(panel).getByText(/0:30/)).toBeInTheDocument();
     expect(within(panel).getByTestId("pack-preview-play")).toBeInTheDocument();
   });
 
-  it("Details tab lists category, tags, samples, creator", async () => {
+  it("Preview tab shows Add to cart button with price", () => {
+    renderPanel();
+    const btn = screen.getByTestId("pack-add-to-cart");
+    expect(btn).toHaveTextContent(/\$5/);
+  });
+
+  it("Details tab lists category, tags, creator", async () => {
     renderPanel();
     await userEvent.click(screen.getByTestId("pack-tab-details"));
     const panel = screen.getByTestId("pack-details-tab");
@@ -82,29 +89,15 @@ describe("PackDetailPanel", () => {
     expect(within(panel).getByText(/multiverse/i)).toBeInTheDocument();
   });
 
-  it("License tab shows picker with personal default + Add to cart price", async () => {
+  it("Details tab labels SFX count as Sounds", async () => {
     renderPanel();
-    await userEvent.click(screen.getByTestId("pack-tab-license"));
-    expect(screen.getByTestId("license-picker")).toBeInTheDocument();
-    expect(screen.getByTestId("license-personal")).toHaveAttribute(
-      "data-active",
-      "true",
-    );
-    expect(screen.getByTestId("pack-license-total")).toHaveTextContent("$5");
-    expect(screen.getByTestId("pack-add-to-cart")).toHaveTextContent(/\$5/);
-  });
-
-  it("switching to Commercial updates total + add-to-cart price (3×)", async () => {
-    renderPanel();
-    await userEvent.click(screen.getByTestId("pack-tab-license"));
-    await userEvent.click(screen.getByTestId("license-commercial"));
-    expect(screen.getByTestId("pack-license-total")).toHaveTextContent("$15");
-    expect(screen.getByTestId("pack-add-to-cart")).toHaveTextContent(/\$15/);
+    await userEvent.click(screen.getByTestId("pack-tab-details"));
+    const panel = screen.getByTestId("pack-details-tab");
+    expect(within(panel).getByText("Sounds")).toBeInTheDocument();
   });
 
   it("Add to cart inserts into cartStore and flips CTA to View cart", async () => {
     renderPanel();
-    await userEvent.click(screen.getByTestId("pack-tab-license"));
     await userEvent.click(screen.getByTestId("pack-add-to-cart"));
     expect(useCart.getState().items).toHaveLength(1);
     expect(screen.getByTestId("pack-open-cart")).toBeInTheDocument();
@@ -113,7 +106,6 @@ describe("PackDetailPanel", () => {
 
   it("Remove from cart restores Add CTA", async () => {
     renderPanel();
-    await userEvent.click(screen.getByTestId("pack-tab-license"));
     await userEvent.click(screen.getByTestId("pack-add-to-cart"));
     await userEvent.click(screen.getByTestId("pack-remove-from-cart"));
     expect(useCart.getState().items).toHaveLength(0);
