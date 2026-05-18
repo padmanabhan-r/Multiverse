@@ -30,8 +30,8 @@ class PackFilters:
     category: PackCategory | None = None
     tags: list[str] = field(default_factory=list)
     moods: list[str] = field(default_factory=list)
-    price_min_cents: int | None = None
-    price_max_cents: int | None = None
+    price_min_credits: int | None = None
+    price_max_credits: int | None = None
     q: str | None = None
     sort: SortKey = "new"
     limit: int = 24
@@ -47,10 +47,10 @@ def list_packs(db: Session, filters: PackFilters) -> list[Pack]:
             raise ValueError(f"unknown category: {filters.category}")
         stmt = stmt.where(Pack.category == filters.category)
 
-    if filters.price_min_cents is not None:
-        stmt = stmt.where(Pack.price_cents >= filters.price_min_cents)
-    if filters.price_max_cents is not None:
-        stmt = stmt.where(Pack.price_cents <= filters.price_max_cents)
+    if filters.price_min_credits is not None:
+        stmt = stmt.where(Pack.price_credits >= filters.price_min_credits)
+    if filters.price_max_credits is not None:
+        stmt = stmt.where(Pack.price_credits <= filters.price_max_credits)
 
     if filters.q:
         like = f"%{filters.q.lower()}%"

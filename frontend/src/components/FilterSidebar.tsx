@@ -29,10 +29,9 @@ const PRICE_BUCKETS: Array<{
   max?: number;
 }> = [
   { label: "Any" },
-  { label: "Under $1", max: 99 },
-  { label: "$1 – $3", min: 100, max: 300 },
-  { label: "$3 – $7", min: 300, max: 700 },
-  { label: "Over $7", min: 701 },
+  { label: "Under 3 ⚡", max: 2 },
+  { label: "3 – 5 ⚡", min: 3, max: 5 },
+  { label: "Over 5 ⚡", min: 6 },
 ];
 
 export function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
@@ -40,12 +39,12 @@ export function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
     onChange({ ...filters, category: cat });
   const setSort = (sort: PackSort) => onChange({ ...filters, sort });
   const setPrice = (min?: number, max?: number) =>
-    onChange({ ...filters, price_min_cents: min, price_max_cents: max });
+    onChange({ ...filters, price_min_credits: min, price_max_credits: max });
   const setQ = (q: string) => onChange({ ...filters, q: q || undefined });
 
   const activePriceLabel = priceLabelFor(
-    filters.price_min_cents,
-    filters.price_max_cents,
+    filters.price_min_credits,
+    filters.price_max_credits,
   );
 
   return (
@@ -194,10 +193,9 @@ function FilterRow({
 
 function priceLabelFor(min?: number, max?: number): string {
   if (min == null && max == null) return "Any";
-  if (min == null && max === 99) return "Under $1";
-  if (min === 100 && max === 300) return "$1 – $3";
-  if (min === 300 && max === 700) return "$3 – $7";
-  if (min === 701 && max == null) return "Over $7";
+  if (min == null && max === 2) return "Under 3 ⚡";
+  if (min === 3 && max === 5) return "3 – 5 ⚡";
+  if (min === 6 && max == null) return "Over 5 ⚡";
   return "Any";
 }
 

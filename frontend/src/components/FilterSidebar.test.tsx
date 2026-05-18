@@ -52,14 +52,14 @@ describe("FilterSidebar", () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ category: undefined }));
   });
 
-  it("price bucket click dispatches min/max", async () => {
+  it("price bucket click dispatches min/max credits", async () => {
     const onChange = vi.fn();
     render(<FilterSidebar filters={{}} onChange={onChange} />);
-    await userEvent.click(screen.getByTestId("filter-price-1-3"));
+    await userEvent.click(screen.getByTestId("filter-price-3-5"));
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        price_min_cents: 100,
-        price_max_cents: 300,
+        price_min_credits: 3,
+        price_max_credits: 5,
       }),
     );
   });

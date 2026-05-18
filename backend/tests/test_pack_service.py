@@ -25,8 +25,8 @@ def seeded(db_session: Session):
 # ─── Seed ───────────────────────────────────────────────────────────────────
 
 
-def test_curated_seed_has_30_packs() -> None:
-    assert len(all_curated_packs()) == 30
+def test_curated_seed_has_22_packs() -> None:
+    assert len(all_curated_packs()) == 22
 
 
 def test_curated_seed_spans_all_6_categories() -> None:
@@ -41,11 +41,11 @@ def test_curated_seed_spans_all_6_categories() -> None:
     }
 
 
-def test_seed_inserts_30_published_packs(db_session: Session) -> None:
+def test_seed_inserts_22_published_packs(db_session: Session) -> None:
     seed_packs(db_session)
     db_session.commit()
     rows = pack_service.list_packs(db_session, PackFilters(limit=100))
-    assert len(rows) == 30
+    assert len(rows) == 22
     assert all(p.status == "published" for p in rows)
 
 
@@ -55,7 +55,7 @@ def test_seed_is_idempotent(db_session: Session) -> None:
     seed_packs(db_session)
     db_session.commit()
     rows = pack_service.list_packs(db_session, PackFilters(limit=100))
-    assert len(rows) == 30
+    assert len(rows) == 22
 
 
 # ─── list_packs filters ─────────────────────────────────────────────────────
@@ -69,9 +69,9 @@ def test_list_filters_by_category(seeded: Session) -> None:
 
 def test_list_filters_by_price_range(seeded: Session) -> None:
     out = pack_service.list_packs(
-        seeded, PackFilters(price_min_cents=100, price_max_cents=300, limit=100)
+        seeded, PackFilters(price_min_credits=2, price_max_credits=5, limit=100)
     )
-    assert all(100 <= p.price_cents <= 300 for p in out)
+    assert all(2 <= p.price_credits <= 5 for p in out)
     assert len(out) > 0
 
 

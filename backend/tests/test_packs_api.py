@@ -33,11 +33,11 @@ def authed_client(client: TestClient, db_session: Session) -> TestClient:
         app.dependency_overrides.pop(get_current_user, None)
 
 
-def test_list_packs_returns_30_seeded(seeded_client: TestClient) -> None:
+def test_list_packs_returns_seeded(seeded_client: TestClient) -> None:
     r = seeded_client.get("/packs", params={"limit": 100})
     assert r.status_code == 200
     data = r.json()
-    assert len(data) == 30
+    assert len(data) == 22
     assert all(p["status"] == "published" for p in data)
 
 
@@ -57,11 +57,11 @@ def test_list_packs_rejects_unknown_category(seeded_client: TestClient) -> None:
 def test_list_packs_price_window(seeded_client: TestClient) -> None:
     r = seeded_client.get(
         "/packs",
-        params={"price_min_cents": 100, "price_max_cents": 300, "limit": 100},
+        params={"price_min_credits": 2, "price_max_credits": 5, "limit": 100},
     )
     assert r.status_code == 200
     for p in r.json():
-        assert 100 <= p["price_cents"] <= 300
+        assert 2 <= p["price_credits"] <= 5
 
 
 def test_list_packs_sort_price_asc(seeded_client: TestClient) -> None:

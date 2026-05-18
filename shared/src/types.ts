@@ -147,8 +147,8 @@ export interface PackListFilters {
   category?: PackCategory;
   tags?: string[];
   moods?: string[];
-  price_min_cents?: number;
-  price_max_cents?: number;
+  price_min_credits?: number;
+  price_max_credits?: number;
   q?: string;
   sort?: PackSort;
   limit?: number;
