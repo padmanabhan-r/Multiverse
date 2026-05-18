@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: multiverse
       POSTGRES_PASSWORD: multiverse
-      POSTGRES_DB: multiverse_fm
+      POSTGRES_DB: multiverse
     ports:
       - "5433:5432"
     volumes:

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { PackCategory } from "@multiverse-fm/shared";
+import type { PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 
 const API_BASE =
@@ -21,18 +21,18 @@ interface CardSpec {
 
 const CARDS: CardSpec[] = [
   {
-    category: "sfx",
-    label: "Sound effects",
-    blurb: "One-shots, foley, impacts. Tile to taste.",
-    background:
-      "radial-gradient(circle at 30% 30%, rgba(255,106,31,0.35) 0%, transparent 60%), linear-gradient(135deg, #1a1217 0%, #0a0a0c 100%)",
-  },
-  {
     category: "music",
     label: "Music",
     blurb: "Instrumental beds + cinematic cues.",
     background:
       "radial-gradient(ellipse at 70% 40%, rgba(255,138,61,0.22) 0%, transparent 60%), linear-gradient(135deg, #16100c 0%, #0a0a0c 100%)",
+  },
+  {
+    category: "sfx",
+    label: "Sound effects",
+    blurb: "One-shots, foley, impacts. Tile to taste.",
+    background:
+      "radial-gradient(circle at 30% 30%, rgba(255,106,31,0.35) 0%, transparent 60%), linear-gradient(135deg, #1a1217 0%, #0a0a0c 100%)",
   },
   {
     category: "voice_packs",

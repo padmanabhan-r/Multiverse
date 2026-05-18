@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Station } from "@multiverse-fm/shared";
+import type { Station } from "@multiverse/shared";
 import { usePlayer } from "@/stores/playerStore";
 import { RightPanel } from "./RightPanel";
 

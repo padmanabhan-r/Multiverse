@@ -2,7 +2,7 @@ import { useState } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { PackListFilters } from "@multiverse-fm/shared";
+import type { PackListFilters } from "@multiverse/shared";
 import { FilterSidebar } from "./FilterSidebar";
 
 function Controlled({ onChange }: { onChange: (v: PackListFilters) => void }) {

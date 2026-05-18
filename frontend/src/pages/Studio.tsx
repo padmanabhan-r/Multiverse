@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { api } from "@/lib/api";
 
 export function Studio() {

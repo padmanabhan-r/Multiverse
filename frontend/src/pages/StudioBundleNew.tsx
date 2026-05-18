@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 

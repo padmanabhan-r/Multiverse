@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { Pack, PackSample, SampleKind } from "@multiverse-fm/shared";
+import type { Pack, PackSample, SampleKind } from "@multiverse/shared";
 import { api } from "@/lib/api";
 import { CoverArtPicker } from "@/components/CoverArtPicker";
 import { SampleGenerator } from "@/components/SampleGenerator";

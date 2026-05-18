@@ -18,8 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@multiverse-fm/shared": ["../shared/src/index.ts"],
-      "@multiverse-fm/shared/*": ["../shared/src/*"]
+      "@multiverse/shared": ["../shared/src/index.ts"],
+      "@multiverse/shared/*": ["../shared/src/*"]
     },
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { CategoryDeck } from "@/components/CategoryDeck";
 import { CoverShelf } from "@/components/CoverShelf";
 import { EditorialEyebrow } from "@/components/EditorialEyebrow";

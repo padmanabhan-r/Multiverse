@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { PackCategory, SampleKind } from "@multiverse-fm/shared";
+import type { PackCategory, SampleKind } from "@multiverse/shared";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 

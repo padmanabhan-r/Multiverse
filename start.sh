@@ -52,7 +52,7 @@ echo ""
 trap 'kill $(jobs -p) 2>/dev/null' EXIT INT TERM
 
 cd "$BACKEND"
-uv run uvicorn app.main:app --reload --port 8000 &
+uv run uvicorn app.main:app --reload --port 8000 --env-file "$ENV_FILE" &
 
 cd "$FRONTEND"
 pnpm dev &

@@ -1,4 +1,4 @@
-import type { Station, Tier } from "@multiverse-fm/shared";
+import type { Station, Tier } from "@multiverse/shared";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";

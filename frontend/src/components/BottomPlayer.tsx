@@ -1,4 +1,4 @@
-import type { Station } from "@multiverse-fm/shared";
+import type { Station } from "@multiverse/shared";
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";

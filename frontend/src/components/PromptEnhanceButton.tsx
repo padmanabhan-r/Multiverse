@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { SampleKind } from "@multiverse-fm/shared";
+import type { SampleKind } from "@multiverse/shared";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 

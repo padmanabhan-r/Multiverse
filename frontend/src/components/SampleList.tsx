@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PackSample } from "@multiverse-fm/shared";
+import type { PackSample } from "@multiverse/shared";
 import { api } from "@/lib/api";
 
 interface Props {

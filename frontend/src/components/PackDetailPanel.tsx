@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
+import { playExclusive, clearCurrent } from "@/lib/audioSingleton";
 import type { Pack, PackSample } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
@@ -121,7 +122,7 @@ function SoundRow({ sample, index }: { sample: PackSample; index: number }) {
     if (playing) {
       el.pause();
     } else {
-      el.play();
+      playExclusive(el);
     }
   }
 
@@ -184,8 +185,8 @@ function SoundRow({ sample, index }: { sample: PackSample; index: number }) {
         src={src}
         preload="none"
         onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
+        onPause={() => { setPlaying(false); clearCurrent(audioRef.current!); }}
+        onEnded={() => { setPlaying(false); clearCurrent(audioRef.current!); }}
       />
     </div>
   );
@@ -210,6 +211,10 @@ function PreviewTab({
 }) {
   const plate = plateFor(pack.id);
   const { data: samples, isLoading: samplesLoading } = usePackSamples(pack.id);
+  const totalMs = samples?.length
+    ? samples.reduce((sum, s) => sum + s.duration_ms, 0)
+    : pack.duration_ms;
+  const trackCount = samples?.length ?? pack.sample_count;
 
   return (
     <div data-testid="pack-preview-tab" className="p-4 sm:p-5 space-y-5">
@@ -241,8 +246,8 @@ function PreviewTab({
           {pack.title}
         </div>
         <div className="font-mono text-silver2 text-[10px] tracking-[0.14em] uppercase mt-0.5">
-          {sampleWord(pack.sample_count, pack.category)} ·{" "}
-          {formatDuration(pack.duration_ms)}
+          {sampleWord(trackCount, pack.category)} ·{" "}
+          {formatDuration(totalMs)}
         </div>
       </div>
 
@@ -354,10 +359,16 @@ function PreviewTab({
 }
 
 function DetailsTab({ pack }: { pack: Pack }) {
+  const { data: samples } = usePackSamples(pack.id);
+  const totalMs = samples?.length
+    ? samples.reduce((sum, s) => sum + s.duration_ms, 0)
+    : pack.duration_ms;
+  const trackCount = samples?.length ?? pack.sample_count;
+
   const fields: Array<[string, string]> = [
     ["Category", CATEGORY_LABEL[pack.category]],
-    [pack.category === "sfx" ? "Sounds" : "Samples", String(pack.sample_count)],
-    ["Duration", formatDuration(pack.duration_ms)],
+    [pack.category === "sfx" ? "Sounds" : "Samples", String(trackCount)],
+    ["Duration", formatDuration(totalMs)],
     ["Tags", (pack.tags || []).join(" · ") || "—"],
     ["Moods", (pack.moods || []).join(" · ") || "—"],
     ["Creator", pack.creator_name],

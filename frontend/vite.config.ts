@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
-      "@multiverse-fm/shared": fileURLToPath(new URL("../shared/src/index.ts", import.meta.url)),
+      "@multiverse/shared": fileURLToPath(new URL("../shared/src/index.ts", import.meta.url)),
     },
   },
   server: { port: 5173 },

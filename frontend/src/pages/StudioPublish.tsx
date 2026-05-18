@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import type { Pack, PackCategory } from "@multiverse-fm/shared";
+import type { Pack, PackCategory } from "@multiverse/shared";
 import { ApiError, api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 

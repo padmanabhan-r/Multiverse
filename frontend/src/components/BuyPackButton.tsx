@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { ApiError, api } from "@/lib/api";
 
 interface Props {

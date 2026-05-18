@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import type { PackCategory } from "@multiverse-fm/shared";
+import type { PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 
 interface CategoryDef {
@@ -13,18 +13,18 @@ interface CategoryDef {
 
 const CATEGORIES: ReadonlyArray<CategoryDef> = [
   {
-    key: "sfx",
-    label: "Sound effects",
-    hint: "Stingers · transitions · impacts",
-    plate:
-      "radial-gradient(circle at 30% 30%, rgba(255,106,31,0.32), transparent 55%), linear-gradient(165deg, #1a0f08 0%, #0d0805 100%)",
-  },
-  {
     key: "music",
     label: "Music",
     hint: "Loops · beds · score cues",
     plate:
       "radial-gradient(circle at 70% 30%, rgba(216,168,86,0.30), transparent 55%), linear-gradient(165deg, #160807 0%, #0a0506 100%)",
+  },
+  {
+    key: "sfx",
+    label: "Sound effects",
+    hint: "Stingers · transitions · impacts",
+    plate:
+      "radial-gradient(circle at 30% 30%, rgba(255,106,31,0.32), transparent 55%), linear-gradient(165deg, #1a0f08 0%, #0d0805 100%)",
   },
   {
     key: "voice_packs",

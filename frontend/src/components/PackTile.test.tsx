@@ -34,15 +34,13 @@ describe("PackTile", () => {
     render(<PackTile pack={basePack} />);
     expect(screen.getByText("Rainy noir stings")).toBeInTheDocument();
     expect(screen.getByTestId("pack-tile-category")).toHaveTextContent("SFX");
-    expect(screen.getByTestId("pack-tile-price")).toHaveTextContent("$5");
+    expect(screen.getByTestId("pack-tile-price")).toHaveTextContent("50 ⚡");
     expect(screen.getByTestId("pack-tile-meta")).toHaveTextContent(/10 sounds/);
   });
 
-  it("price badge formats fractional dollars", () => {
-    render(
-      <PackTile pack={{ ...basePack, price_cents: 1299 }} />,
-    );
-    expect(screen.getByTestId("pack-tile-price")).toHaveTextContent("$12.99");
+  it("price badge uses price_credits when set", () => {
+    render(<PackTile pack={{ ...basePack, price_credits: 3 }} />);
+    expect(screen.getByTestId("pack-tile-price")).toHaveTextContent("3 ⚡");
   });
 
   it("creator chip shows 'Multiverse' for the curated system user", () => {

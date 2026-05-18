@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { api, ApiError } from "@/lib/api";
 import { useCart } from "@/stores/cartStore";
 import { Cart } from "./Cart";

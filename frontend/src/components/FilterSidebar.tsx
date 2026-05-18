@@ -1,5 +1,5 @@
-import type { PackCategory, PackListFilters, PackSort } from "@multiverse-fm/shared";
-import { PACK_CATEGORIES } from "@multiverse-fm/shared";
+import type { PackCategory, PackListFilters, PackSort } from "@multiverse/shared";
+import { PACK_CATEGORIES } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 
 export interface FilterSidebarProps {

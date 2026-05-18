@@ -4,8 +4,8 @@ import type {
   Pack,
   PackCategory,
   PackListFilters,
-} from "@multiverse-fm/shared";
-import { PACK_CATEGORIES } from "@multiverse-fm/shared";
+} from "@multiverse/shared";
+import { PACK_CATEGORIES } from "@multiverse/shared";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { PackTile } from "@/components/PackTile";
 import { usePacks } from "@/lib/queries";

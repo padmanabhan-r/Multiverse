@@ -29,8 +29,8 @@ PackStatus = Literal["draft", "published", "removed"]
 LicenseKind = Literal["personal", "commercial"]
 
 PACK_CATEGORIES: tuple[str, ...] = (
-    "sfx",
     "music",
+    "sfx",
     "voice_packs",
     "ambient",
     "radio_packs",

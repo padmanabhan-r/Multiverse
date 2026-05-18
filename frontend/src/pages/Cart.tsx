@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import type { CartItem, PackCategory } from "@multiverse-fm/shared";
+import type { CartItem, PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 import { api, ApiError } from "@/lib/api";

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import type { Station } from "@multiverse-fm/shared";
+import type { Station } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 

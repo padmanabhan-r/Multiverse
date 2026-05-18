@@ -108,7 +108,7 @@ export function PackTile({
               font-mono text-[10px] tracking-[0.08em] text-molten font-semibold
             "
           >
-            {formatPrice(pack.price_cents)}
+            {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
           </span>
 
           {/* Active dot — bottom-right */}
@@ -195,7 +195,4 @@ function plateSeedFromPack(pack: Pack): string {
   return pack.id;
 }
 
-function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
-}
 

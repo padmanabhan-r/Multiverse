@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { PackCategory } from "@multiverse-fm/shared";
+import type { PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 
 const API_BASE =

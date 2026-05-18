@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
+import { playExclusive, clearCurrent } from "@/lib/audioSingleton";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 import { BuyPackButton } from "@/components/BuyPackButton";
@@ -34,13 +35,18 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
   function togglePreview() {
     const el = previewRef.current;
     if (!el || !previewSrc) return;
-    if (playing) { el.pause(); } else { el.play(); }
+    if (playing) { el.pause(); } else { playExclusive(el); }
   }
+
+  const totalMs = samples?.length
+    ? samples.reduce((sum, s) => sum + s.duration_ms, 0)
+    : pack.duration_ms;
+  const trackCount = samples?.length ?? pack.sample_count;
 
   const fields: Array<[string, string]> = [
     ["Category", CATEGORY_LABEL[pack.category]],
-    [pack.category === "sfx" ? "Sounds" : "Samples", String(pack.sample_count)],
-    ["Duration", formatDuration(pack.duration_ms)],
+    [pack.category === "sfx" ? "Sounds" : "Samples", String(trackCount)],
+    ["Duration", formatDuration(totalMs)],
     ["Tags", (pack.tags || []).join(" · ") || "—"],
     ["Moods", (pack.moods || []).join(" · ") || "—"],
     ["Creator", pack.creator_name],
@@ -123,9 +129,9 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
               {CATEGORY_LABEL[pack.category]}
             </span>
             <span className="size-0.5 rounded-full bg-silver2/60" aria-hidden />
-            <span>{pack.sample_count} {pack.category === "sfx" ? "sounds" : "samples"}</span>
+            <span>{trackCount} {pack.category === "sfx" ? "sounds" : "samples"}</span>
             <span className="size-0.5 rounded-full bg-silver2/60" aria-hidden />
-            <span>{formatDuration(pack.duration_ms)}</span>
+            <span>{formatDuration(totalMs)}</span>
           </div>
 
           <h1
@@ -148,8 +154,8 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
               src={previewSrc.startsWith("http") ? previewSrc : `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${previewSrc}`}
               preload="none"
               onPlay={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
-              onEnded={() => setPlaying(false)}
+              onPause={() => { setPlaying(false); clearCurrent(previewRef.current!); }}
+              onEnded={() => { setPlaying(false); clearCurrent(previewRef.current!); }}
             />
           )}
 
@@ -336,7 +342,7 @@ function PackSoundRow({ sample, index, owned }: { sample: PackSample; index: num
   function toggle() {
     const el = audioRef.current;
     if (!el) return;
-    playing ? el.pause() : el.play();
+    playing ? el.pause() : playExclusive(el);
   }
 
   return (
@@ -401,8 +407,8 @@ function PackSoundRow({ sample, index, owned }: { sample: PackSample; index: num
         src={src}
         preload="none"
         onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
+        onPause={() => { setPlaying(false); clearCurrent(audioRef.current!); }}
+        onEnded={() => { setPlaying(false); clearCurrent(audioRef.current!); }}
       />
     </div>
   );

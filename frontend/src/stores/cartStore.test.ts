@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Pack } from "@multiverse-fm/shared";
+import type { Pack } from "@multiverse/shared";
 import { lineCount, totalCents, useCart } from "./cartStore";
 
 function pk(over: Partial<Pack> = {}): Pack {

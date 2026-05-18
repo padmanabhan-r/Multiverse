@@ -1,4 +1,4 @@
-import type { Tier } from "@multiverse-fm/shared";
+import type { Tier } from "@multiverse/shared";
 import { type ReactNode } from "react";
 
 const RANK: Record<Tier, number> = { free: 0, explorer: 1, architect: 2 };

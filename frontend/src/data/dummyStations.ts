@@ -1,4 +1,4 @@
-import type { Station } from "@multiverse-fm/shared";
+import type { Station } from "@multiverse/shared";
 
 /**
  * Local seed used by the Studio shell until /api/stations is wired (S5).

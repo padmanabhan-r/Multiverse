@@ -105,8 +105,8 @@ export type PackCategory =
   | "broadcast_packs";
 
 export const PACK_CATEGORIES: ReadonlyArray<PackCategory> = [
-  "sfx",
   "music",
+  "sfx",
   "voice_packs",
   "ambient",
   "radio_packs",

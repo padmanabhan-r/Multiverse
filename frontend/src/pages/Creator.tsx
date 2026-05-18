@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { Bundle, Pack } from "@multiverse-fm/shared";
+import type { Bundle, Pack } from "@multiverse/shared";
 import { api, type CreatorMe, type CreatorSale } from "@/lib/api";
 
 type SaleRow = CreatorSale;
