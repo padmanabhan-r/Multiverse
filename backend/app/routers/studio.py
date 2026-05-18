@@ -308,6 +308,50 @@ def generate_voice_endpoint(
     )
 
 
+# ─── TTS on owned voice ────────────────────────────────────────────────────
+
+
+class TTSBody(BaseModel):
+    voice_id: str = Field(min_length=1, max_length=96)
+    text: str = Field(min_length=1, max_length=4096)
+
+
+class TTSResponse(BaseModel):
+    audio_url: str
+    credits_spent: int
+    duration_ms: int
+    voice_id: str
+
+
+@router.post("/tts", response_model=TTSResponse)
+def tts_endpoint(
+    body: TTSBody,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> TTSResponse:
+    from app.services import tts_usage_service
+    from app.services.credit_service import InsufficientCreditsError
+    from app.services.tts_usage_service import TTSAccessError, TTSError
+
+    try:
+        out = tts_usage_service.generate_and_charge(
+            db, buyer_id=user.user_id, voice_id=body.voice_id, text=body.text
+        )
+    except TTSAccessError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except InsufficientCreditsError as exc:
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            f"need {exc.required} credits, have {exc.available}",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    except TTSError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(exc)) from exc
+    db.commit()
+    return TTSResponse(**out)
+
+
 # ─── Cover ─────────────────────────────────────────────────────────────────
 
 

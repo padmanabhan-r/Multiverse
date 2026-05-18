@@ -151,6 +151,9 @@ class Pack(Base):
     tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=200)
+    # Sm.1: credits-only economy. New buy price is here; price_cents is
+    # retained read-only during migration. Backfilled from cents/10.
+    price_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=20)
     credit_cost: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     license_personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     license_commercial_multiplier: Mapped[float] = mapped_column(
@@ -277,6 +280,8 @@ class Bundle(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")
     cover_art_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Sm.1: credits-economy price. Backfilled from cents/10.
+    price_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
     tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     purchases_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -333,6 +338,8 @@ class Purchase(Base):
     )
     license_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="personal")
     price_paid_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Sm.1: credits-economy column. Backfilled from cents/10.
+    price_paid_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(
         String(128), nullable=True
     )
@@ -377,8 +384,9 @@ class CreatorProfile(Base):
 class CreditBalance(Base):
     """Studio generation credits — granted monthly by Creator subscription.
 
-    Buying packs does NOT touch this table. Credits are creation-only.
-    No rollover: cycle reset zeroes balance on monthly top-up.
+    Sm.1 onward: this is the SINGLE balance for every action on the site
+    (creator generation, buyer purchase, TTS usage, monthly grant, one-off
+    top-ups). No rollover on monthly top-up; direct top-ups stack on top.
     """
 
     __tablename__ = "credit_balances"
@@ -393,3 +401,136 @@ class CreditBalance(Base):
     last_topup_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+
+# ─── Sm.1 — Credits economy + Voice marketplace ────────────────────────────
+
+
+class Voice(Base):
+    """A creator-owned, sellable voice asset.
+
+    Different from the ElevenLabs public voice catalog: this row represents
+    a voice the creator OWNS and SELLS. Buyers purchase lifetime access
+    (see VoiceAccess) and then run TTS through ``eleven_voice_id`` while
+    each generation continues to consume credits.
+    """
+
+    __tablename__ = "voices"
+
+    id: Mapped[str] = mapped_column(String(96), primary_key=True)  # slug
+    creator_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    eleven_voice_id: Mapped[str] = mapped_column(String(96), nullable=False)
+    preview_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    cover_art_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    price_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=80)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
+    tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    purchases_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('draft','published','removed')", name="ck_voices_status"
+        ),
+        CheckConstraint("price_credits >= 5", name="ck_voices_price_min"),
+        CheckConstraint("price_credits <= 5000", name="ck_voices_price_max"),
+        Index("ix_voices_status_published", "status", "published_at"),
+    )
+
+
+class VoiceAccess(Base):
+    """Lifetime ownership of a Voice by a buyer.
+
+    Granted by ``voice_purchase_service`` on a credit-spend purchase. Each
+    TTS generation against this voice still consumes credits (tracked
+    separately in CreditLedger); ``royalty_accumulator_bps`` carries
+    sub-credit creator royalty until it can be flushed as ≥1 whole credit.
+    """
+
+    __tablename__ = "voice_access"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # uuid
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    voice_id: Mapped[str] = mapped_column(
+        ForeignKey("voices.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    purchase_credits_paid: Mapped[int] = mapped_column(Integer, nullable=False)
+    royalty_accumulator_bps: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    granted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "voice_id", name="uq_voice_access_user_voice"),
+    )
+
+
+class CreditLedger(Base):
+    """Immutable audit trail of every credit movement.
+
+    One row per credit-affecting event. Sign of ``delta`` indicates direction
+    (+ inbound, − outbound). ``reason`` is the action key; related_*
+    columns point at the relevant Pack / Voice / Purchase / Bundle.
+    ``related_user_id`` records the counterparty in a transfer (creator on
+    a buyer's purchase, buyer on a creator's royalty credit, etc.).
+    """
+
+    __tablename__ = "credit_ledger"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # uuid
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    delta: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str] = mapped_column(String(32), nullable=False)
+    related_pack_id: Mapped[str | None] = mapped_column(
+        ForeignKey("packs.id", ondelete="SET NULL"), index=True, nullable=True
+    )
+    related_voice_id: Mapped[str | None] = mapped_column(
+        ForeignKey("voices.id", ondelete="SET NULL"), index=True, nullable=True
+    )
+    related_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    balance_after: Mapped[int] = mapped_column(Integer, nullable=False)
+    note: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_credit_ledger_user_created", "user_id", "created_at"),
+    )
+
+
+# Single source of truth for valid CreditLedger.reason values. Keep in sync
+# with credit_service.cost_for_action() and tests.
+CREDIT_LEDGER_REASONS: tuple[str, ...] = (
+    "gen_sfx",
+    "gen_ambient",
+    "gen_music",
+    "gen_voice_design",
+    "gen_tts",
+    "buy_pack",
+    "buy_voice",
+    "buy_bundle",
+    "royalty",
+    "refund",
+    "topup",
+    "monthly_grant",
+    "trial_grant",
+    "admin_adjust",
+)

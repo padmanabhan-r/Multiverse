@@ -40,6 +40,8 @@ _BASE_URL = "http://localhost:8000"
 
 
 def main() -> None:
+    import sys
+    force = "--force" in sys.argv
     get_settings.cache_clear()
     reset_engine_for_tests()
     engine = get_engine()
@@ -56,13 +58,13 @@ def main() -> None:
 
     try:
         packs: list[Pack] = list(session.execute(select(Pack)).scalars().all())
-        print(f"Found {len(packs)} packs in database.")
+        print(f"Found {len(packs)} packs in database. force={force}")
 
         generated = 0
         skipped = 0
 
         for pack in packs:
-            if pack.cover_art_url:
+            if pack.cover_art_url and not force:
                 print(f"  Skipping: {pack.title} ({pack.category}) — already has cover art")
                 skipped += 1
                 continue
@@ -76,6 +78,7 @@ def main() -> None:
                     description=pack.description or "",
                     tags=list(pack.tags or []),
                     moods=list(pack.moods or []),
+                    overwrite=force,
                 )
                 url = f"{_BASE_URL}/static/images/packs/{pack.id}.png"
                 pack.cover_art_url = url

@@ -69,18 +69,24 @@ def _clean_tables() -> Iterator[None]:
         BundlePack,
         CreatorProfile,
         CreditBalance,
+        CreditLedger,
         Pack,
         PackSample,
         ProcessedEvent,
         Purchase,
         Station,
         User,
+        Voice,
+        VoiceAccess,
     )
     from app.db.session import get_engine
 
     engine = get_engine()
     with engine.begin() as conn:
         # Order: leaves → roots
+        conn.execute(delete(CreditLedger))
+        conn.execute(delete(VoiceAccess))
+        conn.execute(delete(Voice))
         conn.execute(delete(BundlePack))
         conn.execute(delete(Bundle))
         conn.execute(delete(Purchase))

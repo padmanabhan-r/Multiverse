@@ -168,6 +168,24 @@ def publish_pack(db: Session, pack_id: str, requesting_user_id: str) -> Pack:
         )
     if pack.status == "published":
         return pack  # idempotent
+
+    # Auto-fill convenience fields so the creator doesn't have to manually
+    # set them in the publish form.
+    from app.db.models import PackSample
+    if not pack.preview_url:
+        first = (
+            db.query(PackSample)
+            .filter(PackSample.pack_id == pack.id)
+            .order_by(PackSample.position)
+            .first()
+        )
+        if first is not None:
+            pack.preview_url = first.audio_url
+    if not pack.cover_art_url:
+        # Procedural plate fallback so the marketplace tile still renders.
+        pack.cover_art_url = f"/static/images/packs/{pack.id}.png"
+    db.flush()
+
     missing = _missing_required_for_publish(pack)
     if missing:
         raise PackNotPublishableError(
@@ -175,6 +193,48 @@ def publish_pack(db: Session, pack_id: str, requesting_user_id: str) -> Pack:
         )
     pack.status = "published"
     pack.published_at = datetime.now(tz=timezone.utc)
+    db.flush()
+    return pack
+
+
+def update_pack_metadata(
+    db: Session,
+    pack_id: str,
+    requesting_user_id: str,
+    *,
+    title: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+    price_cents: int | None = None,
+    license_commercial_multiplier: float | None = None,
+) -> Pack:
+    """Creator-side: edit title / description / tags / price on a draft.
+
+    Pack must be owned by ``requesting_user_id``. Allowed on drafts AND
+    published packs (so a creator can update price / desc after launch).
+    """
+    pack = get_pack(db, pack_id)
+    if pack.creator_id != requesting_user_id:
+        raise PackPermissionError(
+            f"user {requesting_user_id} cannot edit pack {pack_id}"
+        )
+    if title is not None and title.strip():
+        pack.title = title.strip()
+    if description is not None:
+        pack.description = description.strip()
+    if tags is not None:
+        pack.tags = list(tags)
+    if price_cents is not None:
+        if price_cents < 50 or price_cents > 1500:
+            raise ValueError("price_cents must be 50–1500")
+        pack.price_cents = price_cents
+        pack.credit_cost = _credit_cost_for_price(price_cents)
+        # Keep credits-economy column in sync.
+        pack.price_credits = max(5, round(price_cents / 10))
+    if license_commercial_multiplier is not None:
+        if license_commercial_multiplier < 1.0 or license_commercial_multiplier > 10.0:
+            raise ValueError("license_commercial_multiplier must be 1.0–10.0")
+        pack.license_commercial_multiplier = license_commercial_multiplier
     db.flush()
     return pack
 
@@ -187,17 +247,19 @@ def increment_plays(db: Session, pack_id: str) -> Pack:
 
 
 def _missing_required_for_publish(pack: Pack) -> list[str]:
+    """Only the truly-required fields. Description is optional now.
+    Cover + preview are auto-filled by publish_pack() so they're never
+    blockers in practice.
+    """
     missing: list[str] = []
     if not pack.title.strip():
         missing.append("title")
-    if not pack.description.strip():
-        missing.append("description")
     if not pack.cover_art_url:
         missing.append("cover_art_url")
     if not pack.preview_url:
-        missing.append("preview_url")
+        missing.append("preview_url (generate at least one sample first)")
     if pack.sample_count <= 0:
-        missing.append("sample_count")
+        missing.append("at least one sample")
     return missing
 
 

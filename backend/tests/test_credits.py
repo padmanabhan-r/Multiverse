@@ -55,8 +55,8 @@ def test_cost_for_unknown_category_raises() -> None:
 
 def test_tier_monthly_credits_table() -> None:
     assert TIER_MONTHLY_CREDITS["free"] == 0
-    assert TIER_MONTHLY_CREDITS["creator"] == 20
-    assert TIER_MONTHLY_CREDITS["pro_studio"] == 80
+    assert TIER_MONTHLY_CREDITS["creator"] == 100
+    assert TIER_MONTHLY_CREDITS["pro_studio"] == 400
 
 
 def test_free_trial_constant() -> None:
@@ -111,7 +111,7 @@ def test_grant_monthly_creator_sets_20(db_session: Session, user: User) -> None:
     db_session.commit()
     row = db_session.get(CreditBalance, user.id)
     assert row is not None
-    assert row.balance == 20
+    assert row.balance == 100
 
 
 def test_grant_monthly_pro_studio_sets_80(db_session: Session, user: User) -> None:
@@ -119,19 +119,19 @@ def test_grant_monthly_pro_studio_sets_80(db_session: Session, user: User) -> No
     db_session.commit()
     row = db_session.get(CreditBalance, user.id)
     assert row is not None
-    assert row.balance == 80
+    assert row.balance == 400
 
 
 def test_grant_monthly_does_not_roll_over(db_session: Session, user: User) -> None:
     """Per V3 plan: credits reset monthly, no rollover."""
-    grant_monthly(db_session, user.id, "creator")  # 20
+    grant_monthly(db_session, user.id, "creator")  # 100
     db_session.commit()
     # User hasn't spent any. Next cycle should reset to 20, not 40.
     grant_monthly(db_session, user.id, "creator")
     db_session.commit()
     row = db_session.get(CreditBalance, user.id)
     assert row is not None
-    assert row.balance == 20
+    assert row.balance == 100
 
 
 def test_grant_monthly_free_tier_grants_zero(db_session: Session, user: User) -> None:
@@ -148,11 +148,11 @@ def test_grant_monthly_free_tier_grants_zero(db_session: Session, user: User) ->
 def test_spend_credits_decrements_by_category_cost(
     db_session: Session, user: User
 ) -> None:
-    grant_monthly(db_session, user.id, "creator")  # 20
+    grant_monthly(db_session, user.id, "creator")  # 100
     db_session.commit()
-    row = spend_credits(db_session, user.id, "music")  # -3 → 17
+    row = spend_credits(db_session, user.id, "music")  # -3 → 97
     db_session.commit()
-    assert row.balance == 17
+    assert row.balance == 97
 
 
 def test_spend_credits_raises_on_insufficient(
@@ -209,15 +209,15 @@ def test_cost_for_sample_kind_rejects_unknown() -> None:
 
 
 def test_refund_adds_credits_back(db_session: Session, user: User) -> None:
-    grant_monthly(db_session, user.id, "creator")  # 20
+    grant_monthly(db_session, user.id, "creator")  # 100
     db_session.commit()
-    spend_credits(db_session, user.id, "music")  # -3 → 17
+    spend_credits(db_session, user.id, "music")  # -3 → 97
     db_session.commit()
     refund(db_session, user.id, 3)
     db_session.commit()
     row = db_session.get(CreditBalance, user.id)
     assert row is not None
-    assert row.balance == 20
+    assert row.balance == 100
 
 
 def test_refund_creates_balance_row_if_missing(
@@ -249,8 +249,8 @@ def test_full_cycle_create_drain_topup(db_session: Session, user: User) -> None:
     # New billing cycle.
     grant_monthly(db_session, user.id, "pro_studio")  # → 80
     db_session.commit()
-    spend_credits(db_session, user.id, "broadcast_packs")  # -3 → 77
+    spend_credits(db_session, user.id, "broadcast_packs")  # -3 → 397
     db_session.commit()
     row = db_session.get(CreditBalance, user.id)
     assert row is not None
-    assert row.balance == 77
+    assert row.balance == 397

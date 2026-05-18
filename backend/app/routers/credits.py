@@ -6,7 +6,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db.models import CreditBalance
+from sqlalchemy import select
+
+from app.db.models import CreditBalance, CreditLedger
 from app.db.session import get_db
 from app.deps import CurrentUser
 from app.services import credit_service
@@ -43,3 +45,47 @@ def my_credits(
             "broadcast_packs": 3,
         },
     )
+
+
+class LedgerEntryDTO(BaseModel):
+    id: str
+    delta: int
+    reason: str
+    related_pack_id: str | None
+    related_voice_id: str | None
+    related_user_id: str | None
+    balance_after: int
+    note: str | None
+    created_at: str | None
+
+
+@router.get("/credits/ledger", response_model=list[LedgerEntryDTO])
+def my_ledger(
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+    limit: int = 50,
+) -> list[LedgerEntryDTO]:
+    rows = list(
+        db.execute(
+            select(CreditLedger)
+            .where(CreditLedger.user_id == user.user_id)
+            .order_by(CreditLedger.created_at.desc())
+            .limit(max(1, min(limit, 200)))
+        )
+        .scalars()
+        .all()
+    )
+    return [
+        LedgerEntryDTO(
+            id=r.id,
+            delta=r.delta,
+            reason=r.reason,
+            related_pack_id=r.related_pack_id,
+            related_voice_id=r.related_voice_id,
+            related_user_id=r.related_user_id,
+            balance_after=r.balance_after,
+            note=r.note,
+            created_at=r.created_at.isoformat() if r.created_at else None,
+        )
+        for r in rows
+    ]

@@ -10,12 +10,16 @@ import { Pack } from "@/pages/Pack";
 import { Pricing } from "@/pages/Pricing";
 import { Creator } from "@/pages/Creator";
 import { CreatorStorefront } from "@/pages/CreatorStorefront";
+import { Credits } from "@/pages/Credits";
 import { Library } from "@/pages/Library";
 import { Studio } from "@/pages/Studio";
 import { StudioBundleNew } from "@/pages/StudioBundleNew";
 import { StudioDraft } from "@/pages/StudioDraft";
 import { StudioNew } from "@/pages/StudioNew";
 import { StudioPublish } from "@/pages/StudioPublish";
+import { StudioTTS } from "@/pages/StudioTTS";
+import { Voice } from "@/pages/Voice";
+import { Voices } from "@/pages/Voices";
 import { World } from "@/pages/World";
 import { DUMMY_STATIONS } from "@/data/dummyStations";
 import { useAuth } from "@clerk/clerk-react";
@@ -86,6 +90,10 @@ export function App() {
         <Route path="/library" element={<Library />} />
         <Route path="/creator" element={<Creator />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/credits" element={<Credits />} />
+        <Route path="/voices" element={<Voices />} />
+        <Route path="/v/:voiceId" element={<Voice />} />
+        <Route path="/studio/tts" element={<StudioTTS />} />
         <Route path="/u/:creatorId" element={<CreatorStorefront />} />
         <Route path="/w/:stationId" element={<World />} />
         <Route path="*" element={<Home />} />

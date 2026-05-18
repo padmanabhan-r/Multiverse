@@ -129,6 +129,74 @@ export interface ApiClient {
   creatorSales: () => Promise<CreatorSale[]>;
   library: () => Promise<LibraryItem[]>;
   creatorPublic: (creatorId: string) => Promise<PublicCreatorPage>;
+  ledger: (limit?: number) => Promise<LedgerEntry[]>;
+  purchasePack: (packId: string) => Promise<PurchaseRecord>;
+  updatePack: (
+    packId: string,
+    patch: Partial<{
+      title: string;
+      description: string;
+      tags: string[];
+      price_cents: number;
+      license_commercial_multiplier: number;
+    }>,
+  ) => Promise<Pack>;
+  listMarketplaceVoices: () => Promise<MarketplaceVoice[]>;
+  getMarketplaceVoice: (voiceId: string) => Promise<MarketplaceVoice>;
+  purchaseVoice: (voiceId: string) => Promise<VoiceAccessRecord>;
+  listOwnedVoices: () => Promise<MarketplaceVoice[]>;
+  generateTts: (voiceId: string, text: string) => Promise<TTSResult>;
+}
+
+export interface TTSResult {
+  audio_url: string;
+  credits_spent: number;
+  duration_ms: number;
+  voice_id: string;
+}
+
+export interface MarketplaceVoice {
+  id: string;
+  creator_id: string;
+  creator_name: string;
+  title: string;
+  description: string;
+  eleven_voice_id: string;
+  preview_url: string | null;
+  cover_art_url: string | null;
+  price_credits: number;
+  status: string;
+  tags: string[];
+  purchases_count: number;
+  created_at: string | null;
+  published_at: string | null;
+}
+
+export interface VoiceAccessRecord {
+  id: string;
+  voice_id: string;
+  purchase_credits_paid: number;
+  granted_at: string | null;
+}
+
+export interface PurchaseRecord {
+  id: string;
+  pack_id: string;
+  price_paid_credits: number;
+  license_kind: string;
+  created_at: string | null;
+}
+
+export interface LedgerEntry {
+  id: string;
+  delta: number;
+  reason: string;
+  related_pack_id: string | null;
+  related_voice_id: string | null;
+  related_user_id: string | null;
+  balance_after: number;
+  note: string | null;
+  created_at: string | null;
 }
 
 export interface LibraryItem {
@@ -287,6 +355,32 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
       request<PublicCreatorPage>(
         `/creators/${encodeURIComponent(creatorId)}`,
       ),
+    ledger: (limit = 50) =>
+      request<LedgerEntry[]>(`/credits/ledger?limit=${limit}`),
+    purchasePack: (packId) =>
+      request<PurchaseRecord>(
+        `/packs/${encodeURIComponent(packId)}/purchase`,
+        { method: "POST", body: JSON.stringify({}) },
+      ),
+    updatePack: (packId, patch) =>
+      request<Pack>(`/packs/${encodeURIComponent(packId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }),
+    listMarketplaceVoices: () => request<MarketplaceVoice[]>("/voices"),
+    getMarketplaceVoice: (voiceId) =>
+      request<MarketplaceVoice>(`/voices/${encodeURIComponent(voiceId)}`),
+    purchaseVoice: (voiceId) =>
+      request<VoiceAccessRecord>(
+        `/voices/${encodeURIComponent(voiceId)}/purchase`,
+        { method: "POST", body: JSON.stringify({}) },
+      ),
+    listOwnedVoices: () => request<MarketplaceVoice[]>("/voices/mine"),
+    generateTts: (voiceId, text) =>
+      request<TTSResult>("/studio/tts", {
+        method: "POST",
+        body: JSON.stringify({ voice_id: voiceId, text }),
+      }),
   };
 }
 
@@ -309,12 +403,36 @@ function packFiltersToQuery(filters: PackListFilters): URLSearchParams {
 // Module-level token getter — set once by AuthSync after Clerk loads.
 let _tokenGetter: (() => Promise<string | null>) | undefined;
 
+// Promise that resolves the first time setTokenGetter() is called. Every
+// api.* call awaits this BEFORE issuing fetch so the very first /me /
+// /me/credits etc. always carry a JWT (no race with AuthSync's useEffect).
+let _resolveTokenReady: (() => void) | undefined;
+const _tokenReady: Promise<void> = new Promise((resolve) => {
+  _resolveTokenReady = resolve;
+});
+
 /** Called by AuthSync to wire Clerk's getToken into the singleton. */
 export function setTokenGetter(fn: () => Promise<string | null>): void {
   _tokenGetter = fn;
+  _resolveTokenReady?.();
+  _resolveTokenReady = undefined;
+}
+
+/**
+ * Resolve a Clerk JWT, waiting up to 1.5 s for AuthSync to wire its getter.
+ * After the timeout we fall back to null — preserves anonymous browse on
+ * pages that don't strictly need auth.
+ */
+async function _getToken(): Promise<string | null> {
+  if (!_tokenGetter) {
+    await Promise.race([
+      _tokenReady,
+      new Promise<void>((r) => setTimeout(r, 1500)),
+    ]);
+  }
+  if (!_tokenGetter) return null;
+  return _tokenGetter();
 }
 
 /** Singleton ApiClient used by hooks. Override only in tests. */
-export const api: ApiClient = makeApi({
-  getToken: () => _tokenGetter?.() ?? Promise.resolve(null),
-});
+export const api: ApiClient = makeApi({ getToken: _getToken });

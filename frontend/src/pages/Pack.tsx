@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import type { LicenseKind } from "@multiverse-fm/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
-import { LicensePicker } from "@/components/LicensePicker";
+import { BuyPackButton } from "@/components/BuyPackButton";
 import { usePack } from "@/lib/queries";
-import { useCart } from "@/stores/cartStore";
 
 export function Pack() {
   const { packId } = useParams<{ packId: string }>();
@@ -21,17 +18,6 @@ export function Pack() {
 function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data"]> }) {
   const navigate = useNavigate();
   const plate = plateFor(pack.id);
-  const [license, setLicense] = useState<LicenseKind>("personal");
-  const add = useCart((s) => s.add);
-  const remove = useCart((s) => s.remove);
-  const inCart = useCart((s) =>
-    s.items.some((i) => i.pack_id === pack.id && i.license_kind === license),
-  );
-
-  const unitPrice =
-    license === "commercial"
-      ? Math.round(pack.price_cents * (pack.license_commercial_multiplier || 1))
-      : pack.price_cents;
 
   const fields: Array<[string, string]> = [
     ["Category", CATEGORY_LABEL[pack.category]],
@@ -234,64 +220,23 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
             </div>
           </div>
 
-          <LicensePicker pack={pack} value={license} onChange={setLicense} />
-
           <div className="flex items-baseline justify-between border-t border-glass-soft pt-3">
             <span className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
-              Total
+              Price
             </span>
             <span
               data-testid="pack-buy-total"
               className="font-mono text-warm text-[20px] tracking-[-0.005em] font-semibold"
             >
-              {formatPrice(unitPrice)}
+              {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
             </span>
           </div>
 
-          {inCart ? (
-            <div className="flex flex-col gap-2">
-              <Link
-                to="/cart"
-                data-testid="pack-buy-cart"
-                style={{
-                  color: "#1a0700",
-                  background: "var(--mvfm-molten)",
-                  boxShadow:
-                    "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
-                }}
-                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
-              >
-                View cart
-              </Link>
-              <button
-                type="button"
-                data-testid="pack-buy-remove"
-                onClick={() => remove(pack.id, license)}
-                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-silver hover:text-warm bg-elev-2/40 border border-glass-soft hover:border-glass font-mono text-[10px] tracking-[0.18em] uppercase transition-colors duration-fast ease-tune"
-              >
-                Remove from cart
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              data-testid="pack-buy-add"
-              onClick={() => add(pack, license)}
-              style={{
-                color: "#1a0700",
-                background: "var(--mvfm-molten)",
-                boxShadow:
-                  "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
-              }}
-              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
-            >
-              Add to cart · {formatPrice(unitPrice)}
-            </button>
-          )}
+          <BuyPackButton pack={pack} className="w-full flex flex-col gap-2" />
 
           <p className="text-silver2 text-[10.5px] leading-[1.5]">
-            Buyers don't need a subscription. Pay once, download instantly. Personal
-            covers non-commercial use; Commercial unlocks resale and product release.
+            Royalty-free. Buyers spend credits to own a pack — no recurring
+            fees. Creators earn 70% of every purchase.
           </p>
         </aside>
       </section>

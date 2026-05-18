@@ -1,7 +1,17 @@
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Pack } from "@multiverse-fm/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+function audioUrl(u: string | null | undefined): string | null {
+  if (!u) return null;
+  if (u.startsWith("http://") || u.startsWith("https://")) return u;
+  return `${API_BASE}${u}`;
+}
 
 export interface MarketplaceHeroProps {
   pack?: Pack | null;
@@ -26,8 +36,16 @@ const CATEGORY_LABEL: Record<string, string> = {
 export function MarketplaceHero({
   pack,
   loading,
-  onPreview,
 }: MarketplaceHeroProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  function togglePreview() {
+    if (!audioRef.current) return;
+    if (playing) audioRef.current.pause();
+    else audioRef.current.play().catch(() => {/* user gesture race */});
+  }
+
   if (loading || !pack) {
     return (
       <section
@@ -135,7 +153,7 @@ export function MarketplaceHero({
           <button
             type="button"
             data-testid="marketplace-hero-preview"
-            onClick={() => onPreview?.(pack.id)}
+            onClick={togglePreview}
             className="
               inline-flex items-center gap-2 px-5 py-3 rounded-md
               text-warm font-mono text-[11px] tracking-[0.18em] uppercase font-semibold
@@ -148,18 +166,45 @@ export function MarketplaceHero({
                 "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(255,255,255,0.08)",
             }}
           >
-            <span
-              aria-hidden
-              className="block w-0 h-0 -ml-0.5"
-              style={{
-                borderLeft: "8px solid currentColor",
-                borderTop: "6px solid transparent",
-                borderBottom: "6px solid transparent",
-              }}
-            />
-            Preview 30 s
+            {playing ? (
+              <span
+                aria-hidden
+                className="inline-flex items-center gap-0.5"
+              >
+                <span
+                  className="inline-block w-[3px] h-3 bg-current"
+                />
+                <span
+                  className="inline-block w-[3px] h-3 bg-current"
+                />
+              </span>
+            ) : (
+              <span
+                aria-hidden
+                className="block w-0 h-0 -ml-0.5"
+                style={{
+                  borderLeft: "8px solid currentColor",
+                  borderTop: "6px solid transparent",
+                  borderBottom: "6px solid transparent",
+                }}
+              />
+            )}
+            {playing ? "Pause preview" : "Preview"}
           </button>
         </div>
+
+        {/* Hidden audio element driven by the Preview button. */}
+        {audioUrl(pack.preview_url) && (
+          <audio
+            ref={audioRef}
+            src={audioUrl(pack.preview_url) || undefined}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+            preload="none"
+            data-testid="marketplace-hero-audio"
+          />
+        )}
       </div>
 
       {/* Bottom scan-line */}

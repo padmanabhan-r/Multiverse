@@ -33,7 +33,7 @@ def test_my_credits_zero_when_no_balance_row(authed_client: TestClient) -> None:
     assert r.status_code == 200
     body = r.json()
     assert body["balance"] == 0
-    assert body["tier_monthly_grant"] == 20  # creator tier
+    assert body["tier_monthly_grant"] == 100  # creator tier
     assert body["cost_per_category"]["sfx"] == 1
     assert body["cost_per_category"]["music"] == 3
 
@@ -44,7 +44,7 @@ def test_my_credits_returns_existing_balance(
     credit_service.grant_monthly(db_session, "u_alice", "creator")
     db_session.commit()
     r = authed_client.get("/me/credits")
-    assert r.json()["balance"] == 20
+    assert r.json()["balance"] == 100
     assert r.json()["cycle_start"] is not None
 
 
@@ -71,7 +71,7 @@ def test_subscription_completed_grants_first_cycle_credits(
     assert r.status_code == 200
     row = db_session.get(CreditBalance, "u_alice")
     assert row is not None
-    assert row.balance == 20
+    assert row.balance == 100
 
 
 def test_pro_studio_subscription_grants_80_credits(
@@ -96,7 +96,7 @@ def test_pro_studio_subscription_grants_80_credits(
     assert r.status_code == 200
     row = db_session.get(CreditBalance, "u_bob")
     assert row is not None
-    assert row.balance == 80
+    assert row.balance == 400
 
 
 def test_invoice_paid_tops_up_monthly_credits(
@@ -134,7 +134,7 @@ def test_invoice_paid_tops_up_monthly_credits(
     db_session.expire_all()
     bal2 = db_session.get(CreditBalance, "u_charlie")
     assert bal2 is not None
-    assert bal2.balance == 20  # creator tier grant, no rollover added
+    assert bal2.balance == 100  # creator tier grant, no rollover added
 
 
 def test_invoice_paid_for_free_user_does_nothing(

@@ -165,33 +165,30 @@ function PreviewTab({
         </div>
       </div>
 
-      <button
-        type="button"
-        data-testid="pack-preview-play"
-        onClick={() => onPreview?.(pack.id)}
-        style={{
-          color: "#1a0700",
-          background: "var(--mvfm-molten)",
-          boxShadow:
-            "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
-        }}
-        className="
-          w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md
-          font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold
-          hover:brightness-110 transition-all duration-fast ease-tune
-        "
-      >
-        <span
-          aria-hidden
-          className="block w-0 h-0 -ml-0.5"
-          style={{
-            borderLeft: "7px solid #1a0700",
-            borderTop: "5px solid transparent",
-            borderBottom: "5px solid transparent",
-          }}
+      {pack.preview_url ? (
+        <audio
+          data-testid="pack-preview-play"
+          src={
+            pack.preview_url.startsWith("http")
+              ? pack.preview_url
+              : `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${pack.preview_url}`
+          }
+          controls
+          preload="none"
+          onPlay={() => onPreview?.(pack.id)}
+          className="w-full h-10"
         />
-        Play 30 s preview
-      </button>
+      ) : (
+        <div
+          data-testid="pack-preview-empty"
+          className="
+            w-full px-3 py-2.5 rounded-md text-silver italic text-[12px]
+            bg-elev-2/40 border border-glass-soft text-center
+          "
+        >
+          No preview available yet.
+        </div>
+      )}
 
       {pack.description && (
         <p className="text-warm/85 text-[13px] leading-[1.5]">{pack.description}</p>

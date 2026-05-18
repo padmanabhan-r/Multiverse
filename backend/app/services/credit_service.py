@@ -1,23 +1,32 @@
+"""Credit service — unified currency for every site action.
+
+Sm.2 pivot: every credit-affecting flow goes through ``ledger_entry`` so
+``CreditLedger`` is the single source of truth for what happened (audit +
+user-facing transaction history). The older ``spend_credits`` /
+``spend_sample_kind`` / ``refund`` / ``grant_trial`` / ``grant_monthly``
+helpers remain — internally they now write Ledger rows.
+"""
+
 from __future__ import annotations
 
+import math
+import uuid
 from datetime import datetime, timezone
 from typing import Literal
 
 from sqlalchemy.orm import Session
 
-from app.db.models import CreditBalance, PackCategory
+from app.db.models import CreditBalance, CreditLedger, PackCategory
 
-# Monthly credit grants per Creator subscription tier.
-# Free = one-time 5-credit trial granted at signup; not a recurring grant.
+# Sm.2 economy. 1 credit = $0.10 USD.
 TIER_MONTHLY_CREDITS: dict[str, int] = {
     "free": 0,
-    "creator": 20,
-    "pro_studio": 80,
+    "creator": 100,
+    "pro_studio": 400,
 }
 FREE_TRIAL_CREDITS: int = 5
 
-# Credit cost per Studio generation by category.
-# Locked formula — referenced from V3 plan.
+# Legacy pack-category cost (kept for back-compat with seed + old callers).
 _COSTS: dict[str, int] = {
     "sfx": 1,
     "voice_packs": 2,
@@ -27,9 +36,7 @@ _COSTS: dict[str, int] = {
     "broadcast_packs": 3,
 }
 
-# Per-sample cost — used by sample-level Studio generators (Sh.2+).
-# Finer-grained than `cost_for_category`: a SFX pack has many samples so
-# we charge one credit per sample, not one credit for the whole pack.
+# Sample-level generator cost (Sh.x onwards).
 _SAMPLE_COSTS: dict[str, int] = {
     "sfx": 1,
     "voice": 1,
@@ -37,9 +44,31 @@ _SAMPLE_COSTS: dict[str, int] = {
     "music": 2,
 }
 
+# Unified action → credits map (Sm.2 surface). Lookups use ``cost_for_action``.
+# Buy-* + royalty actions are creator-set / computed at call time so are not
+# listed here; ``ledger_entry`` accepts arbitrary delta for those.
+_ACTION_COSTS: dict[str, int] = {
+    "gen_sfx": 1,
+    "gen_ambient": 1,
+    "gen_music_60s": 2,
+    "gen_music_120s": 3,
+    "gen_voice_design": 5,
+    "gen_tts_5min": 1,
+}
+
+# TTS pricing: 1 credit covers up to this many ms of output. Beyond it we
+# round up to the next chunk (so 5m1s = 2 credits, 9m59s = 2 credits).
+TTS_MS_PER_CREDIT: int = 5 * 60 * 1000
+# Creator royalty share on purchases (70 % floor; remainder to platform).
+CREATOR_PURCHASE_ROYALTY_NUMERATOR: int = 70
+CREATOR_PURCHASE_ROYALTY_DENOMINATOR: int = 100
+# Creator royalty share on TTS usage (30 % — tracked via basis-points
+# accumulator on VoiceAccess until a whole credit can be flushed).
+CREATOR_TTS_ROYALTY_BPS: int = 3000  # 30.00 %
+
 
 class InsufficientCreditsError(Exception):
-    """Raised when a Studio generation requires more credits than the user holds."""
+    """Raised when a debit would push CreditBalance.balance < 0."""
 
     def __init__(self, *, required: int, available: int) -> None:
         super().__init__(
@@ -49,70 +78,57 @@ class InsufficientCreditsError(Exception):
         self.available = available
 
 
-def cost_for_sample_kind(kind: str) -> int:
-    """Return the credit cost to generate one sample of this kind.
+# ─── Lookups ───────────────────────────────────────────────────────────────
 
-    SFX / voice / ambient = 1 credit each; music = 2 (longer compute).
-    Raises ValueError on unknown kind so Studio routes can never silently
-    accept a typo.
+
+def cost_for_action(action: str) -> int:
+    """Return credit cost for a fixed-cost action.
+
+    Raises ValueError on unknown action so callers can never silently accept
+    a typo. For variable-cost actions (buy_pack, buy_voice, royalty) call
+    ``ledger_entry`` directly with an explicit delta.
     """
+    if action not in _ACTION_COSTS:
+        raise ValueError(f"unknown action: {action}")
+    return _ACTION_COSTS[action]
+
+
+def cost_for_sample_kind(kind: str) -> int:
     if kind not in _SAMPLE_COSTS:
         raise ValueError(f"unknown sample kind: {kind}")
     return _SAMPLE_COSTS[kind]
 
 
-def spend_sample_kind(
-    db: Session, user_id: str, kind: str
-) -> CreditBalance:
-    """Atomically deduct the per-sample cost for one Studio generation.
-
-    Cost table differs from `spend_credits` (which charges per-pack-category):
-    sfx/voice/ambient = 1, music = 2. Same row-lock semantics.
-    """
-    cost = cost_for_sample_kind(kind)
-    row = (
-        db.query(CreditBalance)
-        .filter(CreditBalance.user_id == user_id)
-        .with_for_update(read=False)
-        .one_or_none()
-    )
-    if row is None:
-        raise InsufficientCreditsError(required=cost, available=0)
-    if row.balance < cost:
-        raise InsufficientCreditsError(required=cost, available=row.balance)
-    row.balance -= cost
-    db.flush()
-    return row
-
-
-def refund(db: Session, user_id: str, amount: int) -> CreditBalance:
-    """Credit back ``amount`` credits to a user.
-
-    Used when a Studio generation fails after the credit has been debited
-    (ElevenLabs 5xx, R2 PUT failure, etc.). Creates the balance row if it
-    doesn't exist — refunding always tops up rather than failing.
-    """
-    if amount < 0:
-        raise ValueError(f"refund amount must be non-negative: {amount}")
-    row = ensure_balance(db, user_id)
-    row.balance += amount
-    db.flush()
-    return row
-
-
 def cost_for_category(category: PackCategory | str) -> int:
-    """Return the credit cost to generate a pack in this category.
-
-    Raises ValueError on an unknown category — we want fail-loud here so the
-    Studio flow can never accept an unknown enum silently.
-    """
     if category not in _COSTS:
         raise ValueError(f"unknown pack category: {category}")
     return _COSTS[category]
 
 
+def tts_credits_for_duration(duration_ms: int) -> int:
+    """Cost of a single TTS generation in credits — ceil to 5-min chunks."""
+    if duration_ms <= 0:
+        return 0
+    return max(1, math.ceil(duration_ms / TTS_MS_PER_CREDIT))
+
+
+def creator_purchase_royalty(price_credits: int) -> int:
+    """Royalty credits a creator earns when a buyer pays ``price_credits``.
+
+    Uses floor on numerator * price / denominator so platform never owes
+    more than the buyer paid (rounding error favours platform — micro-residue
+    becomes effective spread).
+    """
+    return (
+        price_credits * CREATOR_PURCHASE_ROYALTY_NUMERATOR
+    ) // CREATOR_PURCHASE_ROYALTY_DENOMINATOR
+
+
+# ─── Core helpers — every credit movement goes through ledger_entry ────────
+
+
 def ensure_balance(db: Session, user_id: str) -> CreditBalance:
-    """Fetch or create a CreditBalance row for a user."""
+    """Fetch or create the CreditBalance row for a user."""
     row = db.get(CreditBalance, user_id)
     if row is None:
         row = CreditBalance(user_id=user_id, balance=0, cycle_start=_now())
@@ -121,22 +137,74 @@ def ensure_balance(db: Session, user_id: str) -> CreditBalance:
     return row
 
 
-def grant_trial(db: Session, user_id: str) -> CreditBalance:
-    """Grant the one-time free-tier trial credits.
+def ledger_entry(
+    db: Session,
+    *,
+    user_id: str,
+    delta: int,
+    reason: str,
+    related_pack_id: str | None = None,
+    related_voice_id: str | None = None,
+    related_user_id: str | None = None,
+    note: str | None = None,
+) -> CreditLedger:
+    """Atomically apply a credit movement and write the audit row.
 
-    Idempotent: if the user already has a balance row, do nothing.
-    Use at signup.
+    Negative ``delta`` requires sufficient balance — raises
+    ``InsufficientCreditsError`` otherwise. Positive ``delta`` always
+    succeeds (grants, refunds, royalties). The CreditBalance row is locked
+    on read to serialise concurrent debits on Postgres; SQLite is
+    write-serialised by default so the lock is a no-op there.
     """
+    row = (
+        db.query(CreditBalance)
+        .filter(CreditBalance.user_id == user_id)
+        .with_for_update(read=False)
+        .one_or_none()
+    )
+    if row is None:
+        row = ensure_balance(db, user_id)
+
+    if delta < 0 and row.balance + delta < 0:
+        raise InsufficientCreditsError(required=-delta, available=row.balance)
+
+    row.balance += delta
+    db.flush()
+
+    entry = CreditLedger(
+        id=uuid.uuid4().hex,
+        user_id=user_id,
+        delta=delta,
+        reason=reason,
+        related_pack_id=related_pack_id,
+        related_voice_id=related_voice_id,
+        related_user_id=related_user_id,
+        balance_after=row.balance,
+        note=note,
+    )
+    db.add(entry)
+    db.flush()
+    return entry
+
+
+# ─── Public surfaces — write through ledger_entry ─────────────────────────
+
+
+def grant_trial(db: Session, user_id: str) -> CreditBalance:
+    """One-time free-tier 5-credit grant. Idempotent."""
     existing = db.get(CreditBalance, user_id)
     if existing is not None:
         return existing
-    row = CreditBalance(
-        user_id=user_id,
-        balance=FREE_TRIAL_CREDITS,
-        cycle_start=_now(),
-        last_topup_at=_now(),
-    )
-    db.add(row)
+    row = ensure_balance(db, user_id)
+    if FREE_TRIAL_CREDITS > 0:
+        ledger_entry(
+            db,
+            user_id=user_id,
+            delta=FREE_TRIAL_CREDITS,
+            reason="trial_grant",
+            note="one-time free trial",
+        )
+    row.last_topup_at = _now()
     db.flush()
     return row
 
@@ -146,14 +214,23 @@ def grant_monthly(
     user_id: str,
     tier: Literal["free", "creator", "pro_studio"],
 ) -> CreditBalance:
-    """Monthly top-up — resets balance to the tier's grant.
+    """Monthly subscription top-up. Resets balance to the tier grant.
 
-    No rollover: a Pro Studio user with 12 unspent credits at the end of
-    their cycle is reset to 80 (not 92). Called by the ARQ cron job +
-    by Stripe webhook on `invoice.paid`.
+    No rollover. Writes a ``monthly_grant`` ledger row capturing the net
+    change (positive if rising, negative if previous balance > new grant —
+    rare but possible for downgrades).
     """
     row = ensure_balance(db, user_id)
-    row.balance = TIER_MONTHLY_CREDITS.get(tier, 0)
+    target = TIER_MONTHLY_CREDITS.get(tier, 0)
+    delta = target - row.balance
+    if delta != 0:
+        ledger_entry(
+            db,
+            user_id=user_id,
+            delta=delta,
+            reason="monthly_grant",
+            note=f"tier={tier}",
+        )
     row.cycle_start = _now()
     row.last_topup_at = _now()
     db.flush()
@@ -163,27 +240,51 @@ def grant_monthly(
 def spend_credits(
     db: Session, user_id: str, category: PackCategory | str
 ) -> CreditBalance:
-    """Atomically deduct the category cost from the user's credit balance.
-
-    Raises ``InsufficientCreditsError`` if the user doesn't hold enough credits.
-    Uses ``with_for_update()`` on Postgres / row-level lock semantics where
-    available; on SQLite the lock is a no-op but tests still pass because
-    SQLite serialises writes by default.
-    """
     cost = cost_for_category(category)
-    row = (
-        db.query(CreditBalance)
-        .filter(CreditBalance.user_id == user_id)
-        .with_for_update(read=False)
-        .one_or_none()
+    ledger_entry(
+        db,
+        user_id=user_id,
+        delta=-cost,
+        reason="gen_" + (category if category != "voice_packs" else "voice_design"),
+        note=f"pack-category {category}",
     )
-    if row is None:
-        raise InsufficientCreditsError(required=cost, available=0)
-    if row.balance < cost:
-        raise InsufficientCreditsError(required=cost, available=row.balance)
-    row.balance -= cost
-    db.flush()
-    return row
+    return ensure_balance(db, user_id)
+
+
+def spend_sample_kind(db: Session, user_id: str, kind: str) -> CreditBalance:
+    cost = cost_for_sample_kind(kind)
+    reason_map = {
+        "sfx": "gen_sfx",
+        "voice": "gen_voice_design",
+        "ambient": "gen_ambient",
+        "music": "gen_music_60s",
+    }
+    reason = reason_map.get(kind, "gen_sfx")
+    ledger_entry(
+        db,
+        user_id=user_id,
+        delta=-cost,
+        reason=reason,
+        note=f"sample-kind {kind}",
+    )
+    return ensure_balance(db, user_id)
+
+
+def refund(db: Session, user_id: str, amount: int) -> CreditBalance:
+    if amount < 0:
+        raise ValueError(f"refund amount must be non-negative: {amount}")
+    if amount > 0:
+        ledger_entry(
+            db,
+            user_id=user_id,
+            delta=amount,
+            reason="refund",
+            note="refund on upstream failure",
+        )
+    return ensure_balance(db, user_id)
+
+
+# ─── Internal ─────────────────────────────────────────────────────────────
 
 
 def _now() -> datetime:

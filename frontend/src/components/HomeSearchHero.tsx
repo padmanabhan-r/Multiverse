@@ -97,7 +97,7 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
         relative w-full overflow-hidden rounded-xl
         border border-glass-soft
         px-5 sm:px-10 lg:px-14
-        py-12 sm:py-16 lg:py-20
+        py-7 sm:py-9 lg:py-10
       "
     >
       {/* Cycling hero background images — slow cross-fade, ken-burns drift. */}
@@ -160,9 +160,9 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
       <div aria-hidden className="absolute top-0 left-0 right-0 mvfm-scanline" />
       <div aria-hidden className="absolute bottom-0 left-0 right-0 mvfm-scanline" />
 
-      <div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
+      <div className="max-w-3xl mx-auto text-center space-y-3 sm:space-y-4">
         {/* Headline */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div
             data-testid="home-hero-eyebrow"
             className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase"
@@ -172,12 +172,12 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
           <h1
             data-testid="home-hero-headline"
             className="mvfm-display text-warm leading-[0.95]"
-            style={{ fontSize: "clamp(36px, 5vw, 68px)" }}
+            style={{ fontSize: "clamp(30px, 4vw, 56px)" }}
           >
             Find the sound you need.
           </h1>
-          <p className="text-silver text-[14px] sm:text-[15px] max-w-2xl mx-auto font-body leading-relaxed">
-            Buy from <span className="text-warm font-medium">thousands of royalty-free AI-generated sounds</span> at the cheapest prices. Don't just create music — create, sell and own it. Subscribe to generate from scratch or download instantly from a growing catalog.
+          <p className="text-silver text-[13px] sm:text-[14px] max-w-2xl mx-auto font-body leading-snug">
+            Buy from <span className="text-warm font-medium">thousands of royalty-free AI-generated sounds</span> at the cheapest prices. Don't just create music — create, sell and own it.
           </p>
         </div>
 

@@ -36,7 +36,7 @@ export function Home() {
   const onTileSelect = (id: string) => navigate(`/p/${id}`);
 
   return (
-    <div data-testid="home-page" className="space-y-8 sm:space-y-12 pb-8">
+    <div data-testid="home-page" className="space-y-6 sm:space-y-8 pb-8">
       {/* 1. Pixabay-style search hero — enhanced visuals */}
       <HomeSearchHero />
 

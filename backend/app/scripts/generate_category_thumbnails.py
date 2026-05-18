@@ -39,9 +39,15 @@ CATEGORY_DIR: Path = (
 
 _PROMPTS: dict[str, str] = {
     "sfx": (
-        "Cinematic abstract thumbnail for a 'Sound effects' category. "
-        "Dark near-black background with glowing molten-orange waveform and "
-        "impact-light streaks. Painterly, atmospheric. No text, no logos."
+        "Cinematic collage thumbnail for a 'Sound effects' category showing "
+        "variety. A dark near-black canvas with several layered icons + scene "
+        "fragments arranged in a balanced composition: a game controller "
+        "silhouette, a film clapperboard, a smartphone showing a short-video "
+        "reel, an explosion spark, a footstep impact ring, a coin pickup "
+        "burst, a cartoon laugh-track speech bubble, a meme thumbs-up. All "
+        "lit with warm molten-orange accent rim light, painterly, restrained "
+        "palette. Conveys: SFX for games, films, videos, reels, memes. No "
+        "text, no logos, no brand marks."
     ),
     "music": (
         "Cinematic thumbnail for a 'Music' category. Dark near-black scene "
@@ -49,9 +55,16 @@ _PROMPTS: dict[str, str] = {
         "rim light. Painterly, moody. No text, no logos."
     ),
     "voice_packs": (
-        "Cinematic thumbnail for a 'Voice packs' category. Dark near-black "
-        "studio scene with a vintage microphone, molten-orange rim light, "
-        "shallow depth of field. Painterly. No text."
+        "Cinematic collage thumbnail for a 'Voices' category showing variety "
+        "of vocal archetypes. Dark near-black background with a row of "
+        "expressive character silhouettes lit by molten-orange rim light: "
+        "a gravelly cowboy-outlaw narrator in a duster coat and hat, a "
+        "smoky noir detective in a fedora, a sci-fi corporate AI assistant "
+        "with a clean geometric profile, a streetwise rap-style hype "
+        "narrator, a soothing late-night radio DJ at a vintage mic, and a "
+        "fairy-tale storyteller silhouette. Painterly, cinematic, restrained "
+        "palette. Conveys creative voice variety. No text, no logos, no "
+        "real-person likenesses, no brand IP."
     ),
     "ambient": (
         "Cinematic thumbnail for an 'Ambient beds' category. Dark near-black "

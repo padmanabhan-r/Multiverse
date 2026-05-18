@@ -32,6 +32,7 @@ class PackDTO(BaseModel):
     tags: list[str]
     moods: list[str]
     price_cents: int
+    price_credits: int
     credit_cost: int
     license_personal: bool
     license_commercial_multiplier: float
@@ -58,6 +59,7 @@ class PackDTO(BaseModel):
             tags=list(p.tags or []),
             moods=list(p.moods or []),
             price_cents=p.price_cents,
+            price_credits=p.price_credits,
             credit_cost=p.credit_cost,
             license_personal=bool(p.license_personal),
             license_commercial_multiplier=float(p.license_commercial_multiplier),
@@ -253,6 +255,42 @@ def create_draft_endpoint(
     return PackDTO.from_model(pack)
 
 
+class PackPatchBody(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=160)
+    description: str | None = Field(default=None, max_length=4000)
+    tags: list[str] | None = None
+    price_cents: int | None = Field(default=None, ge=50, le=1500)
+    license_commercial_multiplier: float | None = Field(default=None, ge=1.0, le=10.0)
+
+
+@router.patch("/packs/{pack_id}", response_model=PackDTO)
+def patch_pack_endpoint(
+    pack_id: str,
+    body: PackPatchBody,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> PackDTO:
+    try:
+        pack = pack_service.update_pack_metadata(
+            db,
+            pack_id,
+            user.user_id,
+            title=body.title,
+            description=body.description,
+            tags=body.tags,
+            price_cents=body.price_cents,
+            license_commercial_multiplier=body.license_commercial_multiplier,
+        )
+    except PackNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "pack not found") from exc
+    except PackPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    db.commit()
+    return PackDTO.from_model(pack)
+
+
 @router.post("/packs/{pack_id}/publish", response_model=PackDTO)
 def publish_pack_endpoint(
     pack_id: str,
@@ -314,6 +352,54 @@ def patch_sample_endpoint(
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
     db.commit()
     return PackSampleDTO.from_model(sample)
+
+
+class PurchaseDTO(BaseModel):
+    id: str
+    pack_id: str
+    price_paid_credits: int
+    license_kind: str
+    created_at: str | None
+
+
+@router.post(
+    "/packs/{pack_id}/purchase",
+    response_model=PurchaseDTO,
+    status_code=status.HTTP_201_CREATED,
+)
+def purchase_pack_endpoint(
+    pack_id: str,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> PurchaseDTO:
+    from app.services import pack_purchase_service
+    from app.services.credit_service import InsufficientCreditsError
+    from app.services.pack_purchase_service import (
+        AlreadyOwnedError,
+        PackPurchaseError,
+    )
+
+    try:
+        purchase = pack_purchase_service.purchase_pack(
+            db, buyer_id=user.user_id, pack_id=pack_id
+        )
+    except AlreadyOwnedError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    except InsufficientCreditsError as exc:
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            f"need {exc.required} credits, have {exc.available}",
+        ) from exc
+    except PackPurchaseError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    db.commit()
+    return PurchaseDTO(
+        id=purchase.id,
+        pack_id=purchase.pack_id,
+        price_paid_credits=purchase.price_paid_credits,
+        license_kind=purchase.license_kind,
+        created_at=purchase.created_at.isoformat() if purchase.created_at else None,
+    )
 
 
 @router.delete(

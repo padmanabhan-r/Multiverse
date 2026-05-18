@@ -21,42 +21,80 @@ HERO_IMAGE_DIR: Path = (
     Path(__file__).resolve().parents[2] / "static" / "images" / "heroes"
 )
 
-_PROMPT_TEMPLATES: dict[str, str] = {
+_CATEGORY_STYLE: dict[str, str] = {
     "sfx": (
-        "Abstract waveform visualizer art for a '{title}' sound effect pack. "
-        "Dark near-black background, glowing molten orange accents, cinematic. No text."
+        "scene-illustrative concept art. Depict the literal SOURCE of the sound "
+        "as a single dramatic scene — props, materials, environment. Painterly, "
+        "cinematic, photo-real-leaning. Examples of variety to aim for: a smashed "
+        "neon sign, a controller mid-button-press, a magnifying glass over a "
+        "comic-book POW panel, a clockwork brass mechanism, footstep impact "
+        "rings on wet concrete, an explosion shockwave, a meme-style giant "
+        "thumbs-up emoji floating in chiaroscuro. Never abstract waveforms."
     ),
     "music": (
-        "Album cover art for a '{title}' music pack. {description} "
-        "Dark atmospheric, cinematic, moody lighting. No text."
+        "evocative album cover photography. Moody, restrained, "
+        "single-subject composition. A lone Rhodes piano in shadow, a vinyl "
+        "record spinning, an analog synth lit by a single bulb, a smoky stage. "
+        "Cinematic. Never abstract waveforms."
     ),
     "voice_packs": (
-        "Character portrait art for a '{title}' voice pack. "
-        "Dark cinematic, dramatic lighting, expressive. No text."
+        "character portrait silhouette — single figure, dramatic rim light, "
+        "molten-orange backlight. Convey the archetype implied by the title: "
+        "noir detective, fairy-tale narrator, sci-fi AI, hype host, cowboy "
+        "outlaw, etc. Never abstract waveforms; never a microphone."
     ),
     "ambient": (
-        "Environmental atmospheric landscape for a '{title}' ambient sound pack. "
-        "Dark moody, immersive, painterly. No text."
-    ),
-    "broadcast_packs": (
-        "Studio DJ booth or broadcast desk for a '{title}' broadcast pack. "
-        "Dark with neon accent glow, professional. No text."
+        "environmental landscape — wide painterly atmosphere, deep depth of "
+        "field, fog, distant horizon. Convey the literal place (rain on "
+        "asphalt → wet city street; tavern → candlelit interior; orbital → "
+        "ship corridor). Never abstract waveforms."
     ),
     "radio_packs": (
-        "Vintage radio broadcast scene for a '{title}' radio pack. "
-        "Dark retro aesthetic, warm tones, cinematic. No text."
+        "vintage broadcast scene tied to the station's place + era. "
+        "Late-night cab, wartime studio, orbital console, etc. Retro warmth, "
+        "dial glow, painterly. Never abstract waveforms."
+    ),
+    "broadcast_packs": (
+        "studio control-room or DJ booth scene, neon dashboard glow, "
+        "headphones, mixer faders, painterly. Never abstract waveforms."
     ),
 }
 
 _DELAY_SECONDS: float = 1.5
 
 
-def _build_prompt(title: str, category: str, description: str) -> str:
-    template = _PROMPT_TEMPLATES.get(
-        category,
-        "Abstract cover art for a '{title}' audio pack. Dark cinematic. No text.",
+def _build_prompt(
+    title: str,
+    category: str,
+    description: str,
+    tags: list[str] | None = None,
+    moods: list[str] | None = None,
+) -> str:
+    """Build a rich, scene-driven prompt unique to this pack.
+
+    The Gemini result varies most when the prompt is concretely visual:
+    title → scene, description → mood, tags/moods → palette + props.
+    """
+    style = _CATEGORY_STYLE.get(category, _CATEGORY_STYLE["sfx"])
+    pack_tags = ", ".join((tags or [])[:6])
+    pack_moods = ", ".join((moods or [])[:4])
+
+    parts: list[str] = [
+        f"Cover art for an audio pack called '{title}'.",
+    ]
+    if description:
+        parts.append(description.strip()[:240])
+    if pack_tags:
+        parts.append(f"Tags: {pack_tags}.")
+    if pack_moods:
+        parts.append(f"Mood: {pack_moods}.")
+    parts.append(f"Creative direction: {style}")
+    parts.append(
+        "Locked palette: near-black background (#0A0A0C) with warm "
+        "molten-orange (#FF6A1F) rim or accent light. No purple, no blue. "
+        "No text, no logos, no brand marks. 1:1 square composition."
     )
-    return template.format(title=title, description=description[:100])
+    return " ".join(parts)
 
 
 def generate_pack_cover(
@@ -84,7 +122,7 @@ def generate_pack_cover(
         return str(output_path)
 
     settings = get_settings()
-    prompt = _build_prompt(title, category, description)
+    prompt = _build_prompt(title, category, description, tags, moods)
 
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
     contents = [

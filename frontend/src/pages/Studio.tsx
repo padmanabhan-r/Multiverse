@@ -47,6 +47,17 @@ export function Studio() {
             + New pack
           </Link>
           <Link
+            to="/studio/tts"
+            data-testid="cta-tts"
+            className="
+              px-4 py-2 rounded-md bg-elev-2/60 border border-glass-soft
+              text-silver hover:text-warm font-mono text-[11px]
+              tracking-[0.22em] uppercase
+            "
+          >
+            TTS composer
+          </Link>
+          <Link
             to="/studio/bundle/new"
             data-testid="cta-new-bundle"
             className="

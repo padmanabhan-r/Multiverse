@@ -21,7 +21,7 @@ export function CreditBadge({ balance, tierGrant }: CreditBadgeProps) {
 
   return (
     <Link
-      to="/pricing"
+      to={subscribed || balance > 0 ? "/credits" : "/pricing"}
       data-testid="credit-badge"
       data-state={subscribed ? (low ? "low" : "ok") : "free"}
       className={cn(

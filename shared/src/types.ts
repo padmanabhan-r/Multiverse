@@ -121,6 +121,7 @@ export interface Pack {
   id: string;
   creator_id: string;
   creator_name: string;
+  price_credits?: number;
   title: string;
   description: string;
   category: PackCategory;

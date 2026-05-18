@@ -28,6 +28,7 @@ export interface ShellProps {
 
 const NAV_ITEMS = [
   { key: "discover", label: "Discover", to: "/browse" },
+  { key: "voices", label: "Voices", to: "/voices" },
   { key: "studio", label: "Studio", to: "/studio" },
   { key: "library", label: "Library", to: "/library" },
   { key: "creator", label: "Creator", to: "/creator" },
@@ -293,6 +294,28 @@ function SignedInCredits() {
   const credits = useMyCredits({ enabled: !!isSignedIn });
   const balance = credits.data?.balance ?? 0;
   const tierGrant = credits.data?.tier_monthly_grant ?? 0;
+  // Surface loading + error states in dev so we can spot wiring breakage.
+  if (credits.isLoading) {
+    return (
+      <span
+        data-testid="credit-badge-loading"
+        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-elev-2/60 border border-glass-soft font-mono text-[10px] tracking-[0.22em] uppercase text-silver2"
+      >
+        ⚡ …
+      </span>
+    );
+  }
+  if (credits.isError) {
+    return (
+      <span
+        data-testid="credit-badge-error"
+        title={String(credits.error)}
+        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-elev-2/60 border border-molten/50 font-mono text-[10px] tracking-[0.22em] uppercase text-molten"
+      >
+        ⚡ ?
+      </span>
+    );
+  }
   return <CreditBadge balance={balance} tierGrant={tierGrant} />;
 }
 

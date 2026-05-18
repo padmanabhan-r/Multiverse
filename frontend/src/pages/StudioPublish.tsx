@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import type { PackCategory } from "@multiverse-fm/shared";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import type { Pack, PackCategory } from "@multiverse-fm/shared";
+import { ApiError, api } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import { api } from "@/lib/api";
 
 const CATEGORIES: { value: PackCategory; label: string; credits: number }[] = [
   { value: "sfx", label: "Sound effects", credits: 1 },
@@ -23,8 +23,12 @@ interface LocationState {
 export function StudioPublish() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [search] = useSearchParams();
+  const draftIdFromUrl = search.get("packId");
   const prefill = (location.state ?? {}) as LocationState;
 
+  const [draft, setDraft] = useState<Pack | null>(null);
+  const [draftErr, setDraftErr] = useState<string | null>(null);
   const [title, setTitle] = useState(prefill.title ?? "");
   const [category, setCategory] = useState<PackCategory>(prefill.category ?? "sfx");
   const [description, setDescription] = useState(prefill.description ?? "");
@@ -34,6 +38,25 @@ export function StudioPublish() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Load existing draft if ?packId= present.
+  useEffect(() => {
+    if (!draftIdFromUrl) return;
+    api
+      .getPack(draftIdFromUrl)
+      .then((p) => {
+        setDraft(p);
+        setTitle(p.title);
+        setCategory(p.category as PackCategory);
+        setDescription(p.description || "");
+        setPriceDollars((p.price_cents / 100).toFixed(2));
+        setTagsRaw((p.tags || []).join(", "));
+        setMultiplier(String(p.license_commercial_multiplier || 3));
+      })
+      .catch((e) =>
+        setDraftErr(e instanceof Error ? e.message : "couldn't load draft"),
+      );
+  }, [draftIdFromUrl]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -42,34 +65,52 @@ export function StudioPublish() {
       setError("Title is required.");
       return;
     }
-
     const price = Math.round(parseFloat(priceDollars) * 100);
     if (isNaN(price) || price < 50 || price > 1500) {
       setError("Price must be between $0.50 and $15.");
       return;
     }
-
     const tags = tagsRaw
       .split(",")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
+    const multiplierVal = parseFloat(multiplier) || 3;
 
     setBusy(true);
     try {
-      const draft = await api.createDraft({
-        title: title.trim(),
-        category,
-        description: description.trim(),
-        price_cents: price,
-        tags,
-        moods: prefill.moods ?? [],
-        license_commercial_multiplier: parseFloat(multiplier) || 3,
-        style_profile: {},
-      });
-      await api.publishPack(draft.id);
-      navigate(`/p/${draft.id}`, { replace: true });
+      let pack: Pack;
+      if (draft) {
+        // Existing builder draft → PATCH metadata then publish.
+        pack = await api.updatePack(draft.id, {
+          title: title.trim(),
+          description: description.trim(),
+          price_cents: price,
+          tags,
+          license_commercial_multiplier: multiplierVal,
+        });
+      } else {
+        // No builder draft → legacy fast-track: create + publish in one go.
+        pack = await api.createDraft({
+          title: title.trim(),
+          category,
+          description: description.trim(),
+          price_cents: price,
+          tags,
+          moods: prefill.moods ?? [],
+          license_commercial_multiplier: multiplierVal,
+          style_profile: {},
+        });
+      }
+      await api.publishPack(pack.id);
+      navigate(`/p/${pack.id}`, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Publish failed. Try again.");
+      if (err instanceof ApiError && err.status === 422) {
+        setError(
+          `Pack isn't ready to publish yet: ${err.message}. Add at least one sample in the builder first.`,
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "Publish failed. Try again.");
+      }
       setBusy(false);
     }
   };
@@ -81,11 +122,18 @@ export function StudioPublish() {
           Studio · Publish
         </div>
         <h1 className="font-display text-warm text-3xl tracking-tight">
-          Publish to marketplace
+          {draft ? "Set details + publish" : "Publish to marketplace"}
         </h1>
         <p className="text-silver text-[14px]">
-          Set your price. Ship it. Buyers can purchase instantly.
+          {draft
+            ? `Editing draft "${draft.title}" · ${draft.sample_count} samples ready.`
+            : "Set your price. Ship it. Buyers can purchase instantly."}
         </p>
+        {draftErr && (
+          <div data-testid="publish-draft-err" className="text-molten text-[12px]">
+            {draftErr}
+          </div>
+        )}
       </div>
 
       <form
@@ -93,7 +141,6 @@ export function StudioPublish() {
         onSubmit={handleSubmit}
         className="space-y-4"
       >
-        {/* Title */}
         <Field label="Pack name" htmlFor="pub-title">
           <input
             id="pub-title"
@@ -106,77 +153,65 @@ export function StudioPublish() {
           />
         </Field>
 
-        {/* Category */}
-        <Field label="Category" htmlFor="pub-category">
-          <select
-            id="pub-category"
-            data-testid="publish-category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as PackCategory)}
-            className={inputCls}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label} ({c.credits} credit{c.credits > 1 ? "s" : ""} to generate)
-              </option>
-            ))}
-          </select>
-        </Field>
+        {!draft && (
+          <Field label="Category" htmlFor="pub-category">
+            <select
+              id="pub-category"
+              data-testid="publish-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as PackCategory)}
+              className={inputCls}
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label} · {c.credits} ⚡
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
 
-        {/* Description */}
         <Field label="Description" htmlFor="pub-desc">
           <textarea
             id="pub-desc"
             data-testid="publish-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            placeholder="What's in this pack. Where to use it."
             rows={3}
-            placeholder="What's in this pack? Where should buyers use it?"
-            className={cn(inputCls, "resize-none")}
+            className={inputCls}
           />
         </Field>
 
-        {/* Price */}
-        <Field label="Price (USD)" htmlFor="pub-price" hint="$0.50 – $15">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-silver2 text-[13px]">
-              $
-            </span>
-            <input
-              id="pub-price"
-              data-testid="publish-price"
-              type="number"
-              min="0.50"
-              max="15"
-              step="0.50"
-              value={priceDollars}
-              onChange={(e) => setPriceDollars(e.target.value)}
-              className={cn(inputCls, "pl-7")}
-            />
-          </div>
+        <Field label="Price (USD)" htmlFor="pub-price">
+          <input
+            id="pub-price"
+            data-testid="publish-price"
+            type="number"
+            min="0.50"
+            max="15"
+            step="0.50"
+            value={priceDollars}
+            onChange={(e) => setPriceDollars(e.target.value)}
+            className={inputCls}
+          />
         </Field>
 
-        {/* Tags */}
-        <Field label="Tags" htmlFor="pub-tags" hint="Comma-separated, e.g. jungle, nature, game">
+        <Field label="Tags (comma-separated)" htmlFor="pub-tags">
           <input
             id="pub-tags"
             data-testid="publish-tags"
             type="text"
             value={tagsRaw}
             onChange={(e) => setTagsRaw(e.target.value)}
-            placeholder="jungle, nature, indie game"
+            placeholder="noir, rain, city"
             className={inputCls}
           />
         </Field>
 
-        {/* Commercial multiplier */}
-        <Field
-          label="Commercial license multiplier"
-          htmlFor="pub-multiplier"
-          hint="Buyers pay this × price for commercial use (default 3×)"
-        >
+        <Field label="Commercial license multiplier" htmlFor="pub-mult">
           <select
-            id="pub-multiplier"
+            id="pub-mult"
             data-testid="publish-multiplier"
             value={multiplier}
             onChange={(e) => setMultiplier(e.target.value)}
@@ -184,71 +219,59 @@ export function StudioPublish() {
           >
             {["1.5", "2", "3", "5", "10"].map((m) => (
               <option key={m} value={m}>
-                {m}×
+                {m}× of personal price
               </option>
             ))}
           </select>
         </Field>
 
-        {/* Error */}
         {error && (
-          <p
-            data-testid="publish-error"
-            className="text-molten font-mono text-[11px] tracking-[0.04em]"
-          >
+          <div data-testid="publish-error" className="text-molten text-[12px]">
             {error}
-          </p>
+          </div>
         )}
 
-        {/* Submit */}
         <button
           type="submit"
           data-testid="publish-submit"
           disabled={busy}
-          style={!busy ? { color: "#1a0700" } : undefined}
-          className={cn(
-            "w-full py-3 rounded-pill font-mono text-[10.5px] tracking-[0.22em] uppercase font-semibold",
-            "transition-all duration-fast ease-tune",
-            busy
-              ? "bg-elev-2/60 border border-glass-soft text-silver cursor-not-allowed"
-              : "bg-molten hover:bg-molten-glow shadow-bloom",
-          )}
+          style={{ color: "#1a0700" }}
+          className="
+            w-full px-4 py-3 rounded-md bg-molten font-mono text-[11px]
+            tracking-[0.22em] uppercase font-semibold hover:bg-molten-glow
+            shadow-bloom disabled:opacity-50
+          "
         >
-          {busy ? "Publishing…" : "Publish to marketplace"}
+          {busy ? "Publishing…" : draft ? "Publish pack" : "Create + publish"}
         </button>
       </form>
     </section>
   );
 }
 
+const inputCls =
+  "w-full px-3 py-2.5 rounded-md bg-elev-2/60 border border-glass-soft " +
+  "text-warm text-[13px] placeholder:text-silver/60";
+
 function Field({
   label,
   htmlFor,
-  hint,
   children,
 }: {
   label: string;
   htmlFor: string;
-  hint?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <label
-          htmlFor={htmlFor}
-          className="font-mono text-[10px] tracking-[0.22em] uppercase text-silver"
-        >
-          {label}
-        </label>
-        {hint && (
-          <span className="font-mono text-[9.5px] text-silver2 tracking-[0.04em]">{hint}</span>
+    <label className="block space-y-1" htmlFor={htmlFor}>
+      <span
+        className={cn(
+          "block font-mono text-silver2 text-[10px] tracking-[0.28em] uppercase",
         )}
-      </div>
+      >
+        {label}
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
-
-const inputCls =
-  "w-full bg-elev-2/40 border border-glass-soft rounded-md px-3 py-2.5 text-warm text-[14px] placeholder:text-silver2 focus:outline-none focus:border-glass transition-colors duration-fast ease-tune";

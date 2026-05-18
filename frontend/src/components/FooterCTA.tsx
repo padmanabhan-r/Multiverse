@@ -17,8 +17,8 @@ export function FooterCTA() {
         />
         <CTARow
           to="/browse"
-          headline="Browse 30+ packs."
-          caption="Sound effects, music, voice, ambient and more — sold by AI-native creators."
+          headline="Browse the catalog."
+          caption="Thousands of royalty-free AI-generated sounds — sold by AI-native creators."
           testId="footer-cta-browse"
         />
       </div>
