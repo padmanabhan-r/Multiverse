@@ -1,8 +1,11 @@
+import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 import { BuyPackButton } from "@/components/BuyPackButton";
-import { usePack } from "@/lib/queries";
+import { usePack, usePackAccess, usePackSamples } from "@/lib/queries";
+import type { PackSample } from "@multiverse/shared";
 
 export function Pack() {
   const { packId } = useParams<{ packId: string }>();
@@ -18,6 +21,21 @@ export function Pack() {
 function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data"]> }) {
   const navigate = useNavigate();
   const plate = plateFor(pack.id);
+  const { user } = useUser();
+  const isOwner = !!user && user.id === pack.creator_id;
+  const { data: access } = usePackAccess(user ? pack.id : undefined);
+  const owned = access?.owned ?? isOwner;
+  const { data: samples } = usePackSamples(pack.id);
+  const previewRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const previewSrc = samples?.[0]?.audio_url ?? pack.preview_url;
+
+  function togglePreview() {
+    const el = previewRef.current;
+    if (!el || !previewSrc) return;
+    if (playing) { el.pause(); } else { el.play(); }
+  }
 
   const fields: Array<[string, string]> = [
     ["Category", CATEGORY_LABEL[pack.category]],
@@ -124,30 +142,50 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
             </p>
           )}
 
+          {previewSrc && (
+            <audio
+              ref={previewRef}
+              src={previewSrc.startsWith("http") ? previewSrc : `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${previewSrc}`}
+              preload="none"
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onEnded={() => setPlaying(false)}
+            />
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              data-testid="pack-play"
-              onClick={() => undefined /* Sm wires preview audio */}
-              style={{
-                color: "#1a0700",
-                background: "var(--mvfm-molten)",
-                boxShadow:
-                  "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
-              }}
-              className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.12em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
-            >
-              <span
-                aria-hidden
-                className="block w-0 h-0 -ml-0.5"
+            {previewSrc && (
+              <button
+                type="button"
+                data-testid="pack-play"
+                onClick={togglePreview}
                 style={{
-                  borderLeft: "7px solid #1a0700",
-                  borderTop: "5px solid transparent",
-                  borderBottom: "5px solid transparent",
+                  color: "#1a0700",
+                  background: "var(--mvfm-molten)",
+                  boxShadow:
+                    "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
                 }}
-              />
-              Play 30 s preview
-            </button>
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.12em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
+              >
+                {playing ? (
+                  <span className="flex gap-[3px]">
+                    <span className="w-[2.5px] h-3 rounded-full bg-current" />
+                    <span className="w-[2.5px] h-3 rounded-full bg-current" />
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden
+                    className="block w-0 h-0 -ml-0.5"
+                    style={{
+                      borderLeft: "7px solid #1a0700",
+                      borderTop: "5px solid transparent",
+                      borderBottom: "5px solid transparent",
+                    }}
+                  />
+                )}
+                {playing ? "Pause" : "Preview"}
+              </button>
+            )}
             <button
               type="button"
               data-testid="pack-view-creator"
@@ -195,9 +233,28 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
               </div>
             ))}
           </dl>
+
+          {/* Sounds list */}
+          {samples && samples.length > 0 && (
+            <div className="mt-8 sm:mt-10">
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="font-mono text-warm text-[12px] tracking-[0.18em] uppercase font-semibold">
+                  {pack.category === "sfx" ? "Sounds" : "Samples"}
+                </h2>
+                <span className="font-mono text-silver2 text-[9.5px] tracking-[0.18em] uppercase">
+                  {samples.length} tracks
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {samples.map((s, i) => (
+                  <PackSoundRow key={s.id} sample={s} index={i} owned={owned} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* License + Cart sidebar */}
+        {/* Buy sidebar — hidden for the pack's own creator */}
         <aside
           data-testid="pack-buy"
           className="
@@ -208,33 +265,145 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
         >
           <div>
             <div className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
-              Buy this pack
+              {isOwner ? "Your pack" : "Buy this pack"}
             </div>
             <div className="font-mono text-warm text-[15px] truncate mt-1">
               {pack.title}
             </div>
           </div>
 
-          <div className="flex items-baseline justify-between border-t border-glass-soft pt-3">
-            <span className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
-              Price
-            </span>
-            <span
-              data-testid="pack-buy-total"
-              className="font-mono text-warm text-[20px] tracking-[-0.005em] font-semibold"
-            >
-              {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
-            </span>
-          </div>
-
-          <BuyPackButton pack={pack} className="w-full flex flex-col gap-2" />
-
-          <p className="text-silver2 text-[10.5px] leading-[1.5]">
-            Royalty-free. Buyers spend credits to own a pack — no recurring
-            fees. Creators earn 70% of every purchase.
-          </p>
+          {owned ? (
+            <div className="space-y-3 border-t border-glass-soft pt-3">
+              <a
+                href={`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}/packs/${pack.id}/download/zip`}
+                download={`${pack.title}.zip`}
+                className="
+                  w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md
+                  font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold
+                  hover:brightness-110 transition-all duration-fast ease-tune
+                "
+                style={{
+                  color: "#1a0700",
+                  background: "var(--mvfm-molten)",
+                  boxShadow: "0 0 0 1px rgba(255,106,31,0.7), 0 10px 30px -10px rgba(255,106,31,0.8), inset 0 1px 0 rgba(255,255,255,0.28)",
+                }}
+              >
+                <svg viewBox="0 0 12 12" fill="none" className="size-3" aria-hidden>
+                  <path d="M6 2v6M3 6l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Download all
+              </a>
+              {isOwner && (
+                <p className="text-silver2 text-[10px] leading-[1.5]">
+                  Your pack · buyers pay {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡ · you earn 70%
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between border-t border-glass-soft pt-3">
+                <span className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">
+                  Price
+                </span>
+                <span
+                  data-testid="pack-buy-total"
+                  className="font-mono text-warm text-[20px] tracking-[-0.005em] font-semibold"
+                >
+                  {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
+                </span>
+              </div>
+              <BuyPackButton pack={pack} className="w-full flex flex-col gap-2" />
+              <p className="text-silver2 text-[10.5px] leading-[1.5]">
+                Royalty-free. Buyers spend credits to own a pack — no recurring
+                fees. Creators earn 70% of every purchase.
+              </p>
+            </>
+          )}
         </aside>
       </section>
+    </div>
+  );
+}
+
+function PackSoundRow({ sample, index, owned }: { sample: PackSample; index: number; owned: boolean }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const src = sample.audio_url.startsWith("http")
+    ? sample.audio_url
+    : `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${sample.audio_url}`;
+
+  function toggle() {
+    const el = audioRef.current;
+    if (!el) return;
+    playing ? el.pause() : el.play();
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 px-3 sm:px-4 py-3 rounded-md border",
+        "transition-colors duration-fast ease-tune",
+        playing
+          ? "border-molten/40 bg-molten-tint/10"
+          : "border-glass-soft bg-elev-2/30 hover:border-glass",
+      )}
+    >
+      <button
+        type="button"
+        aria-label={playing ? `Pause ${sample.title}` : `Play ${sample.title}`}
+        onClick={toggle}
+        className={cn(
+          "flex-shrink-0 size-8 rounded-full grid place-items-center transition-colors duration-fast ease-tune",
+          playing
+            ? "bg-molten text-[#1a0700]"
+            : "bg-elev-2 border border-glass text-silver hover:text-warm hover:border-molten/40",
+        )}
+      >
+        {playing ? (
+          <span className="flex gap-[3px]">
+            <span className="w-[2.5px] h-2.5 rounded-full bg-current" />
+            <span className="w-[2.5px] h-2.5 rounded-full bg-current" />
+          </span>
+        ) : (
+          <span
+            className="block w-0 h-0 ml-0.5"
+            style={{
+              borderLeft: "6px solid currentColor",
+              borderTop: "4px solid transparent",
+              borderBottom: "4px solid transparent",
+            }}
+          />
+        )}
+      </button>
+      <span className="font-mono text-silver2 text-[10px] tracking-[0.18em] w-5 flex-shrink-0">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <span className="font-mono text-warm text-[13px] truncate flex-1">{sample.title}</span>
+      <span className="font-mono text-silver2 text-[10px] tracking-[0.1em] flex-shrink-0">
+        {formatDuration(sample.duration_ms)}
+      </span>
+      {owned && (
+        <a
+          href={src}
+          download={`${sample.title}.mp3`}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Download ${sample.title}`}
+          className="flex-shrink-0 size-7 rounded-md grid place-items-center text-silver2 hover:text-warm border border-glass-soft hover:border-glass transition-colors duration-fast ease-tune"
+        >
+          <svg viewBox="0 0 12 12" fill="none" className="size-3" aria-hidden>
+            <path d="M6 2v5M3.5 5l2.5 3 2.5-3M2 10h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
+      )}
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
     </div>
   );
 }

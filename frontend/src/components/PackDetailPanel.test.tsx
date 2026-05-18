@@ -1,10 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { Pack } from "@multiverse/shared";
 import { useCart } from "@/stores/cartStore";
 import { usePlayer } from "@/stores/playerStore";
+import { api } from "@/lib/api";
 import { PackDetailPanel } from "./PackDetailPanel";
 
 const pack: Pack = {
@@ -43,14 +45,23 @@ const reset = () => {
   });
 };
 
-beforeEach(reset);
-afterEach(reset);
+beforeEach(() => {
+  reset();
+  vi.spyOn(api, "listSamples").mockResolvedValue([]);
+});
+afterEach(() => {
+  reset();
+  vi.restoreAllMocks();
+});
 
 function renderPanel() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
-      <PackDetailPanel pack={pack} />
-    </MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>
+        <PackDetailPanel pack={pack} />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -65,19 +76,17 @@ describe("PackDetailPanel", () => {
     expect(screen.queryByTestId("pack-tab-license")).not.toBeInTheDocument();
   });
 
-  it("Preview tab shows title + sound count + duration + play CTA", () => {
+  it("Preview tab shows title + sound count + duration", () => {
     renderPanel();
     const panel = screen.getByTestId("pack-preview-tab");
     expect(within(panel).getByText("Rainy noir stings")).toBeInTheDocument();
     expect(within(panel).getByText(/10 sounds/)).toBeInTheDocument();
     expect(within(panel).getByText(/0:30/)).toBeInTheDocument();
-    expect(within(panel).getByTestId("pack-preview-play")).toBeInTheDocument();
   });
 
   it("Preview tab shows Add to cart button with price", () => {
     renderPanel();
-    const btn = screen.getByTestId("pack-add-to-cart");
-    expect(btn).toHaveTextContent(/\$5/);
+    expect(screen.getByTestId("pack-add-to-cart")).toHaveTextContent(/\$5/);
   });
 
   it("Details tab lists category, tags, creator", async () => {

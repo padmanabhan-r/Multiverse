@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartItem, LicenseKind, Pack } from "@multiverse-fm/shared";
+import type { CartItem, LicenseKind, Pack } from "@multiverse/shared";
 
 export interface CartState {
   items: CartItem[];

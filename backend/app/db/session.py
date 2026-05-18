@@ -14,9 +14,13 @@ from app.config import get_settings
 def get_engine() -> Engine:
     s = get_settings()
     url = s.DATABASE_URL_SYNC or s.DATABASE_URL
-    # SQLAlchemy needs sync driver scheme
-    if url.startswith("postgresql+asyncpg"):
-        url = url.replace("postgresql+asyncpg", "postgresql+psycopg", 1)
+    # Normalise to psycopg (v3) sync driver — handles plain postgres:// and asyncpg URLs
+    if url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
     connect_args: dict[str, object] = {}
     if url.startswith("sqlite"):
         connect_args["check_same_thread"] = False

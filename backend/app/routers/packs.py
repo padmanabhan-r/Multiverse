@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import io
+import zipfile
 from typing import Annotated, Any, Literal
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
-from app.db.models import Pack, PACK_CATEGORIES, PackSample
+from app.db.models import Pack, PACK_CATEGORIES, PackSample, Purchase
 from app.db.session import get_db
 from app.deps import CurrentUser
 from app.services import pack_service, sample_service
@@ -323,6 +327,79 @@ def list_samples_endpoint(
         PackSampleDTO.from_model(s)
         for s in sample_service.list_samples(db, pack_id)
     ]
+
+
+class PackAccessDTO(BaseModel):
+    owned: bool
+    is_creator: bool
+
+
+@router.get("/packs/{pack_id}/access", response_model=PackAccessDTO)
+def pack_access_endpoint(
+    pack_id: str,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> PackAccessDTO:
+    pack = db.get(Pack, pack_id)
+    if pack is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "pack not found")
+    is_creator = pack.creator_id == user.user_id
+    purchased = (
+        db.query(Purchase)
+        .filter(Purchase.pack_id == pack_id, Purchase.user_id == user.user_id)
+        .first()
+        is not None
+    )
+    return PackAccessDTO(owned=is_creator or purchased, is_creator=is_creator)
+
+
+@router.get("/packs/{pack_id}/download/zip")
+def download_pack_zip(
+    pack_id: str,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> StreamingResponse:
+    pack = db.get(Pack, pack_id)
+    if pack is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "pack not found")
+
+    is_creator = pack.creator_id == user.user_id
+    purchased = (
+        db.query(Purchase)
+        .filter(Purchase.pack_id == pack_id, Purchase.user_id == user.user_id)
+        .first()
+        is not None
+    )
+    if not (is_creator or purchased):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "purchase required")
+
+    samples = sample_service.list_samples(db, pack_id)
+    if not samples:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no samples in this pack")
+
+    def generate_zip():
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for s in samples:
+                url = s.audio_url
+                if not url.startswith("http"):
+                    continue
+                try:
+                    resp = httpx.get(url, timeout=30)
+                    resp.raise_for_status()
+                    filename = f"{s.position + 1:02d} - {s.title}.mp3"
+                    zf.writestr(filename, resp.content)
+                except Exception:
+                    pass
+        buf.seek(0)
+        yield from buf
+
+    safe_title = "".join(c if c.isalnum() or c in " -_" else "_" for c in pack.title)
+    return StreamingResponse(
+        generate_zip(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{safe_title}.zip"'},
+    )
 
 
 @router.patch(

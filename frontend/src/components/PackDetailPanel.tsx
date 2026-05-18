@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Pack } from "@multiverse-fm/shared";
+import { useUser } from "@clerk/clerk-react";
+import type { Pack, PackSample } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 import { useCart } from "@/stores/cartStore";
 import { usePlayer } from "@/stores/playerStore";
+import { usePackSamples } from "@/lib/queries";
 
 export type PackPanelTab = "preview" | "details";
 
@@ -27,10 +29,12 @@ export function PackDetailPanel({
   const [tab, setTab] = useState<PackPanelTab>(initialTab);
   const closePackPanel = usePlayer((s) => s.closePackPanel);
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const addItem = useCart((s) => s.add);
   const removeItem = useCart((s) => s.remove);
   const inCart = useCart((s) => s.items.some((i) => i.pack_id === pack.id));
+  const isOwner = !!user && user.id === pack.creator_id;
 
   const dismiss = () => closePackPanel();
 
@@ -91,6 +95,7 @@ export function PackDetailPanel({
           <PreviewTab
             pack={pack}
             onPreview={onPreview}
+            isOwner={isOwner}
             inCart={inCart}
             onAddToCart={() => addItem(pack, "personal")}
             onRemoveFromCart={() => removeItem(pack.id, "personal")}
@@ -106,9 +111,90 @@ export function PackDetailPanel({
   );
 }
 
+function SoundRow({ sample, index }: { sample: PackSample; index: number }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  function toggle() {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) {
+      el.pause();
+    } else {
+      el.play();
+    }
+  }
+
+  const src = sample.audio_url.startsWith("http")
+    ? sample.audio_url
+    : `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"}${sample.audio_url}`;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-md",
+        "border border-glass-soft bg-elev-2/30",
+        "transition-colors duration-fast ease-tune",
+        playing && "border-molten/40 bg-molten-tint/20",
+      )}
+    >
+      <button
+        type="button"
+        aria-label={playing ? `Pause ${sample.title}` : `Play ${sample.title}`}
+        onClick={toggle}
+        className={cn(
+          "flex-shrink-0 size-7 rounded-full grid place-items-center",
+          "transition-colors duration-fast ease-tune",
+          playing
+            ? "bg-molten text-[#1a0700]"
+            : "bg-elev-2 border border-glass text-silver hover:text-warm hover:border-molten/40",
+        )}
+      >
+        {playing ? (
+          <span className="flex gap-[3px]">
+            <span className="w-[2.5px] h-2.5 rounded-full bg-current" />
+            <span className="w-[2.5px] h-2.5 rounded-full bg-current" />
+          </span>
+        ) : (
+          <span
+            className="block w-0 h-0 ml-0.5"
+            style={{
+              borderLeft: "6px solid currentColor",
+              borderTop: "4px solid transparent",
+              borderBottom: "4px solid transparent",
+            }}
+          />
+        )}
+      </button>
+
+      <span className="font-mono text-silver2 text-[9px] tracking-[0.18em] w-4 flex-shrink-0">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+
+      <span className="font-mono text-warm text-[11.5px] truncate flex-1">
+        {sample.title}
+      </span>
+
+      <span className="font-mono text-silver2 text-[9px] tracking-[0.1em] flex-shrink-0">
+        {formatDuration(sample.duration_ms)}
+      </span>
+
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
+    </div>
+  );
+}
+
 function PreviewTab({
   pack,
   onPreview,
+  isOwner,
   inCart,
   onAddToCart,
   onRemoveFromCart,
@@ -116,12 +202,15 @@ function PreviewTab({
 }: {
   pack: Pack;
   onPreview?: (id: string) => void;
+  isOwner: boolean;
   inCart: boolean;
   onAddToCart: () => void;
   onRemoveFromCart: () => void;
   onOpenCart: () => void;
 }) {
   const plate = plateFor(pack.id);
+  const { data: samples, isLoading: samplesLoading } = usePackSamples(pack.id);
+
   return (
     <div data-testid="pack-preview-tab" className="p-4 sm:p-5 space-y-5">
       <div className="relative aspect-square rounded-md overflow-hidden">
@@ -157,7 +246,23 @@ function PreviewTab({
         </div>
       </div>
 
-      {pack.preview_url ? (
+      {/* Sounds list */}
+      {samplesLoading ? (
+        <div className="space-y-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-10 rounded-md bg-elev-2/40 animate-pulse" />
+          ))}
+        </div>
+      ) : samples && samples.length > 0 ? (
+        <div data-testid="pack-sounds-list" className="space-y-1.5">
+          <div className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase mb-2">
+            Sounds
+          </div>
+          {samples.map((s, i) => (
+            <SoundRow key={s.id} sample={s} index={i} />
+          ))}
+        </div>
+      ) : pack.preview_url ? (
         <audio
           data-testid="pack-preview-play"
           src={
@@ -186,7 +291,11 @@ function PreviewTab({
         <p className="text-warm/85 text-[13px] leading-[1.5]">{pack.description}</p>
       )}
 
-      {inCart ? (
+      {isOwner ? (
+        <div className="px-3 py-2 rounded-md bg-elev-2/40 border border-glass-soft text-center font-mono text-silver2 text-[10px] tracking-[0.18em] uppercase">
+          Your pack
+        </div>
+      ) : inCart ? (
         <div className="flex flex-col gap-2">
           <button
             type="button"

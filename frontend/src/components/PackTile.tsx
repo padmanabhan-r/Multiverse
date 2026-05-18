@@ -1,4 +1,4 @@
-import type { Pack, PackCategory } from "@multiverse-fm/shared";
+import type { Pack, PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 

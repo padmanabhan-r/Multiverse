@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     R2_ACCOUNT_ID: str = ""
     R2_ACCESS_KEY_ID: str = ""
     R2_SECRET_ACCESS_KEY: str = ""
-    R2_BUCKET: str = "multiverse-fm"
+    R2_BUCKET: str = "multiverse"
     R2_PUBLIC_BASE_URL: str = ""
 
     STRIPE_SECRET_KEY: str = ""

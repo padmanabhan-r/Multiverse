@@ -6,7 +6,7 @@ import type {
   PackListFilters,
   PackSample,
   SampleKind,
-} from "@multiverse-fm/shared";
+} from "@multiverse/shared";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -78,6 +78,8 @@ export interface ApiClient {
 
   // Sh.6 — Studio builder surface
   listMyPacks: () => Promise<Pack[]>;
+  packAccess: (packId: string) => Promise<{ owned: boolean; is_creator: boolean }>;
+  downloadPackZipUrl: (packId: string) => string;
   listSamples: (packId: string) => Promise<PackSample[]>;
   deleteSample: (packId: string, sampleId: string) => Promise<void>;
   updateSample: (
@@ -280,6 +282,9 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
       request<Pack>(`/packs/${encodeURIComponent(packId)}/publish`, { method: "POST" }),
 
     listMyPacks: () => request<Pack[]>("/packs/mine"),
+    packAccess: (packId) =>
+      request<{ owned: boolean; is_creator: boolean }>(`/packs/${encodeURIComponent(packId)}/access`),
+    downloadPackZipUrl: (packId) => `${BASE}/packs/${encodeURIComponent(packId)}/download/zip`,
     listSamples: (packId) =>
       request<PackSample[]>(`/packs/${encodeURIComponent(packId)}/samples`),
     deleteSample: async (packId, sampleId) => {
