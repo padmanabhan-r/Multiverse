@@ -14,33 +14,31 @@ CURATED_DISPLAY_NAME = "Multiverse Curated"
 
 
 def _radio_packs_from_stations() -> list[dict[str, Any]]:
-    """Map the existing 6 hero stations into `radio_packs` category entries."""
-    out: list[dict[str, Any]] = []
-    for s in HERO_STATIONS:
-        out.append(
-            {
-                "id": f"pack-radio-{s['id']}",
-                "title": s["station_name"],
-                "description": (
-                    f"A 4-minute curated radio broadcast — "
-                    f"{s['broadcast_format']}. Host: {s['dj_persona'].split(' — ')[0]}. "
-                    f"Slogan: {s['station_slogan']}"
-                ),
-                "category": "radio_packs",
-                "tags": [s["reality_type"], s["year_or_era"], s["mastering_preset"]],
-                "moods": s.get("ambient_palette", [])[:3],
-                "price_cents": 300,
-                "credit_cost": 3,
-                "duration_ms": 240_000,
-                "sample_count": 9,  # 9 segments per radio block
-                "style_profile": {
-                    "source": "station",
-                    "station_id": s["id"],
-                    "music_blueprint": s.get("music_blueprint", {}),
-                },
-            }
-        )
-    return out
+    """One radio pack — the flagship Brooklyn 88.7 Night Cab station."""
+    brooklyn = next(s for s in HERO_STATIONS if s["id"] == "brooklyn_887")
+    return [
+        {
+            "id": f"pack-radio-{brooklyn['id']}",
+            "title": brooklyn["station_name"],
+            "description": (
+                f"A 4-minute curated radio broadcast — "
+                f"{brooklyn['broadcast_format']}. Host: {brooklyn['dj_persona'].split(' — ')[0]}. "
+                f"Slogan: {brooklyn['station_slogan']}"
+            ),
+            "category": "radio_packs",
+            "tags": [brooklyn["reality_type"], brooklyn["year_or_era"], brooklyn["mastering_preset"]],
+            "moods": brooklyn.get("ambient_palette", [])[:3],
+            "price_cents": 300,
+            "credit_cost": 3,
+            "duration_ms": 240_000,
+            "sample_count": 9,
+            "style_profile": {
+                "source": "station",
+                "station_id": brooklyn["id"],
+                "music_blueprint": brooklyn.get("music_blueprint", {}),
+            },
+        }
+    ]
 
 
 def _sfx_packs() -> list[dict[str, Any]]:
@@ -54,6 +52,7 @@ def _sfx_packs() -> list[dict[str, Any]]:
             "moods": ["cyberpunk", "apocalyptic"],
             "price_cents": 50,
             "credit_cost": 1,
+            "price_credits": 2,
             "duration_ms": 36_000,
             "sample_count": 12,
         },
@@ -66,6 +65,7 @@ def _sfx_packs() -> list[dict[str, Any]]:
             "moods": ["noir"],
             "price_cents": 50,
             "credit_cost": 1,
+            "price_credits": 2,
             "duration_ms": 30_000,
             "sample_count": 10,
         },
@@ -78,6 +78,7 @@ def _sfx_packs() -> list[dict[str, Any]]:
             "moods": ["orbital"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 22_000,
             "sample_count": 20,
         },
@@ -90,6 +91,7 @@ def _sfx_packs() -> list[dict[str, Any]]:
             "moods": ["steampunk"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 48_000,
             "sample_count": 14,
         },
@@ -102,6 +104,7 @@ def _sfx_packs() -> list[dict[str, Any]]:
             "moods": ["wartime", "apocalyptic"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 42_000,
             "sample_count": 10,
         },
@@ -119,6 +122,7 @@ def _music_packs() -> list[dict[str, Any]]:
             "moods": ["noir"],
             "price_cents": 300,
             "credit_cost": 4,
+            "price_credits": 5,
             "duration_ms": 540_000,
             "sample_count": 3,
         },
@@ -131,6 +135,7 @@ def _music_packs() -> list[dict[str, Any]]:
             "moods": ["orbital"],
             "price_cents": 550,
             "credit_cost": 4,
+            "price_credits": 5,
             "duration_ms": 720_000,
             "sample_count": 5,
         },
@@ -143,6 +148,7 @@ def _music_packs() -> list[dict[str, Any]]:
             "moods": ["steampunk"],
             "price_cents": 700,
             "credit_cost": 5,
+            "price_credits": 5,
             "duration_ms": 600_000,
             "sample_count": 4,
         },
@@ -155,6 +161,7 @@ def _music_packs() -> list[dict[str, Any]]:
             "moods": ["vapor-future"],
             "price_cents": 500,
             "credit_cost": 3,
+            "price_credits": 5,
             "duration_ms": 660_000,
             "sample_count": 6,
         },
@@ -167,6 +174,7 @@ def _music_packs() -> list[dict[str, Any]]:
             "moods": ["hyperpop", "apocalyptic"],
             "price_cents": 600,
             "credit_cost": 4,
+            "price_credits": 5,
             "duration_ms": 540_000,
             "sample_count": 4,
         },
@@ -184,6 +192,7 @@ def _voice_packs() -> list[dict[str, Any]]:
             "moods": ["noir"],
             "price_cents": 400,
             "credit_cost": 3,
+            "price_credits": 3,
             "duration_ms": 180_000,
             "sample_count": 8,
         },
@@ -196,6 +205,7 @@ def _voice_packs() -> list[dict[str, Any]]:
             "moods": ["noir", "pastoral"],
             "price_cents": 250,
             "credit_cost": 3,
+            "price_credits": 3,
             "duration_ms": 120_000,
             "sample_count": 12,
         },
@@ -208,6 +218,7 @@ def _voice_packs() -> list[dict[str, Any]]:
             "moods": ["wartime"],
             "price_cents": 200,
             "credit_cost": 3,
+            "price_credits": 3,
             "duration_ms": 150_000,
             "sample_count": 10,
         },
@@ -220,6 +231,7 @@ def _voice_packs() -> list[dict[str, Any]]:
             "moods": ["tavern"],
             "price_cents": 300,
             "credit_cost": 3,
+            "price_credits": 3,
             "duration_ms": 210_000,
             "sample_count": 15,
         },
@@ -232,6 +244,7 @@ def _voice_packs() -> list[dict[str, Any]]:
             "moods": ["corporate", "apocalyptic"],
             "price_cents": 250,
             "credit_cost": 3,
+            "price_credits": 3,
             "duration_ms": 160_000,
             "sample_count": 8,
         },
@@ -249,6 +262,7 @@ def _ambient_packs() -> list[dict[str, Any]]:
             "moods": ["noir"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 540_000,
             "sample_count": 3,
         },
@@ -261,6 +275,7 @@ def _ambient_packs() -> list[dict[str, Any]]:
             "moods": ["orbital"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 720_000,
             "sample_count": 4,
         },
@@ -273,6 +288,7 @@ def _ambient_packs() -> list[dict[str, Any]]:
             "moods": ["tavern", "pastoral"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 600_000,
             "sample_count": 3,
         },
@@ -285,6 +301,7 @@ def _ambient_packs() -> list[dict[str, Any]]:
             "moods": ["wartime"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 480_000,
             "sample_count": 2,
         },
@@ -297,6 +314,7 @@ def _ambient_packs() -> list[dict[str, Any]]:
             "moods": ["apocalyptic"],
             "price_cents": 100,
             "credit_cost": 2,
+            "price_credits": 2,
             "duration_ms": 540_000,
             "sample_count": 3,
         },
@@ -314,57 +332,22 @@ def _broadcast_packs() -> list[dict[str, Any]]:
             "moods": ["noir"],
             "price_cents": 200,
             "credit_cost": 3,
+            "price_credits": 5,
             "duration_ms": 240_000,
             "sample_count": 20,
-        },
-        {
-            "id": "pack-broadcast-news-bulletins",
-            "title": "News bulletin pack",
-            "description": "10 in-world news bulletins — generic enough to drop into any near-future setting.",
-            "category": "broadcast_packs",
-            "tags": ["news", "bulletin", "broadcast"],
-            "moods": ["corporate"],
-            "price_cents": 400,
-            "credit_cost": 3,
-            "duration_ms": 300_000,
-            "sample_count": 10,
-        },
-        {
-            "id": "pack-broadcast-sponsor-ads",
-            "title": "Sponsor ad pack",
-            "description": "12 fake sponsor ads — coffee, ride-hails, tax software, energy drinks.",
-            "category": "broadcast_packs",
-            "tags": ["ad", "sponsor", "satire"],
-            "moods": ["corporate", "apocalyptic"],
-            "price_cents": 300,
-            "credit_cost": 3,
-            "duration_ms": 360_000,
-            "sample_count": 12,
-        },
-        {
-            "id": "pack-broadcast-station-idents",
-            "title": "Station idents",
-            "description": "30 short station idents — across FM, pirate, future-orbital and wartime registers.",
-            "category": "broadcast_packs",
-            "tags": ["ident", "broadcast", "jingle"],
-            "moods": ["noir", "orbital", "wartime"],
-            "price_cents": 300,
-            "credit_cost": 3,
-            "duration_ms": 180_000,
-            "sample_count": 30,
         },
     ]
 
 
 def all_curated_packs() -> list[dict[str, Any]]:
-    """30 published packs across 6 categories. Order is stable for tests."""
+    """22 published packs across 6 categories. Order is stable for tests."""
     return [
-        *_radio_packs_from_stations(),  # 6
-        *_sfx_packs(),                  # 5
         *_music_packs(),                # 5
+        *_sfx_packs(),                  # 5
         *_voice_packs(),                # 5
         *_ambient_packs(),              # 5
-        *_broadcast_packs(),            # 4
+        *_radio_packs_from_stations(),  # 1
+        *_broadcast_packs(),            # 1
     ]
 
 

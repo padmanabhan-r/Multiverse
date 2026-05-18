@@ -34,9 +34,9 @@ describe("Pricing", () => {
   it("shows credit cost legend", () => {
     renderPricing();
     expect(screen.getByTestId("credit-legend")).toBeInTheDocument();
-    // SFX = 1, music = 3
-    expect(screen.getByTestId("credit-legend")).toHaveTextContent(/1 credit/i);
-    expect(screen.getByTestId("credit-legend")).toHaveTextContent(/3 credits/i);
+    // SFX = 2, music = 5
+    expect(screen.getByTestId("credit-legend")).toHaveTextContent(/2 credits/i);
+    expect(screen.getByTestId("credit-legend")).toHaveTextContent(/5 credits/i);
   });
 
   it("shows 70/30 marketplace fee explainer", () => {

@@ -18,13 +18,23 @@ from sqlalchemy.orm import Session
 
 from app.db.models import CreditBalance, CreditLedger, PackCategory
 
-# Sm.2 economy. 1 credit = $0.10 USD.
+# Economy: 1 credit ≈ $0.05 USD.
 TIER_MONTHLY_CREDITS: dict[str, int] = {
     "free": 0,
-    "creator": 100,
-    "pro_studio": 400,
+    "creator": 200,
+    "pro_studio": 1000,
 }
-FREE_TRIAL_CREDITS: int = 5
+FREE_TRIAL_CREDITS: int = 50
+
+# Pack purchase prices by category (credits).
+PACK_PURCHASE_CREDITS: dict[str, int] = {
+    "sfx": 2,
+    "music": 5,
+    "voice_packs": 3,
+    "ambient": 2,
+    "radio_packs": 8,
+    "broadcast_packs": 5,
+}
 
 # Legacy pack-category cost (kept for back-compat with seed + old callers).
 _COSTS: dict[str, int] = {

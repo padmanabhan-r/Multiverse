@@ -21,11 +21,11 @@ const TIERS: Tier[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    credits: "5 trial Studio credits — one time",
+    credits: "50 credits — one time",
     features: [
       "Browse the full marketplace",
-      "Buy packs with a card (no sub needed)",
-      "5 one-time Studio credits to try generation",
+      "50 one-time credits to buy packs",
+      "Buy packs instantly — no subscription needed",
       "Personal license on purchases",
     ],
     cta: "Get started",
@@ -37,12 +37,12 @@ const TIERS: Tier[] = [
     name: "Creator",
     price: "$9",
     period: "/ mo",
-    credits: "20 Studio credits / month",
+    credits: "200 credits / month",
     features: [
       "Everything in Free",
-      "20 Studio credits every month",
+      "200 credits every month",
       "Publish unlimited packs to marketplace",
-      "Personal license on your own packs",
+      "Studio — generate SFX, music, voice + ambient",
       "Creator dashboard + sales analytics",
     ],
     cta: "Subscribe",
@@ -54,13 +54,13 @@ const TIERS: Tier[] = [
     name: "Pro Studio",
     price: "$29",
     period: "/ mo",
-    credits: "80 Studio credits / month",
+    credits: "1 000 credits / month",
     features: [
       "Everything in Creator",
-      "80 Studio credits every month",
-      "Commercial license on your own generated packs",
+      "1 000 credits every month",
+      "Commercial license on generated packs",
       "Priority generation queue",
-      "Bundle creation (group packs + sell as a set)",
+      "Bundle creation — group packs + sell as a set",
     ],
     cta: "Subscribe",
     ctaTestId: "cta-pro-studio",
@@ -69,12 +69,12 @@ const TIERS: Tier[] = [
 ];
 
 const CREDIT_COSTS = [
-  { category: "Sound effects (SFX)", credits: 1 },
-  { category: "Voice packs", credits: 2 },
+  { category: "Music packs", credits: 5 },
+  { category: "Sound effects (SFX)", credits: 2 },
+  { category: "Voice packs", credits: 3 },
   { category: "Ambient beds", credits: 2 },
-  { category: "Music packs", credits: 3 },
-  { category: "Radio packs", credits: 3 },
-  { category: "Broadcast packs", credits: 3 },
+  { category: "Radio packs", credits: 8 },
+  { category: "Broadcast packs", credits: 5 },
 ];
 
 export function Pricing() {
