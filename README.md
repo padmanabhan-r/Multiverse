@@ -207,8 +207,8 @@ Voice IDs are never hardcoded; the five seeded marketplace voices live in `Voice
 | Top-up: standard | $9 | 200 | $0.045 / credit |
 | Top-up: bulk | $18 | 500 | $0.036 / credit |
 | Top-up: studio | $30 | 1000 | $0.030 / credit · cheapest per-credit rate |
-| **Creator** subscription | $9/mo | +150/month | Rollover preserved, dashboard analytics |
-| **Pro Studio** subscription | $29/mo | +500/month | Rollover preserved, priority queue, bundles |
+| **Creator** subscription | $9/mo | +200/month | Same rate as $9 top-up · rollover · dashboard analytics |
+| **Pro Studio** subscription | $29/mo | +950/month | Within ~5% of $30 top-up rate · rollover · priority queue · bundles |
 
 Voice purchase: 50 credits each. TTS usage: 1 credit per ≤5 min of audio output. Pack purchases: creator-set, currently 5–150 credit range.
 

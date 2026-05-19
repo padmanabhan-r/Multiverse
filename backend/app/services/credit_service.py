@@ -18,14 +18,17 @@ from sqlalchemy.orm import Session
 
 from app.db.models import CreditBalance, CreditLedger, PackCategory
 
-# Economy: monthly subscription grants. Subscribers get fewer credits
-# per dollar than top-up packs — the value is auto-renewal, rollover,
-# and tier perks (priority generation + creator dashboard analytics).
-# Stops the "subscribe one month then cancel" arbitrage.
+# Economy: subscription credits ≈ top-up rates. Subs get effectively the
+# same credits-per-dollar as one-time buyers — the value is auto-renewal,
+# rollover, and tier perks (priority queue, bundles, dashboard analytics).
+# Top-ups stay a hair cheaper so subscribe-then-cancel arbitrage is never
+# profitable; the gap is small enough that users don't feel penalised for
+# committing.
+# Reference: $9/200 top-up = $0.045/credit, $30/1000 top-up = $0.030/credit.
 TIER_MONTHLY_CREDITS: dict[str, int] = {
     "free": 0,
-    "creator": 150,    # $9/mo → 150 credits = $0.060/credit
-    "pro_studio": 500,  # $29/mo → 500 credits = $0.058/credit
+    "creator": 200,    # $9/mo → 200 credits  = matches $9 top-up rate
+    "pro_studio": 950,  # $29/mo → 950 credits ≈ $30 top-up rate (50 fewer)
 }
 FREE_TRIAL_CREDITS: int = 50
 

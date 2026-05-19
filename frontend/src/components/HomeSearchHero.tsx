@@ -239,7 +239,8 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
                 data-testid="home-hero-category-menu"
                 className="
                   absolute left-0 top-full mt-1 z-30 min-w-[180px]
-                  rounded-md mvfm-glass overflow-hidden
+                  max-h-[260px] overflow-y-auto
+                  rounded-md mvfm-glass shadow-panel
                 "
               >
                 {(Object.keys(CATEGORY_LABEL) as Array<HeroCategory>).map(

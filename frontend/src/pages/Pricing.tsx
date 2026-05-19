@@ -21,12 +21,11 @@ const TIERS: Tier[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    credits: "50 credits — one time",
+    credits: "50 trial credits",
     features: [
+      "50 one-time credits on sign-up",
       "Browse the full marketplace",
-      "50 one-time credits to buy packs",
-      "Buy packs instantly — no subscription needed",
-      "Personal license on purchases",
+      "Top up credits anytime — no subscription required",
     ],
     cta: "Get started",
     ctaTestId: "cta-free",
@@ -37,13 +36,12 @@ const TIERS: Tier[] = [
     name: "Creator",
     price: "$9",
     period: "/ mo",
-    credits: "150 credits / month",
+    credits: "200 credits / month",
     features: [
-      "Everything in Free",
-      "150 credits every month — rollover preserved",
-      "Publish unlimited packs to marketplace",
-      "Studio — generate SFX, music, voice + ambient",
-      "Creator dashboard + sales analytics",
+      "200 credits delivered every month",
+      "Unused credits roll over",
+      "Same rate as a $9 top-up — sub adds auto-renew",
+      "Cancel any time",
     ],
     cta: "Subscribe",
     ctaTestId: "cta-creator",
@@ -54,12 +52,12 @@ const TIERS: Tier[] = [
     name: "Pro Studio",
     price: "$29",
     period: "/ mo",
-    credits: "500 credits / month",
+    credits: "950 credits / month",
     features: [
-      "Everything in Creator",
-      "500 credits every month — rollover preserved",
-      "Priority generation queue",
-      "Bundle creation — group packs + sell as a set",
+      "950 credits delivered every month",
+      "Unused credits roll over",
+      "Near-identical rate to a $30 top-up",
+      "Best for heavy Studio usage",
     ],
     cta: "Subscribe",
     ctaTestId: "cta-pro-studio",
@@ -105,12 +103,13 @@ export function Pricing() {
           Simple pricing
         </div>
         <h1 className="font-display text-warm text-[36px] sm:text-[48px] leading-[1.02] tracking-[-0.01em]">
-          Buy anything.{" "}
-          <span className="text-molten">Subscribe to create.</span>
+          Credits power{" "}
+          <span className="text-molten">everything.</span>
         </h1>
         <p className="text-silver text-[15px] leading-[1.6] max-w-xl mx-auto">
-          Anyone can buy packs with a card — no subscription needed. Studio
-          generation is metered by credits, granted monthly with a Creator plan.
+          One currency for every action — generate voices, buy packs, run TTS.
+          Top up directly with Stripe or subscribe for monthly credits with
+          rollover. Same rate either way.
         </p>
       </div>
 

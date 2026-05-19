@@ -17,6 +17,12 @@ const CATEGORY_SHORT: Record<string, string> = {
 export function Studio() {
   const [drafts, setDrafts] = useState<Pack[] | null>(null);
   const [published, setPublished] = useState<Pack[] | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
   function loadPacks() {
     return api
@@ -35,15 +41,25 @@ export function Studio() {
     loadPacks();
   }, []);
 
-  async function deleteDraft(id: string, title: string) {
-    if (!window.confirm(`Delete draft "${title}"? This can't be undone.`)) {
-      return;
-    }
+  function requestDelete(id: string, title: string) {
+    setDeleteErr(null);
+    setConfirmDelete({ id, title });
+  }
+
+  async function performDelete() {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    setDeleteErr(null);
     try {
-      await api.deletePack(id);
-      setDrafts((prev) => (prev ? prev.filter((p) => p.id !== id) : prev));
+      await api.deletePack(confirmDelete.id);
+      setDrafts((prev) =>
+        prev ? prev.filter((p) => p.id !== confirmDelete.id) : prev,
+      );
+      setConfirmDelete(null);
     } catch (e) {
-      window.alert(e instanceof Error ? e.message : "delete failed");
+      setDeleteErr(e instanceof Error ? e.message : "delete failed");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -103,11 +119,122 @@ export function Studio() {
         testId="drafts-section"
         packs={drafts}
         draft
-        onDelete={deleteDraft}
+        onDelete={requestDelete}
       />
       <hr className="border-glass-soft" />
       <Section title="Published" testId="published-section" packs={published} />
+
+      {confirmDelete && (
+        <DeleteConfirmModal
+          title={confirmDelete.title}
+          busy={deleting}
+          error={deleteErr}
+          onConfirm={performDelete}
+          onCancel={() => {
+            if (deleting) return;
+            setConfirmDelete(null);
+            setDeleteErr(null);
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function DeleteConfirmModal({
+  title,
+  busy,
+  error,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  busy: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      data-testid="delete-confirm-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    >
+      <button
+        type="button"
+        aria-label="Cancel"
+        onClick={onCancel}
+        disabled={busy}
+        className="absolute inset-0 bg-base/80 backdrop-blur-sm"
+      />
+      <div
+        className="
+          relative w-full max-w-md rounded-xl border border-glass-soft
+          bg-elev-2 shadow-panel p-6 space-y-4
+        "
+      >
+        <div className="space-y-1">
+          <div className="font-mono text-molten text-[10px] tracking-[0.28em] uppercase">
+            Delete draft
+          </div>
+          <h2 className="mvfm-display text-warm text-[22px] leading-[1.1]">
+            Delete "{title}"?
+          </h2>
+          <p className="text-silver text-[13px] leading-[1.5]">
+            This removes the draft and all its samples. It can't be undone.
+          </p>
+        </div>
+
+        {error && (
+          <div
+            data-testid="delete-error"
+            className="
+              p-2.5 rounded-md border border-glass-soft bg-elev-2/40
+              font-mono text-[10.5px] text-silver
+            "
+          >
+            <span className="text-molten uppercase tracking-[0.18em] text-[9px]">
+              Failed
+            </span>
+            <div className="mt-1 text-warm/85 break-all">{error}</div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2 justify-end pt-1">
+          <button
+            type="button"
+            data-testid="delete-cancel"
+            onClick={onCancel}
+            disabled={busy}
+            className="
+              inline-flex items-center px-4 py-2 rounded-md
+              bg-elev-2/60 border border-glass-soft
+              text-silver hover:text-warm hover:border-glass
+              font-mono text-[10.5px] tracking-[0.22em] uppercase
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            data-testid="delete-confirm"
+            onClick={onConfirm}
+            disabled={busy}
+            style={{ color: "#1a0700" }}
+            className="
+              inline-flex items-center px-4 py-2 rounded-md
+              bg-molten hover:bg-molten-glow shadow-bloom
+              font-mono text-[10.5px] tracking-[0.22em] uppercase font-semibold
+              disabled:opacity-60 disabled:cursor-wait
+            "
+          >
+            {busy ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -266,7 +393,7 @@ function StudioPackCard({
             onDelete(pack.id, pack.title);
           }}
           className="
-            absolute top-2 right-12 z-10 size-7 rounded-full
+            absolute top-10 right-2 z-10 size-7 rounded-full
             bg-elev-2/80 border border-glass-soft backdrop-blur-sm
             text-silver hover:text-molten hover:border-molten/60
             opacity-0 group-hover:opacity-100 focus:opacity-100

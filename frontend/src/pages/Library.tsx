@@ -118,7 +118,7 @@ export function Library() {
         <Group title="My packs" count={myPacks.length}>
           {myPacks.map((p) => (
             <li key={p.id}>
-              <PackCard pack={p} owned="creator" />
+              <PackCard pack={p} />
             </li>
           ))}
         </Group>
@@ -163,13 +163,7 @@ function Group({
   );
 }
 
-function PackCard({
-  pack,
-  owned,
-}: {
-  pack: Pack;
-  owned: "creator" | "buyer";
-}) {
+function PackCard({ pack }: { pack: Pack }) {
   const plate = plateFor(pack.id);
   return (
     <Link
@@ -205,7 +199,7 @@ function PackCard({
           {CATEGORY_SHORT[pack.category] ?? pack.category}
         </div>
         <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-pill bg-molten-tint border border-molten/40 font-mono text-molten text-[8.5px] tracking-[0.22em] uppercase">
-          {owned === "creator" ? "Mine" : "Owned"}
+          Owned
         </div>
         <div className="absolute bottom-2 left-2 right-2">
           <div className="mvfm-display text-warm text-[14px] leading-[0.95] truncate">
