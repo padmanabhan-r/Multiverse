@@ -70,11 +70,5 @@ def test_list_library_voices_caches_result() -> None:
     assert mc.get.call_count == 1
 
 
-def test_design_voice_stub_returns_fixed_id() -> None:
-    """Stretch goal — for hackathon we ship a stub returning a configured
-    default voice_id so the UI can still flow through the Design tab."""
-    out = voice_catalog_service.design_voice(
-        prompt="gravelly noir narrator", name="Custom 1"
-    )
-    assert out.voice_id  # non-empty
-    assert out.preview_url
+# design_voice stub removed — real Voice Design lives in
+# voice_design_service. See test_voice_design_service.py.

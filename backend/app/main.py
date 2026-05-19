@@ -19,6 +19,7 @@ from app.routers import creator as creator_router
 from app.routers import creators_public as creators_public_router
 from app.routers import library as library_router
 from app.routers import voices as voices_router
+from app.routers import voices_clone as voices_clone_router
 
 # Absolute path so StaticFiles works regardless of cwd (uvicorn, pytest, etc.)
 _STATIC_DIR: Path = Path(__file__).resolve().parents[1] / "static"
@@ -27,6 +28,30 @@ _STATIC_DIR: Path = Path(__file__).resolve().parents[1] / "static"
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="Multiverse FM", version="0.0.0")
+    app.state.arq_pool = None
+
+    @app.on_event("startup")
+    async def _init_arq_pool() -> None:
+        # Skip in test env — there's no Redis, and the connect attempt
+        # blocks each TestClient(app) context for several seconds.
+        if settings.APP_ENV == "test":
+            app.state.arq_pool = None
+            return
+        from app.workers.queue import make_pool
+
+        try:
+            app.state.arq_pool = await make_pool()
+        except Exception:  # noqa: BLE001
+            app.state.arq_pool = None
+
+    @app.on_event("shutdown")
+    async def _close_arq_pool() -> None:
+        pool = getattr(app.state, "arq_pool", None)
+        if pool is not None:
+            try:
+                await pool.close()
+            except Exception:  # noqa: BLE001
+                pass
 
     app.add_middleware(
         CORSMiddleware,
@@ -48,6 +73,7 @@ def create_app() -> FastAPI:
     app.include_router(credits_router.router)
     app.include_router(studio_router.router)
     app.include_router(voices_router.router)
+    app.include_router(voices_clone_router.router)
     app.include_router(bundles_router.router)
     app.include_router(creator_router.router)
     app.include_router(creators_public_router.router)

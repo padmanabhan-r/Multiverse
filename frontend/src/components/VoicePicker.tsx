@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { api, type VoiceLibraryEntry } from "@/lib/api";
+import { Link } from "react-router-dom";
+import {
+  api,
+  type MarketplaceVoice,
+  type VoiceLibraryEntry,
+} from "@/lib/api";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -9,35 +14,30 @@ interface Props {
   locked: boolean;
 }
 
+type Tab = "mine" | "library" | "clone";
+
 export function VoicePicker({ selectedVoiceId, onSelect, locked }: Props) {
-  const [tab, setTab] = useState<"library" | "design">("library");
+  const [tab, setTab] = useState<Tab>("mine");
   const [voices, setVoices] = useState<VoiceLibraryEntry[] | null>(null);
-  const [designPrompt, setDesignPrompt] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [mine, setMine] = useState<MarketplaceVoice[] | null>(null);
 
   useEffect(() => {
     api.listVoices().then(setVoices).catch(() => setVoices([]));
+    api.listOwnedVoices().then(setMine).catch(() => setMine([]));
   }, []);
 
-  async function design() {
-    if (!designPrompt.trim()) return;
-    setBusy(true);
-    try {
-      const out = await api.designVoice({
-        prompt: designPrompt.trim(),
-        name: "Custom",
-      });
-      onSelect(out.voice_id);
-    } finally {
-      setBusy(false);
+  // Default to library if there are no owned voices to surface.
+  useEffect(() => {
+    if (mine !== null && mine.length === 0 && tab === "mine") {
+      setTab("library");
     }
-  }
+  }, [mine, tab]);
 
   return (
     <div className="space-y-3" data-testid="voice-picker">
       {!locked && (
         <div className="flex gap-1 text-[10px] font-mono tracking-[0.22em] uppercase">
-          {(["library", "design"] as const).map((t) => (
+          {(["mine", "library", "clone"] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -50,7 +50,42 @@ export function VoicePicker({ selectedVoiceId, onSelect, locked }: Props) {
                   : "text-silver border-glass-soft hover:text-warm",
               )}
             >
-              {t}
+              {t === "mine" ? "my voices" : t}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "mine" && (
+        <div
+          className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto"
+          data-testid="voice-mine-list"
+        >
+          {mine === null && (
+            <div className="text-silver text-[11px]">Loading…</div>
+          )}
+          {mine?.length === 0 && (
+            <div className="text-silver text-[11px]">
+              You haven't created or purchased any voices yet.
+            </div>
+          )}
+          {mine?.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              data-testid={`voice-mine-${v.eleven_voice_id}`}
+              onClick={() => onSelect(v.eleven_voice_id)}
+              className={cn(
+                "text-left p-2 rounded-md border text-[12px]",
+                selectedVoiceId === v.eleven_voice_id
+                  ? "border-molten/60 bg-molten-tint text-warm"
+                  : "border-glass-soft text-silver hover:text-warm",
+              )}
+            >
+              <div className="font-medium">{v.title}</div>
+              {v.preview_url && (
+                <audio src={v.preview_url} controls className="w-full h-7 mt-1" />
+              )}
             </button>
           ))}
         </div>
@@ -84,35 +119,23 @@ export function VoicePicker({ selectedVoiceId, onSelect, locked }: Props) {
         </div>
       )}
 
-      {tab === "design" && (
-        <div className="space-y-2">
-          <textarea
-            data-testid="voice-design-prompt"
-            value={designPrompt}
-            onChange={(e) => setDesignPrompt(e.target.value)}
-            placeholder="e.g. gravelly noir narrator, late 40s, smoky"
+      {tab === "clone" && (
+        <div className="space-y-2 p-3 rounded-md border border-glass-soft">
+          <div className="text-[11px] text-silver">
+            Design a brand-new voice, clone yours instantly, or train a
+            professional clone — all in the voice wizard.
+          </div>
+          <Link
+            to="/studio/voices/new"
+            data-testid="voice-wizard-link"
             className="
-              w-full min-h-16 p-2 rounded-md bg-elev-2/60
-              border border-glass-soft text-warm text-[12px]
-              placeholder:text-silver/60
-            "
-          />
-          <button
-            type="button"
-            data-testid="voice-design-submit"
-            onClick={design}
-            disabled={busy || !designPrompt.trim()}
-            className="
-              px-3 py-1.5 rounded-md bg-molten text-[10px] tracking-[0.18em]
-              uppercase font-mono font-semibold disabled:opacity-40
+              inline-block px-3 py-1.5 rounded-md bg-molten text-[10px]
+              tracking-[0.18em] uppercase font-mono font-semibold
             "
             style={{ color: "#1a0700" }}
           >
-            {busy ? "Designing…" : "Design voice"}
-          </button>
-          <div className="text-[10px] text-silver2 italic">
-            v1 returns a premade voice. Full Voice Design lands later.
-          </div>
+            Create new voice…
+          </Link>
         </div>
       )}
     </div>

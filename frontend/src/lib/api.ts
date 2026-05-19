@@ -53,6 +53,44 @@ export interface VoiceLibraryEntry {
   category: string;
 }
 
+export interface DesignPreviewItem {
+  generated_voice_id: string;
+  audio_base_64: string;
+  media_type: string;
+}
+
+export interface DesignPreviewsResponse {
+  previews: DesignPreviewItem[];
+}
+
+export interface VoiceCloneJob {
+  id: string;
+  voice_id: string;
+  status: "queued" | "fine_tuning" | "fine_tuned" | "failed";
+  poll_attempts: number;
+  credits_spent: number;
+  refunded: boolean;
+  error_message: string | null;
+  created_at: string | null;
+  completed_at: string | null;
+}
+
+export interface CreatedVoice {
+  id: string;
+  creator_id: string;
+  eleven_voice_id: string;
+  title: string;
+  description: string;
+  preview_url: string | null;
+  cover_art_url: string | null;
+  price_credits: number;
+  status: string;
+  clone_kind: string;
+  training_status: string;
+  is_private: boolean;
+  requires_verification: boolean;
+}
+
 export interface CreatorMe {
   creator_id: string;
   display_name: string | null;
@@ -116,9 +154,24 @@ export interface ApiClient {
   generateCover: (packId: string) => Promise<{ cover_art_url: string }>;
   generateHero: (packId: string) => Promise<{ hero_art_url: string }>;
   listVoices: () => Promise<VoiceLibraryEntry[]>;
-  designVoice: (
-    body: { prompt: string; name: string },
-  ) => Promise<{ voice_id: string; preview_url: string }>;
+  designPreviews: (body: {
+    prompt: string;
+    name: string;
+    gender?: string;
+    age?: string;
+    accent?: string;
+  }) => Promise<DesignPreviewsResponse>;
+  designSave: (body: {
+    generated_voice_id: string;
+    name: string;
+    description: string;
+    audio_base_64: string;
+    publish_kind: "private" | "marketplace_draft";
+  }) => Promise<CreatedVoice>;
+  cloneInstant: (form: FormData) => Promise<CreatedVoice>;
+  clonePvc: (form: FormData) => Promise<VoiceCloneJob>;
+  getCloneJob: (jobId: string) => Promise<VoiceCloneJob>;
+  publishAsAsset: (voiceId: string) => Promise<CreatedVoice>;
   createBundle: (body: {
     title: string;
     description: string;
@@ -240,7 +293,11 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
 
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const headers = new Headers(init.headers);
-    if (init.body) headers.set("Content-Type", "application/json");
+    // FormData uploads carry their own multipart boundary in Content-Type;
+    // setting application/json clobbers it and the server rejects the body.
+    if (init.body && !(init.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
     const token = await opts.getToken?.();
     if (token) headers.set("Authorization", `Bearer ${token}`);
     const res = await f(`${BASE}${path}`, { ...init, headers });
@@ -248,6 +305,7 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
       const text = await res.text().catch(() => res.statusText);
       throw new ApiError(res.status, text);
     }
+    if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
   }
 
@@ -338,11 +396,35 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
         body: JSON.stringify({ pack_id: packId }),
       }),
     listVoices: () => request<VoiceLibraryEntry[]>("/voices/library"),
-    designVoice: (body) =>
-      request<{ voice_id: string; preview_url: string }>("/voices/design", {
+    designPreviews: (body) =>
+      request<DesignPreviewsResponse>("/voices/design/previews", {
         method: "POST",
         body: JSON.stringify(body),
       }),
+    designSave: (body) =>
+      request<CreatedVoice>("/voices/design/save", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    cloneInstant: (form) =>
+      request<CreatedVoice>("/voices/clone/instant", {
+        method: "POST",
+        body: form,
+      }),
+    clonePvc: (form) =>
+      request<VoiceCloneJob>("/voices/clone/professional", {
+        method: "POST",
+        body: form,
+      }),
+    getCloneJob: (jobId) =>
+      request<VoiceCloneJob>(
+        `/voices/clone/jobs/${encodeURIComponent(jobId)}`,
+      ),
+    publishAsAsset: (voiceId) =>
+      request<CreatedVoice>(
+        `/voices/${encodeURIComponent(voiceId)}/publish-as-asset`,
+        { method: "POST" },
+      ),
     createBundle: (body) =>
       request<Bundle>("/bundles", {
         method: "POST",
@@ -394,10 +476,10 @@ function packFiltersToQuery(filters: PackListFilters): URLSearchParams {
   if (filters.category) p.set("category", filters.category);
   for (const tag of filters.tags ?? []) p.append("tags", tag);
   for (const mood of filters.moods ?? []) p.append("moods", mood);
-  if (filters.price_min_cents != null)
-    p.set("price_min_cents", String(filters.price_min_cents));
-  if (filters.price_max_cents != null)
-    p.set("price_max_cents", String(filters.price_max_cents));
+  if (filters.price_min_credits != null)
+    p.set("price_min_credits", String(filters.price_min_credits));
+  if (filters.price_max_credits != null)
+    p.set("price_max_credits", String(filters.price_max_credits));
   if (filters.q) p.set("q", filters.q);
   if (filters.sort) p.set("sort", filters.sort);
   if (filters.limit != null) p.set("limit", String(filters.limit));

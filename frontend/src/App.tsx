@@ -18,6 +18,7 @@ import { StudioDraft } from "@/pages/StudioDraft";
 import { StudioNew } from "@/pages/StudioNew";
 import { StudioPublish } from "@/pages/StudioPublish";
 import { StudioTTS } from "@/pages/StudioTTS";
+import { StudioVoiceNew } from "@/pages/StudioVoiceNew";
 import { Voice } from "@/pages/Voice";
 import { Voices } from "@/pages/Voices";
 import { World } from "@/pages/World";
@@ -94,6 +95,7 @@ export function App() {
         <Route path="/voices" element={<Voices />} />
         <Route path="/v/:voiceId" element={<Voice />} />
         <Route path="/studio/tts" element={<StudioTTS />} />
+        <Route path="/studio/voices/new" element={<StudioVoiceNew />} />
         <Route path="/u/:creatorId" element={<CreatorStorefront />} />
         <Route path="/w/:stationId" element={<World />} />
         <Route path="*" element={<Home />} />

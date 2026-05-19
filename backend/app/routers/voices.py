@@ -1,11 +1,12 @@
-"""Voice marketplace + library + Voice Design routes.
+"""Voice marketplace + library routes.
 
 - GET /voices                  — published Voice marketplace listing
 - GET /voices/{id}             — Voice detail w/ creator name
 - POST /voices/{id}/purchase   — buy lifetime access (credits)
 - GET /voices/mine             — buyer's owned voices + creator's published
-- GET /voices/library          — ElevenLabs catalog (existing)
-- POST /voices/design          — Voice Design stub (existing)
+- GET /voices/library          — ElevenLabs catalog
+
+Voice Design + cloning routes live in ``app.routers.voices_clone``.
 """
 
 from __future__ import annotations
@@ -51,16 +52,6 @@ class VoiceLibraryEntryDTO(BaseModel):
     preview_url: str | None
     labels: dict[str, str]
     category: str
-
-
-class DesignVoiceBody(BaseModel):
-    prompt: str = Field(min_length=1, max_length=400)
-    name: str = Field(min_length=1, max_length=80)
-
-
-class DesignedVoiceDTO(BaseModel):
-    voice_id: str
-    preview_url: str
 
 
 class VoiceAccessDTO(BaseModel):
@@ -123,17 +114,8 @@ def list_voices_library_endpoint() -> list[VoiceLibraryEntryDTO]:
     ]
 
 
-@router.post("/voices/design", response_model=DesignedVoiceDTO)
-def design_voice_endpoint_early(
-    body: DesignVoiceBody, _user: CurrentUser
-) -> DesignedVoiceDTO:
-    try:
-        out = voice_catalog_service.design_voice(
-            prompt=body.prompt, name=body.name
-        )
-    except ValueError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
-    return DesignedVoiceDTO(voice_id=out.voice_id, preview_url=out.preview_url)
+# Voice Design moved to /voices/design/previews + /voices/design/save
+# (see app.routers.voices_clone). The legacy stub has been removed.
 
 
 @router.get("/voices/mine", response_model=list[VoiceDTO])

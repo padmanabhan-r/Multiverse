@@ -307,25 +307,5 @@ def test_voices_library_unaffected_by_auth(client: TestClient) -> None:
     assert r.status_code == 200
 
 
-def test_voices_design_stub_route(client: TestClient, db_session: Session) -> None:
-    creator = User(id="u_design", tier="creator")
-    db_session.add(creator)
-    db_session.commit()
-
-    from app.main import app
-
-    def fake_user() -> AuthUser:
-        return AuthUser(user_id=creator.id, email=None, tier="creator")
-
-    app.dependency_overrides[get_current_user] = fake_user
-    try:
-        r = client.post(
-            "/voices/design",
-            json={"prompt": "gravelly noir narrator", "name": "Narrator 1"},
-        )
-        assert r.status_code == 200
-        body = r.json()
-        assert body["voice_id"]
-        assert body["preview_url"]
-    finally:
-        app.dependency_overrides.pop(get_current_user, None)
+# /voices/design stub removed — real route lives at /voices/design/previews
+# (see test_voices_clone_design_routes.py).

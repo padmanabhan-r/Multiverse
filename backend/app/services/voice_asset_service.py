@@ -49,6 +49,10 @@ def create_draft(
     preview_url: str | None = None,
     cover_art_url: str | None = None,
     tags: list[str] | None = None,
+    clone_kind: str = "manual",
+    training_status: str = "ready",
+    is_private: bool = False,
+    requires_verification: bool = False,
 ) -> Voice:
     if not title or not title.strip():
         raise ValueError("title must not be empty")
@@ -71,6 +75,10 @@ def create_draft(
         price_credits=price_credits,
         status="draft",
         tags=list(tags or []),
+        clone_kind=clone_kind,
+        training_status=training_status,
+        is_private=is_private,
+        requires_verification=requires_verification,
     )
     db.add(voice)
     db.flush()
@@ -127,13 +135,33 @@ def list_published(db: Session, limit: int = 24) -> list[Voice]:
     return list(
         db.execute(
             select(Voice)
-            .where(Voice.status == "published")
+            .where(Voice.status == "published", Voice.is_private.is_(False))
             .order_by(Voice.published_at.desc())
             .limit(limit)
         )
         .scalars()
         .all()
     )
+
+
+def mark_for_marketplace(
+    db: Session, voice_id: str, requesting_user_id: str
+) -> Voice:
+    """Two-path fork helper: flip is_private=False on a creator's voice.
+
+    Leaves ``status="draft"`` so the creator finishes price/description in
+    the existing edit flow and then calls ``publish`` to list it.
+    """
+    voice = db.get(Voice, voice_id)
+    if voice is None:
+        raise VoiceNotFoundError(voice_id)
+    if voice.creator_id != requesting_user_id:
+        raise VoicePermissionError(
+            f"user {requesting_user_id} cannot publish voice {voice_id}"
+        )
+    voice.is_private = False
+    db.flush()
+    return voice
 
 
 def get_with_creator(db: Session, voice_id: str) -> tuple[Voice, User]:

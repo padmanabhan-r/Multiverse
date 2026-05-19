@@ -1,9 +1,9 @@
-"""Voice library + Voice Design wrappers.
+"""Voice library wrapper.
 
-Library: GET /v1/voices on ElevenLabs, in-process cache for 1 h so the
-voice picker is fast and we don't blow rate limits on every page load.
-Design: stretch goal — for hackathon we stub it to return a configured
-default voice so the UI's Design tab still flows through.
+GET /v1/voices on ElevenLabs, cached for 1 h so the voice picker is fast
+and we don't blow rate limits on every page load.
+
+Voice Design lives in ``voice_design_service`` (real implementation).
 """
 
 from __future__ import annotations
@@ -20,13 +20,6 @@ from app.services._eleven_client import eleven_client
 _CACHE_TTL_S = 3600
 _cache: dict[str, Any] = {"value": None, "expires_at": 0.0}
 
-# Stub Voice Design returns this voice_id (a known ElevenLabs premade voice)
-# until we wire up the real /v1/voice-generation/create-voice-from-preview.
-_STUB_DESIGNED_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel — premade default
-_STUB_PREVIEW_URL = (
-    "https://api.elevenlabs.io/v1/voices/21m00Tcm4TlvDq8ikWAM/preview"
-)
-
 
 @dataclass(slots=True)
 class VoiceLibraryEntry:
@@ -35,12 +28,6 @@ class VoiceLibraryEntry:
     preview_url: str | None
     labels: dict[str, str] = field(default_factory=dict)
     category: str = "premade"
-
-
-@dataclass(slots=True)
-class DesignedVoice:
-    voice_id: str
-    preview_url: str
 
 
 def clear_cache() -> None:
@@ -79,19 +66,3 @@ def list_library_voices() -> list[VoiceLibraryEntry]:
     _cache["value"] = voices
     _cache["expires_at"] = now + _CACHE_TTL_S
     return voices
-
-
-def design_voice(*, prompt: str, name: str) -> DesignedVoice:
-    """STUB — returns a fixed premade voice_id so the Design tab flows.
-
-    Real implementation (deferred): POST
-    /v1/voice-generation/create-voice-from-preview with the prompt to mint
-    a new voice_id. Adds ~30-60 s latency so the hackathon demo uses the
-    stub by default.
-    """
-    if not prompt or not prompt.strip():
-        raise ValueError("prompt must not be empty")
-    return DesignedVoice(
-        voice_id=_STUB_DESIGNED_VOICE_ID,
-        preview_url=_STUB_PREVIEW_URL,
-    )

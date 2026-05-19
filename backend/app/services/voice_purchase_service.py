@@ -34,6 +34,10 @@ def purchase_voice(
         raise VoicePurchaseError(f"voice not found: {voice_id}")
     if voice.status != "published":
         raise VoiceNotForSaleError(f"voice not for sale: {voice_id}")
+    if voice.is_private:
+        raise VoiceNotForSaleError(
+            f"voice is private and not listed: {voice_id}"
+        )
     if voice.creator_id == buyer_id:
         raise VoicePurchaseError("cannot buy your own voice")
 

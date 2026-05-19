@@ -430,6 +430,18 @@ class Voice(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
     tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     purchases_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    clone_kind: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="manual"
+    )
+    training_status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="ready"
+    )
+    requires_verification: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+    is_private: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -440,6 +452,14 @@ class Voice(Base):
     __table_args__ = (
         CheckConstraint(
             "status in ('draft','published','removed')", name="ck_voices_status"
+        ),
+        CheckConstraint(
+            "clone_kind in ('manual','design','ivc','pvc')",
+            name="ck_voices_clone_kind",
+        ),
+        CheckConstraint(
+            "training_status in ('ready','queued','fine_tuning','failed')",
+            name="ck_voices_training_status",
         ),
         CheckConstraint("price_credits >= 5", name="ck_voices_price_min"),
         CheckConstraint("price_credits <= 5000", name="ck_voices_price_max"),
@@ -523,6 +543,9 @@ CREDIT_LEDGER_REASONS: tuple[str, ...] = (
     "gen_ambient",
     "gen_music",
     "gen_voice_design",
+    "gen_voice_clone_ivc",
+    "gen_voice_clone_pvc",
+    "gen_voice_clone_refund",
     "gen_tts",
     "buy_pack",
     "buy_voice",
@@ -534,3 +557,53 @@ CREDIT_LEDGER_REASONS: tuple[str, ...] = (
     "trial_grant",
     "admin_adjust",
 )
+
+
+class VoiceCloneJob(Base):
+    """Async tracking row for Professional Voice Cloning.
+
+    PVC training on ElevenLabs takes 24–72h. The ARQ worker polls
+    `GET /v1/voices/{voice_id}` periodically and updates this row's
+    ``status`` to mirror their ``fine_tuning_state``. Refunds for failed
+    training go through ``gen_voice_clone_refund`` once, guarded by the
+    ``refunded`` flag (idempotent across worker retries).
+    """
+
+    __tablename__ = "voice_clone_jobs"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # uuid
+    voice_id: Mapped[str] = mapped_column(
+        ForeignKey("voices.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    creator_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(8), nullable=False, default="pvc")
+    eleven_voice_id: Mapped[str] = mapped_column(String(96), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="queued"
+    )
+    last_polled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    poll_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    credits_spent: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    refunded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    error_message: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('queued','fine_tuning','fine_tuned','failed')",
+            name="ck_voice_clone_jobs_status",
+        ),
+        CheckConstraint("kind = 'pvc'", name="ck_voice_clone_jobs_kind"),
+        Index(
+            "ix_voice_clone_jobs_status_polled", "status", "last_polled_at"
+        ),
+    )

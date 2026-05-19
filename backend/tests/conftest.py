@@ -78,6 +78,7 @@ def _clean_tables() -> Iterator[None]:
         User,
         Voice,
         VoiceAccess,
+        VoiceCloneJob,
     )
     from app.db.session import get_engine
 
@@ -86,6 +87,7 @@ def _clean_tables() -> Iterator[None]:
         # Order: leaves → roots
         conn.execute(delete(CreditLedger))
         conn.execute(delete(VoiceAccess))
+        conn.execute(delete(VoiceCloneJob))
         conn.execute(delete(Voice))
         conn.execute(delete(BundlePack))
         conn.execute(delete(Bundle))
