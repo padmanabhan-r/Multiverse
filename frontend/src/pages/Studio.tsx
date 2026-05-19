@@ -65,54 +65,76 @@ export function Studio() {
 
   return (
     <section data-testid="studio-page" className="space-y-8 pb-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <div className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase">
-            Studio
-          </div>
-          <h1 className="font-display text-warm text-3xl sm:text-[40px] tracking-tight">
-            Build something.
-          </h1>
-          <p className="text-silver text-[14px] max-w-prose">
-            Generate samples one at a time. Bundle published packs for cross-sell.
-          </p>
+      <header className="space-y-2">
+        <div className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase">
+          Studio
         </div>
-        <div className="flex gap-2">
-          <Link
-            to="/studio/new"
-            data-testid="cta-new-pack"
-            className="
-              px-4 py-2 rounded-md bg-molten text-[11px] tracking-[0.22em]
-              uppercase font-mono font-semibold shadow-bloom hover:bg-molten-glow
-            "
-            style={{ color: "#1a0700" }}
-          >
-            + New pack
-          </Link>
-          <Link
-            to="/studio/tts"
-            data-testid="cta-tts"
-            className="
-              px-4 py-2 rounded-md bg-elev-2/60 border border-glass-soft
-              text-silver hover:text-warm font-mono text-[11px]
-              tracking-[0.22em] uppercase
-            "
-          >
-            TTS composer
-          </Link>
-          <Link
-            to="/studio/bundle/new"
-            data-testid="cta-new-bundle"
-            className="
-              px-4 py-2 rounded-md bg-elev-2/60 border border-glass-soft
-              text-silver hover:text-warm font-mono text-[11px]
-              tracking-[0.22em] uppercase
-            "
-          >
-            + New bundle
-          </Link>
-        </div>
+        <h1 className="mvfm-display text-warm text-3xl sm:text-[44px] leading-[0.98] tracking-tight">
+          Build something.
+        </h1>
+        <p className="text-silver text-[14px] max-w-prose">
+          Pick a starting point — generate samples, compose TTS, or bundle
+          your published packs.
+        </p>
       </header>
+
+      <div
+        data-testid="studio-entries"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+      >
+        <EntryCard
+          to="/studio/new"
+          testId="cta-new-pack"
+          title="New pack"
+          blurb="Generate music, SFX, or ambient samples one at a time. Cover art included."
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden className="size-5">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          }
+        />
+        <EntryCard
+          to="/studio/tts"
+          testId="cta-tts"
+          title="TTS composer"
+          blurb="Type text, pick an owned voice, get back an MP3. Buyers of any voice can use it here."
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden className="size-5">
+              <path
+                d="M4 6h12M4 12h16M4 18h10"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+              <path
+                d="M18 18l3-3 3 3"
+                transform="translate(-3 -6) scale(0.7)"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          }
+        />
+        <EntryCard
+          to="/studio/bundle/new"
+          testId="cta-new-bundle"
+          title="New bundle"
+          blurb="Group 2+ published packs and sell them together at a discounted price."
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden className="size-5">
+              <path
+                d="M3 8l9-5 9 5-9 5-9-5zm0 8l9 5 9-5M3 12l9 5 9-5"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </svg>
+          }
+        />
+      </div>
 
       <Section
         title="Drafts"
@@ -138,6 +160,66 @@ export function Studio() {
         />
       )}
     </section>
+  );
+}
+
+function EntryCard({
+  to,
+  testId,
+  title,
+  blurb,
+  icon,
+  accent = "default",
+}: {
+  to: string;
+  testId: string;
+  title: string;
+  blurb: string;
+  icon: React.ReactNode;
+  accent?: "default" | "primary";
+}) {
+  const primary = accent === "primary";
+  return (
+    <Link
+      to={to}
+      data-testid={testId}
+      className={cn(
+        "group relative rounded-xl p-5 sm:p-6 flex flex-col gap-3",
+        "border-2 transition-all duration-tune ease-tune",
+        "hover:-translate-y-0.5",
+        primary
+          ? "border-molten/50 bg-molten-tint shadow-[0_0_40px_-14px_var(--mvfm-molten-dim)] hover:border-molten/70"
+          : "border-glass bg-elev-2/40 hover:border-molten/50 hover:bg-molten-tint/40",
+      )}
+    >
+      <div
+        className={cn(
+          "size-10 rounded-lg flex items-center justify-center",
+          "border transition-colors duration-tune ease-tune",
+          primary
+            ? "border-molten/50 bg-molten/20 text-molten"
+            : "border-glass-soft bg-elev-2/60 text-silver group-hover:text-molten group-hover:border-molten/40",
+        )}
+      >
+        {icon}
+      </div>
+      <div className="flex items-center gap-2">
+        <h3 className="mvfm-display text-warm text-[20px] leading-[1.05]">
+          {title}
+        </h3>
+        <span
+          className={cn(
+            "text-[14px] -translate-x-1 transition-transform duration-tune ease-tune",
+            "group-hover:translate-x-0",
+            primary ? "text-molten" : "text-silver2 group-hover:text-molten",
+          )}
+          aria-hidden
+        >
+          →
+        </span>
+      </div>
+      <p className="text-silver text-[12.5px] leading-[1.45]">{blurb}</p>
+    </Link>
   );
 }
 

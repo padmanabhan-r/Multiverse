@@ -76,6 +76,10 @@ export function StudioDraft() {
         setPack(updated);
         setSaving("saved");
         window.setTimeout(() => setSaving("idle"), 1200);
+        // Slug regenerated server-side for drafts → keep URL in sync.
+        if (updated.id !== pack.id) {
+          nav(`/studio/draft/${updated.id}`, { replace: true });
+        }
       } catch {
         setSaving("idle");
       }

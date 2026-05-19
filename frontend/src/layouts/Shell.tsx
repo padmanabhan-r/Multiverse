@@ -61,12 +61,16 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
       >
         <NavLink
           to="/"
-          className="flex items-center gap-3 flex-shrink-0"
+          className="
+            group flex items-center gap-2.5 flex-shrink-0
+            transition-opacity duration-fast ease-tune
+            hover:opacity-90
+          "
           aria-label="Multiverse home"
         >
-          <span className="size-2 rounded-full bg-molten shadow-bloom" aria-hidden />
-          <span className="font-display text-[11px] tracking-[0.32em] text-warm">
-            MULTIVERSE
+          <BrandMark />
+          <span className="mvfm-display text-warm text-[18px] sm:text-[20px] leading-none tracking-tight">
+            Multiverse
           </span>
         </NavLink>
 
@@ -319,3 +323,40 @@ function SignedInCredits() {
   return <CreditBadge balance={balance} tierGrant={tierGrant} />;
 }
 
+function BrandMark() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      width="28"
+      height="28"
+      aria-hidden
+      className="flex-shrink-0 transition-transform duration-tune ease-tune group-hover:scale-105"
+    >
+      <defs>
+        <radialGradient id="mvfm-mark-bg" cx="50%" cy="35%" r="65%">
+          <stop offset="0%" stopColor="#1a0f08" />
+          <stop offset="100%" stopColor="#0a0a0c" />
+        </radialGradient>
+        <linearGradient id="mvfm-mark-bolt" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FF8A3D" />
+          <stop offset="100%" stopColor="#FF6A1F" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="7" fill="url(#mvfm-mark-bg)" />
+      <rect
+        x="0.5"
+        y="0.5"
+        width="31"
+        height="31"
+        rx="6.5"
+        fill="none"
+        stroke="rgba(255,138,61,0.20)"
+        strokeWidth="1"
+      />
+      <path
+        d="M18 3 L9 18 L14.5 18 L13 29 L23 13 L17.5 13 Z"
+        fill="url(#mvfm-mark-bolt)"
+      />
+    </svg>
+  );
+}

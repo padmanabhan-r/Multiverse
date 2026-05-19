@@ -156,7 +156,7 @@ function Group({
           {count.toString().padStart(2, "0")}
         </span>
       </div>
-      <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         {children}
       </ul>
     </section>

@@ -11,7 +11,7 @@ export function Creator() {
   const [packs, setPacks] = useState<Pack[] | null>(null);
   const [bundles, setBundles] = useState<Bundle[] | null>(null);
   const [sales, setSales] = useState<SaleRow[] | null>(null);
-  const [tab, setTab] = useState<Tab>("drafts");
+  const [tab, setTab] = useState<Tab>("published");
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {

@@ -236,13 +236,32 @@ def update_pack_metadata(
     Pack must be owned by ``requesting_user_id``. Allowed on drafts AND
     published packs (so a creator can update price / desc after launch).
     """
+    from app.db.models import PackSample
+
     pack = get_pack(db, pack_id)
     if pack.creator_id != requesting_user_id:
         raise PackPermissionError(
             f"user {requesting_user_id} cannot edit pack {pack_id}"
         )
     if title is not None and title.strip():
-        pack.title = title.strip()
+        new_title = title.strip()
+        # Regenerate the URL slug to match the new title — drafts only.
+        # Published packs keep their id frozen so existing links / purchases
+        # never break.
+        if (
+            new_title.lower() != pack.title.lower()
+            and pack.status == "draft"
+        ):
+            new_id = _slug_from_title(new_title)
+            old_id = pack.id
+            if new_id != old_id:
+                # Re-point samples to the new pack id, then move the pack row.
+                db.query(PackSample).filter(
+                    PackSample.pack_id == old_id
+                ).update({"pack_id": new_id}, synchronize_session=False)
+                pack.id = new_id
+                db.flush()
+        pack.title = new_title
     if description is not None:
         pack.description = description.strip()
     if tags is not None:
