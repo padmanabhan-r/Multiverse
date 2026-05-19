@@ -123,24 +123,27 @@ export function SampleGenerator({
         <label className="font-mono text-silver2 text-[10px] tracking-[0.28em] uppercase">
           {promptLabel[kind]}
         </label>
-        <div className="flex gap-2 items-start">
+        <div className="relative">
           <textarea
             data-testid="prompt-input"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="e.g. old radio static crackling at midnight"
             className="
-              flex-1 min-h-20 p-2 rounded-md bg-elev-2/60
+              w-full min-h-20 p-2 pr-9 rounded-md bg-elev-2/60
               border border-glass-soft text-warm text-[13px]
-              placeholder:text-silver/60
+              placeholder:text-silver/60 focus:outline-none
+              focus:border-molten/40
             "
           />
           {kind !== "voice" && (
-            <PromptEnhanceButton
-              value={prompt}
-              kind={kind}
-              onAccept={setPrompt}
-            />
+            <div className="absolute top-1.5 right-1.5">
+              <PromptEnhanceButton
+                value={prompt}
+                kind={kind}
+                onAccept={setPrompt}
+              />
+            </div>
           )}
         </div>
       </div>

@@ -66,8 +66,8 @@ export function StudioPublish() {
       return;
     }
     const credits = Math.round(parseFloat(priceCredits));
-    if (isNaN(credits) || credits < 5 || credits > 150) {
-      setError("Price must be between 5 and 150 credits.");
+    if (isNaN(credits) || credits < 0 || credits > 150) {
+      setError("Price must be between 0 and 150 credits.");
       return;
     }
     const price = credits * 10;
@@ -102,8 +102,8 @@ export function StudioPublish() {
           style_profile: {},
         });
       }
-      const published = await api.publishPack(pack.id);
-      navigate(`/p/${published.id}`, { replace: true });
+      await api.publishPack(pack.id);
+      navigate(`/p/${pack.id}`, { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 422) {
         setError(
@@ -184,12 +184,12 @@ export function StudioPublish() {
           />
         </Field>
 
-        <Field label="Price (credits ⚡)" htmlFor="pub-price">
+        <Field label="Price (credits ⚡ — 0 = free)" htmlFor="pub-price">
           <input
             id="pub-price"
             data-testid="publish-price"
             type="number"
-            min="5"
+            min="0"
             max="150"
             step="1"
             value={priceCredits}

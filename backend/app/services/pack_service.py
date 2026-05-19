@@ -194,17 +194,6 @@ def publish_pack(db: Session, pack_id: str, requesting_user_id: str) -> Pack:
     if pack.status == "published":
         return pack  # idempotent
 
-    # Always regenerate slug from the real title at publish time so URLs
-    # never contain "untitled-..." even if the pack was created with a
-    # placeholder name and renamed only in the publish form.
-    new_id = _slug_from_title(pack.title)
-    if new_id != pack.id:
-        db.query(PackSample).filter(PackSample.pack_id == pack.id).update(
-            {"pack_id": new_id}, synchronize_session=False
-        )
-        pack.id = new_id
-        db.flush()
-
     # Auto-fill convenience fields so the creator doesn't have to manually
     # set them in the publish form.
     if not pack.preview_url:
@@ -279,12 +268,12 @@ def update_pack_metadata(
     if tags is not None:
         pack.tags = list(tags)
     if price_cents is not None:
-        if price_cents < 50 or price_cents > 1500:
-            raise ValueError("price_cents must be 50–1500")
+        if price_cents < 0 or price_cents > 1500:
+            raise ValueError("price_cents must be 0–1500")
         pack.price_cents = price_cents
         pack.credit_cost = _credit_cost_for_price(price_cents)
         # Keep credits-economy column in sync.
-        pack.price_credits = max(5, round(price_cents / 10))
+        pack.price_credits = round(price_cents / 10)
     if license_commercial_multiplier is not None:
         if license_commercial_multiplier < 1.0 or license_commercial_multiplier > 10.0:
             raise ValueError("license_commercial_multiplier must be 1.0–10.0")

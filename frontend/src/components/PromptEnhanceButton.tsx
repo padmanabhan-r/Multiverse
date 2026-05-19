@@ -40,14 +40,21 @@ export function PromptEnhanceButton({ value, kind, onAccept }: Props) {
         disabled={busy || !value.trim()}
         onClick={run}
         title="Enhance with AI"
+        aria-label="Enhance with AI"
         className={cn(
-          "inline-flex items-center gap-1 h-7 px-2 rounded-md",
-          "bg-elev-2/60 border border-glass-soft text-silver",
-          "hover:text-warm hover:border-glass disabled:opacity-50",
-          "font-mono text-[10px] tracking-[0.18em] uppercase",
+          "size-7 rounded-md flex items-center justify-center",
+          "bg-elev-2/80 border border-glass-soft",
+          "text-silver hover:text-molten hover:border-molten/50",
+          "disabled:opacity-30 disabled:cursor-not-allowed",
+          "transition-colors duration-fast ease-tune",
+          "text-[16px] leading-none",
         )}
       >
-        {busy ? "…" : "✦ Enhance"}
+        {busy ? (
+          <span className="font-mono text-[10px] text-silver2 animate-pulse">…</span>
+        ) : (
+          "✨"
+        )}
       </button>
       {open && (
         <div

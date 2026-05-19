@@ -63,7 +63,7 @@ class PackDTO(BaseModel):
             tags=list(p.tags or []),
             moods=list(p.moods or []),
             price_cents=p.price_cents,
-            price_credits=p.price_credits,
+            price_credits=p.price_credits if p.price_credits is not None else round(p.price_cents / 10),
             credit_cost=p.credit_cost,
             license_personal=bool(p.license_personal),
             license_commercial_multiplier=float(p.license_commercial_multiplier),
@@ -114,7 +114,7 @@ class DraftBody(BaseModel):
     description: str = ""
     tags: list[str] = Field(default_factory=list)
     moods: list[str] = Field(default_factory=list)
-    price_cents: int = Field(default=200, ge=50, le=1500)
+    price_cents: int = Field(default=200, ge=0, le=1500)
     license_commercial_multiplier: float = Field(default=3.0, ge=1.0, le=10.0)
     duration_ms: int = Field(default=0, ge=0)
     sample_count: int = Field(default=0, ge=0)
@@ -263,7 +263,7 @@ class PackPatchBody(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=160)
     description: str | None = Field(default=None, max_length=4000)
     tags: list[str] | None = None
-    price_cents: int | None = Field(default=None, ge=50, le=1500)
+    price_cents: int | None = Field(default=None, ge=0, le=1500)
     license_commercial_multiplier: float | None = Field(default=None, ge=1.0, le=10.0)
 
 

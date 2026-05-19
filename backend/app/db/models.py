@@ -206,7 +206,7 @@ class Pack(Base):
             "status in ('draft','published','removed')",
             name="ck_packs_status",
         ),
-        CheckConstraint("price_cents >= 50", name="ck_packs_price_min"),
+        CheckConstraint("price_cents >= 0", name="ck_packs_price_min"),
         CheckConstraint("price_cents <= 1500", name="ck_packs_price_max"),
         CheckConstraint("credit_cost between 1 and 5", name="ck_packs_credit_range"),
         Index("ix_packs_category_status", "category", "status"),
