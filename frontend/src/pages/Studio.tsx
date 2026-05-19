@@ -70,7 +70,7 @@ export function Studio() {
           Studio
         </div>
         <h1 className="mvfm-display text-warm text-3xl sm:text-[44px] leading-[0.98] tracking-tight">
-          Build something.
+          Build or create something.
         </h1>
         <p className="text-silver text-[14px] max-w-prose">
           Pick a starting point — generate samples, compose TTS, or bundle
@@ -80,7 +80,7 @@ export function Studio() {
 
       <div
         data-testid="studio-entries"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
       >
         <EntryCard
           to="/studio/new"
@@ -90,6 +90,24 @@ export function Studio() {
           icon={
             <svg viewBox="0 0 24 24" fill="none" aria-hidden className="size-5">
               <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          }
+        />
+        <EntryCard
+          to="/studio/voices/new"
+          testId="cta-new-voice"
+          title="New voice"
+          blurb="Design or clone a voice. Sell access and TTS in the marketplace."
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden className="size-5">
+              <path
+                d="M12 2a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"
+                stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+              />
+              <path
+                d="M19 10a7 7 0 0 1-14 0M12 19v3M9 22h6"
+                stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"
+              />
             </svg>
           }
         />
@@ -121,7 +139,7 @@ export function Studio() {
           to="/studio/bundle/new"
           testId="cta-new-bundle"
           title="New bundle"
-          blurb="Group 2+ published packs and sell them together at a discounted price."
+          blurb="Group 2+ published packs or voices and sell them together at a discount."
           icon={
             <svg viewBox="0 0 24 24" fill="none" aria-hidden className="size-5">
               <path

@@ -161,7 +161,7 @@ function Shelf({
       onLinkClick={link.onClick}
       items={items}
       renderItem={(p: Pack) => (
-        <PackTile pack={p} size="md" onSelect={onSelect} onPlay={onSelect} />
+        <PackTile pack={p} size="md" onSelect={onSelect} />
       )}
     />
   );

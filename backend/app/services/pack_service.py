@@ -183,6 +183,8 @@ def create_draft(db: Session, data: DraftInput) -> Pack:
 
 
 def publish_pack(db: Session, pack_id: str, requesting_user_id: str) -> Pack:
+    from app.db.models import PackSample
+
     pack = get_pack(db, pack_id)
     if pack.creator_id != requesting_user_id:
         raise PackPermissionError(
@@ -192,9 +194,19 @@ def publish_pack(db: Session, pack_id: str, requesting_user_id: str) -> Pack:
     if pack.status == "published":
         return pack  # idempotent
 
+    # Always regenerate slug from the real title at publish time so URLs
+    # never contain "untitled-..." even if the pack was created with a
+    # placeholder name and renamed only in the publish form.
+    new_id = _slug_from_title(pack.title)
+    if new_id != pack.id:
+        db.query(PackSample).filter(PackSample.pack_id == pack.id).update(
+            {"pack_id": new_id}, synchronize_session=False
+        )
+        pack.id = new_id
+        db.flush()
+
     # Auto-fill convenience fields so the creator doesn't have to manually
     # set them in the publish form.
-    from app.db.models import PackSample
     if not pack.preview_url:
         first = (
             db.query(PackSample)

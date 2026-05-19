@@ -102,8 +102,8 @@ export function StudioPublish() {
           style_profile: {},
         });
       }
-      await api.publishPack(pack.id);
-      navigate(`/p/${pack.id}`, { replace: true });
+      const published = await api.publishPack(pack.id);
+      navigate(`/p/${published.id}`, { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 422) {
         setError(

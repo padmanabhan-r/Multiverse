@@ -95,7 +95,7 @@ export function Library() {
           Your library
         </div>
         <h1 className="font-display text-warm text-3xl sm:text-[40px] tracking-tight">
-          Your packs.
+          Your packs and voices.
         </h1>
         <p className="text-silver text-[14px]">
           {totalOwned} {totalOwned === 1 ? "item" : "items"} owned ·{" "}

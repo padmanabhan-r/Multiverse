@@ -93,7 +93,6 @@ export function Browse() {
               packs={packs}
               highlightId={highlightId ?? undefined}
               onSelect={onTileSelect}
-              onPlay={onTileSelect}
             />
           )}
         </section>
@@ -119,12 +118,10 @@ function PackGrid({
   packs,
   highlightId,
   onSelect,
-  onPlay,
 }: {
   packs: Pack[];
   highlightId?: string;
   onSelect: (id: string) => void;
-  onPlay: (id: string) => void;
 }) {
   return (
     <div
@@ -141,7 +138,6 @@ function PackGrid({
           size="lg"
           active={p.id === highlightId}
           onSelect={onSelect}
-          onPlay={onPlay}
         />
       ))}
     </div>

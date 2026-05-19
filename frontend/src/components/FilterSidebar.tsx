@@ -24,8 +24,6 @@ const COMING_SOON: ReadonlyArray<PackCategory> = [
 const SORT_OPTIONS: Array<{ value: PackSort; label: string }> = [
   { value: "new", label: "Newest" },
   { value: "popular", label: "Popular" },
-  { value: "price_asc", label: "Price ↑" },
-  { value: "price_desc", label: "Price ↓" },
 ];
 
 const PRICE_BUCKETS: Array<{
@@ -147,6 +145,31 @@ export function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
               </button>
             );
           })}
+          {/* Price toggle: one button cycles asc ↔ desc */}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={
+              filters.sort === "price_asc" || filters.sort === "price_desc"
+            }
+            data-testid="filter-sort-price"
+            onClick={() =>
+              setSort(
+                filters.sort === "price_asc" ? "price_desc" : "price_asc",
+              )
+            }
+            className={cn(
+              "px-3 py-1.5 rounded-md",
+              "font-mono text-[10px] tracking-[0.14em] uppercase",
+              "border transition-all duration-fast ease-tune",
+              filters.sort === "price_asc" || filters.sort === "price_desc"
+                ? "border-molten/50 bg-molten-tint text-molten"
+                : "border-glass-soft bg-elev-2/40 text-silver hover:text-warm hover:border-glass",
+            )}
+          >
+            Price{" "}
+            {filters.sort === "price_desc" ? "↓" : "↑"}
+          </button>
         </div>
       </Section>
     </aside>

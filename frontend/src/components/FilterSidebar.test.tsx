@@ -64,14 +64,28 @@ describe("FilterSidebar", () => {
     );
   });
 
-  it("sort radio dispatches new sort", async () => {
+  it("price toggle defaults to price_asc then flips to price_desc", async () => {
     const onChange = vi.fn();
     render(<FilterSidebar filters={{}} onChange={onChange} />);
     const sort = screen.getByTestId("filter-sort");
-    await userEvent.click(within(sort).getByTestId("filter-sort-price_asc"));
-    expect(onChange).toHaveBeenCalledWith(
+    // First click: inactive → price_asc
+    await userEvent.click(within(sort).getByTestId("filter-sort-price"));
+    expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ sort: "price_asc" }),
     );
+    // Re-render with price_asc active, click again → price_desc
+    const { rerender } = render(
+      <FilterSidebar filters={{ sort: "price_asc" }} onChange={onChange} />,
+    );
+    await userEvent.click(
+      within(screen.getAllByTestId("filter-sort").at(-1)!).getByTestId(
+        "filter-sort-price",
+      ),
+    );
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: "price_desc" }),
+    );
+    rerender(<FilterSidebar filters={{ sort: "price_asc" }} onChange={onChange} />);
   });
 
   it("typing in search dispatches q each keystroke (controlled)", async () => {

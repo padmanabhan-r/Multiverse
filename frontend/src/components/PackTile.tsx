@@ -10,8 +10,6 @@ export interface PackTileProps {
   size?: PackTileSize;
   active?: boolean;
   onSelect?: (id: string) => void;
-  /** Optional — only invoked if `pack.preview_url` is missing. */
-  onPlay?: (id: string) => void;
 }
 
 /** Singleton: only one tile's preview plays at a time across the page. */
@@ -34,7 +32,6 @@ export function PackTile({
   size = "lg",
   active = false,
   onSelect,
-  onPlay,
 }: PackTileProps) {
   const px = SIZE_PX[size];
   const plate = plateFor(plateSeedFromPack(pack));
@@ -52,11 +49,7 @@ export function PackTile({
   }, []);
 
   function togglePreview() {
-    if (!pack.preview_url) {
-      // No preview audio → fall back to opening the pack page.
-      onPlay?.(pack.id);
-      return;
-    }
+    if (!pack.preview_url) return;
     let audio = audioRef.current;
     if (!audio) {
       audio = new Audio(pack.preview_url);
@@ -166,8 +159,8 @@ export function PackTile({
             />
           )}
 
-          {/* Hover play-ring */}
-          <span
+          {/* Hover play-ring — only shown when preview audio exists */}
+          {pack.preview_url && <span
             data-testid="pack-tile-play-ring"
             onClick={(e) => {
               e.stopPropagation();
@@ -206,7 +199,7 @@ export function PackTile({
                 }}
               />
             )}
-          </span>
+          </span>}
         </div>
 
         {/* Meta — always visible for marketplace context (legibility > density) */}

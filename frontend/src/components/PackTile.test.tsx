@@ -57,14 +57,22 @@ describe("PackTile", () => {
     expect(onSelect).toHaveBeenCalledWith("pack-sfx-rainy-noir");
   });
 
-  it("calls onPlay with id when play-ring clicked + stops propagation", async () => {
+  it("hides play-ring when pack has no preview_url", () => {
+    render(<PackTile pack={basePack} onSelect={vi.fn()} />);
+    expect(screen.queryByTestId("pack-tile-play-ring")).not.toBeInTheDocument();
+  });
+
+  it("shows play-ring when pack has a preview_url", () => {
+    const packWithPreview = { ...basePack, preview_url: "https://cdn.example.com/preview.mp3" };
+    render(<PackTile pack={packWithPreview} onSelect={vi.fn()} />);
+    expect(screen.getByTestId("pack-tile-play-ring")).toBeInTheDocument();
+  });
+
+  it("play-ring click does not call onSelect", async () => {
     const onSelect = vi.fn();
-    const onPlay = vi.fn();
-    render(
-      <PackTile pack={basePack} onSelect={onSelect} onPlay={onPlay} />,
-    );
+    const packWithPreview = { ...basePack, preview_url: "https://cdn.example.com/preview.mp3" };
+    render(<PackTile pack={packWithPreview} onSelect={onSelect} />);
     await userEvent.click(screen.getByTestId("pack-tile-play-ring"));
-    expect(onPlay).toHaveBeenCalledWith("pack-sfx-rainy-noir");
     expect(onSelect).not.toHaveBeenCalled();
   });
 

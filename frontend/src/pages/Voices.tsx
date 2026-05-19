@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 
 export function Voices() {
   const [voices, setVoices] = useState<MarketplaceVoice[] | null>(null);
+  const [q, setQ] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,6 +24,16 @@ export function Voices() {
       </div>
     );
 
+  const needle = q.trim().toLowerCase();
+  const filtered = needle
+    ? voices.filter(
+        (v) =>
+          v.title.toLowerCase().includes(needle) ||
+          (v.description ?? "").toLowerCase().includes(needle) ||
+          (v.creator_name ?? "").toLowerCase().includes(needle),
+      )
+    : voices;
+
   return (
     <section className="space-y-6 pb-8" data-testid="voices-page">
       <header className="space-y-1">
@@ -38,13 +49,31 @@ export function Voices() {
         </p>
       </header>
 
-      {voices.length === 0 ? (
-        <div className="text-silver italic text-[13px]">
-          No voices published yet.
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search voices…"
+        aria-label="Search voices"
+        data-testid="voices-search"
+        className="
+          w-full max-w-sm px-3 py-2 rounded-md
+          bg-elev-2/60 border border-glass-soft
+          font-body text-warm text-[13px]
+          placeholder:text-silver2/70
+          focus:outline-none focus:border-molten/40
+          focus:shadow-[0_0_18px_-8px_var(--mvfm-molten-dim)]
+          transition-all duration-fast ease-tune
+        "
+      />
+
+      {filtered.length === 0 ? (
+        <div className="text-silver italic text-[13px]" data-testid="voices-empty">
+          {needle ? `No voices match "${q}".` : "No voices published yet."}
         </div>
       ) : (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {voices.map((v) => (
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {filtered.map((v) => (
             <li key={v.id}>
               <VoiceTile voice={v} />
             </li>
@@ -67,7 +96,7 @@ function VoiceTile({ voice }: { voice: MarketplaceVoice }) {
       )}
     >
       <div
-        className="aspect-[5/3] relative"
+        className="aspect-square relative"
         style={{
           background: voice.cover_art_url
             ? `center / cover no-repeat url('${voice.cover_art_url}'), ${plate.background}`
