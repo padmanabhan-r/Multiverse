@@ -3,20 +3,21 @@ import { useNavigate } from "react-router-dom";
 import type { PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
-
 /** Cycled background images — pulled from the 6 Gemini category thumbnails.
  * Slow cross-fade every 6 s. Each image is 5:4 1024×819, perfect for a wide
  * hero band. Failure-tolerant: any 404 hides itself, the layer below still
  * supplies an atmospheric gradient.
  */
+const R2_PUBLIC =
+  import.meta.env.VITE_R2_PUBLIC_BASE_URL ??
+  "https://pub-435ae75e0b144d9ca5df30f156449361.r2.dev";
+
 const HERO_BG_IMAGES: ReadonlyArray<string> = [
-  `${API_BASE}/static/images/categories/music.png`,
-  `${API_BASE}/static/images/categories/ambient.png`,
-  `${API_BASE}/static/images/categories/radio_packs.png`,
-  `${API_BASE}/static/images/categories/broadcast_packs.png`,
-  `${API_BASE}/static/images/categories/sfx.png`,
+  `${R2_PUBLIC}/categories/music.png`,
+  `${R2_PUBLIC}/categories/ambient.png`,
+  `${R2_PUBLIC}/categories/radio_packs.png`,
+  `${R2_PUBLIC}/categories/broadcast_packs.png`,
+  `${R2_PUBLIC}/categories/sfx.png`,
 ];
 
 type HeroCategory =

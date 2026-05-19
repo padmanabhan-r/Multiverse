@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import type { PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const R2_PUBLIC =
+  import.meta.env.VITE_R2_PUBLIC_BASE_URL ??
+  "https://pub-435ae75e0b144d9ca5df30f156449361.r2.dev";
 
-/** Gemini-generated thumbnail per category (run
- * `uv run python -m app.scripts.generate_category_thumbnails` once). */
+/** Gemini-generated thumbnail per category (uploaded to R2). */
 function thumbnailUrl(category: PackCategory): string {
-  return `${API_BASE}/static/images/categories/${category}.png`;
+  return `${R2_PUBLIC}/categories/${category}.png`;
 }
 
 interface CardSpec {
