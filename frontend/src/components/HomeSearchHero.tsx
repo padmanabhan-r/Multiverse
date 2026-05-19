@@ -97,7 +97,7 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
         relative w-full overflow-hidden rounded-xl
         border border-glass-soft
         px-5 sm:px-10 lg:px-14
-        py-7 sm:py-9 lg:py-10
+        py-12 sm:py-16 lg:py-20
       "
     >
       {/* Cycling hero background images — slow cross-fade, ken-burns drift. */}
@@ -160,24 +160,24 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
       <div aria-hidden className="absolute top-0 left-0 right-0 mvfm-scanline" />
       <div aria-hidden className="absolute bottom-0 left-0 right-0 mvfm-scanline" />
 
-      <div className="max-w-3xl mx-auto text-center space-y-3 sm:space-y-4">
+      <div className="max-w-3xl mx-auto text-center space-y-5 sm:space-y-6">
         {/* Headline */}
         <div className="space-y-2">
           <div
             data-testid="home-hero-eyebrow"
             className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase"
           >
-            The first AI-native music + sound marketplace
+            The first AI-native music, sound & voice marketplace
           </div>
           <h1
             data-testid="home-hero-headline"
             className="mvfm-display text-warm leading-[0.95]"
             style={{ fontSize: "clamp(30px, 4vw, 56px)" }}
           >
-            Find the sound you need.
+            Sounds, music & voices for every creator.
           </h1>
           <p className="text-silver text-[13px] sm:text-[14px] max-w-2xl mx-auto font-body leading-snug">
-            Buy from <span className="text-warm font-medium">thousands of royalty-free AI-generated sounds</span> at the cheapest prices. Don't just create music — create, sell and own it.
+            Royalty-free AI audio for <span className="text-warm font-medium">videos, games and content creation</span>. Discover thousands of packs — or generate your own, publish and monetize.
           </p>
         </div>
 
@@ -301,10 +301,12 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
           className="flex flex-wrap items-center justify-center gap-1.5 mt-3"
         >
           {[
-            "Royalty-free",
-            "Commercial license available",
-            "Instant download",
-            "No subscription to buy",
+            "Sounds",
+            "Music",
+            "Voices",
+            "Ambient",
+            "Radio packs",
+            "Broadcast packs",
           ].map((t) => (
             <span
               key={t}

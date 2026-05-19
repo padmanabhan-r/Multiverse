@@ -44,7 +44,7 @@ def me(
         pass
     _ = is_new  # kept for future first-login-only logic
 
-    # Grant 5 trial credits on first login — idempotent (no-op if row exists).
+    # Grant trial credits on first login — idempotent (no-op if row exists).
     credit_service.grant_trial(db, user.user_id)
     db.commit()
 

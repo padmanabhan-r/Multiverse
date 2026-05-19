@@ -63,6 +63,8 @@ _ACTION_COSTS: dict[str, int] = {
     "gen_music_60s": 2,
     "gen_music_120s": 3,
     "gen_voice_design": 5,
+    "gen_voice_clone_ivc": 10,
+    "gen_voice_clone_pvc": 50,
     "gen_tts_5min": 1,
 }
 
@@ -201,7 +203,7 @@ def ledger_entry(
 
 
 def grant_trial(db: Session, user_id: str) -> CreditBalance:
-    """One-time free-tier 5-credit grant. Idempotent."""
+    """One-time free-tier trial grant (FREE_TRIAL_CREDITS). Idempotent."""
     existing = db.get(CreditBalance, user_id)
     if existing is not None:
         return existing
