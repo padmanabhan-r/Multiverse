@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import type { Pack, PackListFilters, PackSample } from "@multiverse/shared";
+import type { BundleWithPacks, Pack, PackListFilters, PackSample } from "@multiverse/shared";
 import { api, type CreditsResponse } from "@/lib/api";
 
 export function usePacks(
@@ -20,6 +20,18 @@ export function usePack(packId: string | undefined): UseQueryResult<Pack> {
       return api.getPack(packId);
     },
     enabled: !!packId,
+    staleTime: 60_000,
+  });
+}
+
+export function useBundle(bundleId: string | undefined): UseQueryResult<BundleWithPacks> {
+  return useQuery({
+    queryKey: ["bundle", bundleId],
+    queryFn: () => {
+      if (!bundleId) throw new Error("bundleId required");
+      return api.getBundle(bundleId);
+    },
+    enabled: !!bundleId,
     staleTime: 60_000,
   });
 }

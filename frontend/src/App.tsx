@@ -9,6 +9,7 @@ import { Browse } from "@/pages/Browse";
 import { Cart } from "@/pages/Cart";
 import { Home } from "@/pages/Home";
 import { Pack } from "@/pages/Pack";
+import { BundleDetail } from "@/pages/BundleDetail";
 import { Pricing } from "@/pages/Pricing";
 import { Creator } from "@/pages/Creator";
 import { CreatorStorefront } from "@/pages/CreatorStorefront";
@@ -84,6 +85,7 @@ export function App() {
         <Route path="/browse" element={<Browse />} />
         <Route path="/browse/:category" element={<Browse />} />
         <Route path="/p/:packId" element={<Pack />} />
+        <Route path="/bundles/:bundleId" element={<BundleDetail />} />
         <Route path="/studio" element={<Studio />} />
         <Route path="/studio/new" element={<StudioNew />} />
         <Route path="/studio/draft/:packId" element={<StudioDraft />} />

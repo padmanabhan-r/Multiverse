@@ -212,7 +212,7 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
             <button
               type="button"
               data-testid="pack-view-creator"
-              onClick={() => navigate(`/u/${pack.creator_id}`)}
+              onClick={() => navigate(`/u/${encodeURIComponent(pack.creator_name)}`)}
               className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-md text-warm font-mono text-[10.5px] tracking-[0.12em] uppercase font-semibold transition-all duration-fast ease-tune hover:brightness-110"
               style={{
                 background: "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03))",

@@ -38,14 +38,23 @@ class CreatorStorefrontDTO(BaseModel):
     bundles: list[BundleDTO]
 
 
-@router.get("/creators/{creator_id}", response_model=CreatorStorefrontDTO)
+@router.get("/creators/{identifier}", response_model=CreatorStorefrontDTO)
 def storefront(
-    creator_id: str, db: Annotated[Session, Depends(get_db)]
+    identifier: str, db: Annotated[Session, Depends(get_db)]
 ) -> CreatorStorefrontDTO:
-    user = db.get(User, creator_id)
+    # Accept either a Clerk user ID ("user_xxx") or a plain username ("limb").
+    if identifier.startswith("user_"):
+        user = db.get(User, identifier)
+    else:
+        user = (
+            db.query(User)
+            .filter(User.username.ilike(identifier))
+            .first()
+        )
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "creator not found")
 
+    creator_id = user.id
     profile = db.get(CreatorProfile, creator_id)
 
     # If username not yet synced, try Clerk Management API (best-effort).
@@ -62,7 +71,7 @@ def storefront(
     display_name = (
         user.username
         or (profile.display_name if profile and profile.display_name else None)
-        or "Creator"  # never expose raw Clerk ID
+        or "Creator"
     )
 
     packs = list(

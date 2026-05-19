@@ -1,5 +1,6 @@
 import type {
   Bundle,
+  BundleWithPacks,
   CartItem,
   MeResponse,
   Pack,
@@ -111,6 +112,7 @@ export interface ApiClient {
   listTopupPacks: () => Promise<{ packs: Array<{ credits: number; price_cents: number }> }>;
   listPacks: (filters?: PackListFilters) => Promise<Pack[]>;
   getPack: (packId: string) => Promise<Pack>;
+  getBundle: (bundleId: string) => Promise<BundleWithPacks>;
   checkoutCart: (items: CartItem[]) => Promise<{ url: string }>;
   myCredits: () => Promise<CreditsResponse>;
   createDraft: (data: DraftPayload) => Promise<Pack>;
@@ -332,6 +334,7 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
       return request<Pack[]>(`/packs${qs ? `?${qs}` : ""}`);
     },
     getPack: (packId) => request<Pack>(`/packs/${encodeURIComponent(packId)}`),
+    getBundle: (bundleId) => request<BundleWithPacks>(`/bundles/${encodeURIComponent(bundleId)}`),
     checkoutCart: (items) =>
       request("/checkout", {
         method: "POST",

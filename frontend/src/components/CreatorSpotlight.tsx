@@ -13,7 +13,7 @@ interface Props {
  * Two-column spotlight: portrait creator card (left) + three stacked
  * horizontal pack rows (right). Collapses to vertical on mobile.
  */
-export function CreatorSpotlight({ creatorId, displayName, bio, packs }: Props) {
+export function CreatorSpotlight({ displayName, bio, packs }: Props) {
   const trio = packs.slice(0, 3);
   if (trio.length === 0) return null;
 
@@ -24,7 +24,7 @@ export function CreatorSpotlight({ creatorId, displayName, bio, packs }: Props) 
     >
       {/* Left: creator card */}
       <Link
-        to={`/u/${creatorId}`}
+        to={`/u/${encodeURIComponent(displayName)}`}
         className="
           group relative aspect-square lg:aspect-auto rounded-xl overflow-hidden
           border border-glass-soft hover:border-molten/40
