@@ -12,55 +12,76 @@ function thumbnailUrl(category: PackCategory): string {
 }
 
 interface CardSpec {
-  category: PackCategory;
+  /** Slug used for thumbnail filename + test id. */
+  key: string;
+  /** Route target. */
+  to: string;
+  /** Thumbnail key if different from `key` (for non-pack categories). */
+  thumbnailKey?: PackCategory;
   label: string;
   blurb: string;
   /** CSS gradient fallback shown until/if the thumbnail loads. */
   background: string;
+  /** If true, render with "Coming soon" badge and disable nav. */
+  comingSoon?: boolean;
 }
 
 const CARDS: CardSpec[] = [
   {
-    category: "music",
+    key: "music",
+    to: "/browse/music",
+    thumbnailKey: "music",
     label: "Music",
     blurb: "Instrumental beds + cinematic cues.",
     background:
       "radial-gradient(ellipse at 70% 40%, rgba(255,138,61,0.22) 0%, transparent 60%), linear-gradient(135deg, #16100c 0%, #0a0a0c 100%)",
   },
   {
-    category: "sfx",
+    key: "sfx",
+    to: "/browse/sfx",
+    thumbnailKey: "sfx",
     label: "Sound effects",
     blurb: "One-shots, foley, impacts. Tile to taste.",
     background:
       "radial-gradient(circle at 30% 30%, rgba(255,106,31,0.35) 0%, transparent 60%), linear-gradient(135deg, #1a1217 0%, #0a0a0c 100%)",
   },
   {
-    category: "voice_packs",
-    label: "Voice packs",
-    blurb: "Greetings, callouts, narration.",
+    key: "voices",
+    to: "/voices",
+    thumbnailKey: "voice_packs",
+    label: "Voices",
+    blurb: "Character voices — preview, buy, run TTS.",
     background:
       "radial-gradient(circle at 50% 70%, rgba(255,106,31,0.22) 0%, transparent 55%), linear-gradient(180deg, #181410 0%, #0a0a0c 100%)",
   },
   {
-    category: "ambient",
+    key: "ambient",
+    to: "/browse/ambient",
+    thumbnailKey: "ambient",
     label: "Ambient beds",
     blurb: "Loopable atmospheres + rooms.",
     background:
       "radial-gradient(ellipse at 20% 80%, rgba(62,90,102,0.30) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(255,106,31,0.18) 0%, transparent 50%), #0a0a0c",
   },
   {
-    category: "radio_packs",
+    key: "radio_packs",
+    to: "/browse/radio_packs",
+    thumbnailKey: "radio_packs",
     label: "Radio packs",
     blurb: "Full station broadcasts — DJ + bed + ad.",
     background:
       "radial-gradient(ellipse at 50% 50%, rgba(255,106,31,0.30) 0%, rgba(255,106,31,0.08) 35%, transparent 75%), #0a0a0c",
+    comingSoon: true,
   },
   {
-    category: "broadcast_packs",
+    key: "broadcast_packs",
+    to: "/browse/broadcast_packs",
+    thumbnailKey: "broadcast_packs",
     label: "Broadcast packs",
     blurb: "Hour-long themed broadcast blocks.",
     background:
       "radial-gradient(circle at 60% 30%, rgba(255,138,61,0.20) 0%, transparent 55%), linear-gradient(225deg, #1a1310 0%, #0a0a0c 70%)",
+    comingSoon: true,
   },
 ];
 
@@ -77,19 +98,30 @@ export function CategoryDeck() {
     >
       {CARDS.map((card, i) => (
         <Link
-          key={card.category}
-          to={`/browse/${card.category}`}
-          data-testid={`category-card-${card.category}`}
+          key={card.key}
+          to={card.to}
+          data-testid={`category-card-${card.key}`}
+          onClick={(e) => {
+            if (card.comingSoon) e.preventDefault();
+          }}
+          aria-disabled={card.comingSoon}
           className={cn(
             "group relative aspect-[5/4] rounded-lg overflow-hidden",
-            "border border-glass-soft hover:border-molten/50",
-            "transition-all duration-tune ease-tune",
+            "border border-glass-soft transition-all duration-tune ease-tune",
+            card.comingSoon
+              ? "cursor-not-allowed opacity-70"
+              : "hover:border-molten/50",
           )}
           style={{ background: card.background }}
         >
+          {card.comingSoon && (
+            <span className="absolute top-2 right-2 z-[3] px-2 py-1 rounded-pill bg-molten-tint border border-molten/40 font-mono text-molten text-[8.5px] tracking-[0.22em] uppercase">
+              Coming soon
+            </span>
+          )}
           {/* Gemini thumbnail — sits above gradient fallback. */}
           <img
-            src={thumbnailUrl(card.category)}
+            src={thumbnailUrl(card.thumbnailKey ?? "music")}
             alt=""
             aria-hidden
             loading="lazy"

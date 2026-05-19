@@ -61,9 +61,7 @@ export function MarketplaceHero({
 
   const plate = plateFor(pack.id);
   const heroImage = pack.hero_art_url || pack.cover_art_url;
-  const formattedPrice = `$${(pack.price_cents / 100).toFixed(
-    pack.price_cents % 100 === 0 ? 0 : 2,
-  )}`;
+  const formattedPrice = `${pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡`;
 
   return (
     <section

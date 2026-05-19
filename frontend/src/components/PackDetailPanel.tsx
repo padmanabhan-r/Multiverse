@@ -351,7 +351,7 @@ function PreviewTab({
             hover:brightness-110 transition-all duration-fast ease-tune
           "
         >
-          Add to cart · {formatPrice(pack.price_cents)}
+          Add to cart · {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
         </button>
       )}
     </div>
@@ -417,10 +417,6 @@ const CATEGORY_LABEL = {
 function sampleWord(count: number, category: Pack["category"]): string {
   const noun = category === "sfx" ? "sound" : "sample";
   return `${count} ${count === 1 ? noun : `${noun}s`}`;
-}
-
-function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }
 
 function formatDuration(ms: number): string {

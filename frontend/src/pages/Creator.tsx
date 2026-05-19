@@ -58,7 +58,7 @@ export function Creator() {
         <Metric label="Bundles" value={String(me.bundle_count)} />
         <Metric
           label="Sales (30d)"
-          value={`$${(me.sales_cents_30d / 100).toFixed(2)}`}
+          value={`${Math.round(me.sales_cents_30d / 10)} ⚡`}
           sub={`${me.sales_count_30d} packs sold`}
         />
       </div>
@@ -152,7 +152,7 @@ function PackGrid({
             </div>
             <div className="font-display text-warm">{p.title}</div>
             <div className="text-silver text-[11px]">
-              ${(p.price_cents / 100).toFixed(2)}
+              {p.price_credits ?? Math.round(p.price_cents / 10)} ⚡
             </div>
           </Link>
         </li>
@@ -182,7 +182,7 @@ function BundleGrid({ bundles }: { bundles: Bundle[] }) {
             </div>
             <div className="font-display text-warm">{b.title}</div>
             <div className="text-silver text-[11px]">
-              ${(b.price_cents / 100).toFixed(2)}
+              {(b as { price_credits?: number }).price_credits ?? Math.round(b.price_cents / 10)} ⚡
             </div>
           </div>
         </li>
@@ -214,7 +214,7 @@ function SalesTable({ rows }: { rows: SaleRow[] }) {
           >
             <td className="py-2">{r.pack_title}</td>
             <td>{r.license_kind}</td>
-            <td className="text-right">${(r.price_paid_cents / 100).toFixed(2)}</td>
+            <td className="text-right">{Math.round(r.price_paid_cents / 10)} ⚡</td>
             <td className="text-right text-silver">
               {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
             </td>

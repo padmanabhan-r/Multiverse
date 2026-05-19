@@ -25,27 +25,28 @@ def seeded(db_session: Session):
 # ─── Seed ───────────────────────────────────────────────────────────────────
 
 
-def test_curated_seed_has_22_packs() -> None:
-    assert len(all_curated_packs()) == 22
+def test_curated_seed_has_17_packs() -> None:
+    # Voice purchases moved to Voice marketplace (Voice table). 5 music +
+    # 5 sfx + 5 ambient + 1 radio + 1 broadcast = 17 Pack rows.
+    assert len(all_curated_packs()) == 17
 
 
-def test_curated_seed_spans_all_6_categories() -> None:
+def test_curated_seed_spans_5_pack_categories() -> None:
     cats = {p["category"] for p in all_curated_packs()}
     assert cats == {
         "sfx",
         "music",
-        "voice_packs",
         "ambient",
         "radio_packs",
         "broadcast_packs",
     }
 
 
-def test_seed_inserts_22_published_packs(db_session: Session) -> None:
+def test_seed_inserts_17_published_packs(db_session: Session) -> None:
     seed_packs(db_session)
     db_session.commit()
     rows = pack_service.list_packs(db_session, PackFilters(limit=100))
-    assert len(rows) == 22
+    assert len(rows) == 17
     assert all(p.status == "published" for p in rows)
 
 
@@ -55,7 +56,7 @@ def test_seed_is_idempotent(db_session: Session) -> None:
     seed_packs(db_session)
     db_session.commit()
     rows = pack_service.list_packs(db_session, PackFilters(limit=100))
-    assert len(rows) == 22
+    assert len(rows) == 17
 
 
 # ─── list_packs filters ─────────────────────────────────────────────────────
@@ -109,7 +110,8 @@ def test_list_pagination(seeded: Session) -> None:
     page1 = pack_service.list_packs(seeded, PackFilters(limit=10, offset=0))
     page2 = pack_service.list_packs(seeded, PackFilters(limit=10, offset=10))
     ids = {p.id for p in page1} | {p.id for p in page2}
-    assert len(ids) == 20
+    # 17 total → 10 + 7 unique
+    assert len(ids) == 17
 
 
 def test_list_rejects_unknown_category(seeded: Session) -> None:

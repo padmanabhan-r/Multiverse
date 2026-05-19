@@ -89,7 +89,7 @@ export function CreatorStorefront() {
                   </div>
                   <div className="font-display text-warm">{p.title}</div>
                   <div className="text-silver text-[11px]">
-                    ${(p.price_cents / 100).toFixed(2)}
+                    {p.price_credits ?? Math.round(p.price_cents / 10)} ⚡
                   </div>
                 </Link>
               </li>
@@ -112,7 +112,7 @@ export function CreatorStorefront() {
                 </div>
                 <div className="font-display text-warm">{b.title}</div>
                 <div className="text-silver text-[11px]">
-                  ${(b.price_cents / 100).toFixed(2)}
+                  {(b as { price_credits?: number }).price_credits ?? Math.round(b.price_cents / 10)} ⚡
                 </div>
               </li>
             ))}

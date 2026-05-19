@@ -16,19 +16,28 @@ const HERO_BG_IMAGES: ReadonlyArray<string> = [
   `${API_BASE}/static/images/categories/ambient.png`,
   `${API_BASE}/static/images/categories/radio_packs.png`,
   `${API_BASE}/static/images/categories/broadcast_packs.png`,
-  `${API_BASE}/static/images/categories/voice_packs.png`,
   `${API_BASE}/static/images/categories/sfx.png`,
 ];
 
-const CATEGORY_LABEL: Record<"all" | PackCategory, string> = {
+type HeroCategory =
+  | "all"
+  | "voices"
+  | Exclude<PackCategory, "voice_packs">;
+
+const CATEGORY_LABEL: Record<HeroCategory, string> = {
   all: "All packs",
-  sfx: "Sound effects",
   music: "Music",
-  voice_packs: "Voice packs",
+  sfx: "Sound effects",
+  voices: "Voices",
   ambient: "Ambient",
-  radio_packs: "Radio packs",
-  broadcast_packs: "Broadcast packs",
+  radio_packs: "Radio packs · soon",
+  broadcast_packs: "Broadcast packs · soon",
 };
+
+const COMING_SOON: ReadonlyArray<HeroCategory> = [
+  "radio_packs",
+  "broadcast_packs",
+];
 
 const TRENDING_TAGS: ReadonlyArray<string> = [
   "noir",
@@ -45,13 +54,13 @@ const TRENDING_TAGS: ReadonlyArray<string> = [
 
 export interface HomeSearchHeroProps {
   /** Optional explicit submit override (tests). Otherwise navigates. */
-  onSubmit?: (q: string, category: "all" | PackCategory) => void;
+  onSubmit?: (q: string, category: HeroCategory) => void;
 }
 
 export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [category, setCategory] = useState<"all" | PackCategory>("all");
+  const [category, setCategory] = useState<HeroCategory>("all");
   const [showMenu, setShowMenu] = useState(false);
   const [bgIdx, setBgIdx] = useState(0);
 
@@ -76,12 +85,15 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
       onSubmit(q, category);
       return;
     }
+    if (COMING_SOON.includes(category)) return;
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
-    const path =
-      category === "all"
-        ? `/browse${params.toString() ? `?${params.toString()}` : ""}`
-        : `/browse/${category}${params.toString() ? `?${params.toString()}` : ""}`;
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    if (category === "voices") {
+      navigate(`/voices${qs}`);
+      return;
+    }
+    const path = category === "all" ? `/browse${qs}` : `/browse/${category}${qs}`;
     navigate(path);
   };
 
@@ -229,28 +241,35 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
                   rounded-md mvfm-glass overflow-hidden
                 "
               >
-                {(Object.keys(CATEGORY_LABEL) as Array<"all" | PackCategory>).map(
-                  (key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      data-testid={`home-hero-category-${key}`}
-                      onClick={() => {
-                        setCategory(key);
-                        setShowMenu(false);
-                      }}
-                      className={cn(
-                        "block w-full text-left px-3 py-2 font-mono",
-                        "text-[10.5px] tracking-[0.16em] uppercase",
-                        "transition-colors duration-fast ease-tune",
-                        category === key
-                          ? "bg-molten-tint text-molten"
-                          : "text-silver hover:text-warm hover:bg-white/[0.03]",
-                      )}
-                    >
-                      {CATEGORY_LABEL[key]}
-                    </button>
-                  ),
+                {(Object.keys(CATEGORY_LABEL) as Array<HeroCategory>).map(
+                  (key) => {
+                    const soon = COMING_SOON.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        data-testid={`home-hero-category-${key}`}
+                        disabled={soon}
+                        onClick={() => {
+                          if (soon) return;
+                          setCategory(key);
+                          setShowMenu(false);
+                        }}
+                        className={cn(
+                          "block w-full text-left px-3 py-2 font-mono",
+                          "text-[10.5px] tracking-[0.16em] uppercase",
+                          "transition-colors duration-fast ease-tune",
+                          soon
+                            ? "text-silver2/50 cursor-not-allowed italic"
+                            : category === key
+                              ? "bg-molten-tint text-molten"
+                              : "text-silver hover:text-warm hover:bg-white/[0.03]",
+                        )}
+                      >
+                        {CATEGORY_LABEL[key]}
+                      </button>
+                    );
+                  },
                 )}
               </div>
             )}
@@ -305,8 +324,8 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
             "Music",
             "Voices",
             "Ambient",
-            "Radio packs",
-            "Broadcast packs",
+            "Radio packs · soon",
+            "Broadcast packs · soon",
           ].map((t) => (
             <span
               key={t}
@@ -352,7 +371,7 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
   );
 }
 
-function shortLabel(c: "all" | PackCategory): string {
+function shortLabel(c: HeroCategory): string {
   switch (c) {
     case "all":
       return "All";
@@ -360,8 +379,8 @@ function shortLabel(c: "all" | PackCategory): string {
       return "SFX";
     case "music":
       return "Music";
-    case "voice_packs":
-      return "Voice";
+    case "voices":
+      return "Voices";
     case "ambient":
       return "Ambient";
     case "radio_packs":

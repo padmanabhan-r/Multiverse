@@ -73,7 +73,7 @@ describe("Cart page", () => {
     const lines = screen.getByTestId("cart-lines");
     expect(within(lines).getByText("Sample pack")).toBeInTheDocument();
     expect(within(lines).getByText("Another")).toBeInTheDocument();
-    expect(screen.getByTestId("cart-total")).toHaveTextContent("$20");
+    expect(screen.getByTestId("cart-total")).toHaveTextContent("200 ⚡");
   });
 
   it("Remove button drops the matching line", async () => {

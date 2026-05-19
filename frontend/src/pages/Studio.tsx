@@ -2,6 +2,17 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Pack } from "@multiverse/shared";
 import { api } from "@/lib/api";
+import { plateFor } from "@/lib/stationArt";
+import { cn } from "@/lib/cn";
+
+const CATEGORY_SHORT: Record<string, string> = {
+  sfx: "SFX",
+  music: "Music",
+  voice_packs: "Voice",
+  ambient: "Ambient",
+  radio_packs: "Radio",
+  broadcast_packs: "Broadcast",
+};
 
 export function Studio() {
   const [drafts, setDrafts] = useState<Pack[] | null>(null);
@@ -72,6 +83,7 @@ export function Studio() {
       </header>
 
       <Section title="Drafts" testId="drafts-section" packs={drafts} draft />
+      <hr className="border-glass-soft" />
       <Section title="Published" testId="published-section" packs={published} />
     </section>
   );
@@ -90,50 +102,125 @@ function Section({
 }) {
   if (packs === null) {
     return (
-      <div data-testid={testId} className="text-silver text-[12px]">
-        Loading…
-      </div>
+      <section data-testid={testId} className="space-y-3">
+        <SectionHeader title={title} count={null} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-lg bg-elev-2 animate-pulse shadow-[inset_0_0_0_1px_var(--mvfm-border-soft)]"
+            />
+          ))}
+        </div>
+      </section>
     );
   }
   if (packs.length === 0) {
     return (
-      <section data-testid={testId} className="space-y-2">
-        <h2 className="font-display text-warm text-lg">{title}</h2>
-        <div className="text-silver text-[12px] italic">
-          Nothing here yet.
+      <section data-testid={testId} className="space-y-3">
+        <SectionHeader title={title} count={0} />
+        <div className="rounded-lg border border-dashed border-glass-soft bg-elev-2/30 px-4 py-6 text-center">
+          <p className="text-silver text-[12px]">
+            {draft
+              ? "No drafts yet. Start a new pack to see it here."
+              : "Nothing published yet. Finish a draft to publish it."}
+          </p>
         </div>
       </section>
     );
   }
   return (
-    <section data-testid={testId} className="space-y-2">
-      <h2 className="font-display text-warm text-lg">{title}</h2>
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <section data-testid={testId} className="space-y-3">
+      <SectionHeader title={title} count={packs.length} />
+      <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {packs.map((p) => (
           <li key={p.id}>
-            <Link
-              to={
-                draft
-                  ? `/studio/draft/${p.id}`
-                  : `/p/${p.id}`
-              }
-              data-testid={`pack-link-${p.id}`}
-              className="
-                block p-3 rounded-lg bg-elev-2/60 border border-glass-soft
-                hover:border-molten/40 hover:bg-molten-tint/40 transition-colors
-              "
-            >
-              <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-silver2 mb-1">
-                {p.category} · {p.sample_count} samples
-              </div>
-              <div className="font-display text-warm">{p.title}</div>
-              <div className="text-silver text-[11px] truncate">
-                {p.description || "No description"}
-              </div>
-            </Link>
+            <StudioPackCard pack={p} draft={draft} />
           </li>
         ))}
       </ul>
     </section>
+  );
+}
+
+function SectionHeader({
+  title,
+  count,
+}: {
+  title: string;
+  count: number | null;
+}) {
+  return (
+    <div className="flex items-baseline justify-between px-1">
+      <h2 className="font-mono text-warm text-[12px] tracking-[0.22em] uppercase font-semibold">
+        {title}
+      </h2>
+      {count !== null && (
+        <span className="font-mono text-silver2 text-[10px] tracking-[0.22em] uppercase">
+          {count.toString().padStart(2, "0")} {count === 1 ? "pack" : "packs"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StudioPackCard({ pack, draft }: { pack: Pack; draft: boolean }) {
+  const plate = plateFor(pack.id);
+  const price =
+    pack.price_credits ?? Math.round((pack.price_cents ?? 0) / 10);
+  const to = draft ? `/studio/draft/${pack.id}` : `/p/${pack.id}`;
+  return (
+    <Link
+      to={to}
+      data-testid={`pack-link-${pack.id}`}
+      className={cn(
+        "group block rounded-lg overflow-hidden",
+        "border border-glass-soft hover:border-molten/40",
+        "transition-colors duration-tune ease-tune",
+      )}
+    >
+      <div
+        className="aspect-square relative"
+        style={{
+          background: pack.cover_art_url
+            ? `center / cover no-repeat url('${pack.cover_art_url}'), ${plate.background}`
+            : plate.background,
+        }}
+      >
+        <span
+          aria-hidden
+          className="absolute inset-0 mvfm-grain opacity-40 pointer-events-none"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 45%, rgba(10,10,12,0.88) 100%)",
+          }}
+        />
+        <div className="absolute top-2 left-2 font-mono text-silver2 text-[9px] tracking-[0.24em] uppercase">
+          {CATEGORY_SHORT[pack.category] ?? pack.category}
+        </div>
+        {draft && (
+          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-pill bg-molten-tint border border-molten/40 font-mono text-molten text-[8.5px] tracking-[0.22em] uppercase">
+            Draft
+          </div>
+        )}
+        <div className="absolute bottom-2 left-2 right-2">
+          <div className="mvfm-display text-warm text-[14px] leading-[0.95] truncate">
+            {pack.title}
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="font-mono text-silver text-[9.5px] tracking-[0.14em]">
+              {pack.sample_count} {pack.sample_count === 1 ? "sample" : "samples"}
+            </span>
+            <span className="font-mono text-molten text-[10px] tracking-[0.08em]">
+              {price} ⚡
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }

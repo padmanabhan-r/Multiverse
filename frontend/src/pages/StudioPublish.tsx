@@ -32,7 +32,7 @@ export function StudioPublish() {
   const [title, setTitle] = useState(prefill.title ?? "");
   const [category, setCategory] = useState<PackCategory>(prefill.category ?? "sfx");
   const [description, setDescription] = useState(prefill.description ?? "");
-  const [priceDollars, setPriceDollars] = useState("2");
+  const [priceCredits, setPriceCredits] = useState("20");
   const [tagsRaw, setTagsRaw] = useState("");
   const [multiplier, setMultiplier] = useState("3");
   const [busy, setBusy] = useState(false);
@@ -48,7 +48,7 @@ export function StudioPublish() {
         setTitle(p.title);
         setCategory(p.category as PackCategory);
         setDescription(p.description || "");
-        setPriceDollars((p.price_cents / 100).toFixed(2));
+        setPriceCredits(String(p.price_credits ?? Math.round(p.price_cents / 10)));
         setTagsRaw((p.tags || []).join(", "));
         setMultiplier(String(p.license_commercial_multiplier || 3));
       })
@@ -65,11 +65,12 @@ export function StudioPublish() {
       setError("Title is required.");
       return;
     }
-    const price = Math.round(parseFloat(priceDollars) * 100);
-    if (isNaN(price) || price < 50 || price > 1500) {
-      setError("Price must be between $0.50 and $15.");
+    const credits = Math.round(parseFloat(priceCredits));
+    if (isNaN(credits) || credits < 5 || credits > 150) {
+      setError("Price must be between 5 and 150 credits.");
       return;
     }
+    const price = credits * 10;
     const tags = tagsRaw
       .split(",")
       .map((t) => t.trim().toLowerCase())
@@ -183,16 +184,16 @@ export function StudioPublish() {
           />
         </Field>
 
-        <Field label="Price (USD)" htmlFor="pub-price">
+        <Field label="Price (credits ⚡)" htmlFor="pub-price">
           <input
             id="pub-price"
             data-testid="publish-price"
             type="number"
-            min="0.50"
-            max="15"
-            step="0.50"
-            value={priceDollars}
-            onChange={(e) => setPriceDollars(e.target.value)}
+            min="5"
+            max="150"
+            step="1"
+            value={priceCredits}
+            onChange={(e) => setPriceCredits(e.target.value)}
             className={inputCls}
           />
         </Field>

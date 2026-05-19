@@ -64,7 +64,7 @@ function HeroTile({ pack }: { pack: Pack }) {
           {pack.title}
         </div>
         <div className="font-mono text-silver text-[10px] tracking-[0.18em]">
-          ${(pack.price_cents / 100).toFixed(2)}
+          {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
         </div>
       </div>
     </Link>

@@ -44,8 +44,6 @@ export function Credits() {
       </div>
     );
 
-  const dollars = (me.balance / 10).toFixed(2);
-
   return (
     <section className="space-y-8 pb-8" data-testid="credits-page">
       <header>
@@ -56,8 +54,7 @@ export function Credits() {
           {me.balance} <span className="text-molten">⚡</span>
         </h1>
         <p className="text-silver text-[14px] mt-1">
-          ≈ ${dollars} at 10 credits = $1 · monthly grant{" "}
-          {me.tier_monthly_grant} credits
+          Monthly grant: {me.tier_monthly_grant} credits
         </p>
       </header>
 

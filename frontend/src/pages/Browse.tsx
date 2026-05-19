@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type {
   Pack,
@@ -15,6 +15,13 @@ export function Browse() {
   const { category } = useParams<{ category?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Voice purchases live in the Voice marketplace. Bounce legacy URLs.
+  useEffect(() => {
+    if (category === "voice_packs") {
+      navigate("/voices", { replace: true });
+    }
+  }, [category, navigate]);
 
   // URL params take precedence on first mount: `?q=` from HomeSearchHero +
   // `?sort=` from Featured "See all" link. Category from path segment.

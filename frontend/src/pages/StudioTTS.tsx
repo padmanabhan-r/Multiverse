@@ -20,7 +20,13 @@ export function StudioTTS() {
       .listOwnedVoices()
       .then((vs) => {
         setVoices(vs);
-        if (vs.length > 0) setVoiceId(vs[0].id);
+        if (vs.length === 0) return;
+        const wanted = new URLSearchParams(window.location.search).get("voiceId");
+        if (wanted && vs.some((v) => v.id === wanted)) {
+          setVoiceId(wanted);
+        } else {
+          setVoiceId(vs[0].id);
+        }
       })
       .catch(() => setVoices([]));
   }, []);

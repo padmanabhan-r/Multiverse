@@ -53,7 +53,7 @@ export function StudioBundleNew() {
       return;
     }
     if (belowFloor) {
-      setErr(`Price must be at least $${(floorCents / 100).toFixed(2)}.`);
+      setErr(`Price must be at least ${Math.round(floorCents / 10)} ⚡.`);
       return;
     }
     setBusy(true);
@@ -118,7 +118,7 @@ export function StudioBundleNew() {
                   {p.category}
                 </div>
                 <div className="font-display">{p.title}</div>
-                <div className="text-[11px]">${(p.price_cents / 100).toFixed(2)}</div>
+                <div className="text-[11px]">{p.price_credits ?? Math.round(p.price_cents / 10)} ⚡</div>
               </button>
             </li>
           ))}
@@ -179,11 +179,11 @@ export function StudioBundleNew() {
         data-testid="savings-strip"
         className="p-3 rounded-md bg-elev-2/40 border border-glass-soft text-[12px] text-silver space-y-1"
       >
-        <div>Subtotal of selected: <span className="text-warm">${(subtotalCents / 100).toFixed(2)}</span></div>
-        <div>Floor (75%): <span className="text-warm">${(floorCents / 100).toFixed(2)}</span></div>
+        <div>Subtotal of selected: <span className="text-warm">{Math.round(subtotalCents / 10)} ⚡</span></div>
+        <div>Floor (75%): <span className="text-warm">{Math.round(floorCents / 10)} ⚡</span></div>
         {savingsCents > 0 && !belowFloor && (
           <div>
-            Buyers save: <span className="text-molten">${(savingsCents / 100).toFixed(2)}</span>
+            Buyers save: <span className="text-molten">{Math.round(savingsCents / 10)} ⚡</span>
           </div>
         )}
         {belowFloor && (

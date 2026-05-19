@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { PackCategory, SampleKind } from "@multiverse/shared";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -28,14 +28,6 @@ const CATEGORIES: CategoryCard[] = [
     label: "Music",
     blurb: "Instrumental tracks 30–120 s, force-instrumental.",
     cost: "2 credits / track",
-    enabled: true,
-  },
-  {
-    category: "voice_packs",
-    sampleKind: "voice",
-    label: "Voice pack",
-    blurb: "Pick one voice. Generate lines 1-by-1.",
-    cost: "1 credit / line",
     enabled: true,
   },
   {
@@ -130,6 +122,22 @@ export function StudioNew() {
             </div>
           </button>
         ))}
+        <Link
+          to="/studio/voices/new"
+          data-testid="cat-voice"
+          className="
+            text-left p-4 rounded-lg border border-glass-soft bg-elev-2/60
+            hover:border-molten/40 hover:bg-molten-tint/40 transition-colors
+          "
+        >
+          <div className="font-display text-warm text-lg">Voice</div>
+          <div className="text-silver text-[12px] mt-1">
+            Design or clone a voice. Sell access + TTS in the marketplace.
+          </div>
+          <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-silver2 mt-2">
+            5 + credits / design
+          </div>
+        </Link>
       </div>
     </section>
   );

@@ -67,20 +67,21 @@ describe("Home (marketplace landing)", () => {
     expect(screen.getByTestId("category-ribbon")).toBeInTheDocument();
   });
 
-  it("category deck links to each of the 6 categories", () => {
+  it("category deck links to each of the 5 pack categories + Voices", () => {
     listPacksSpy().mockResolvedValue([]);
     renderHome();
-    for (const cat of [
-      "sfx",
-      "music",
-      "voice_packs",
-      "ambient",
-      "radio_packs",
-      "broadcast_packs",
-    ] as const) {
-      expect(screen.getByTestId(`category-card-${cat}`)).toHaveAttribute(
+    const expected: Array<[string, string]> = [
+      ["sfx", "/browse/sfx"],
+      ["music", "/browse/music"],
+      ["voices", "/voices"],
+      ["ambient", "/browse/ambient"],
+      ["radio_packs", "/browse/radio_packs"],
+      ["broadcast_packs", "/browse/broadcast_packs"],
+    ];
+    for (const [key, href] of expected) {
+      expect(screen.getByTestId(`category-card-${key}`)).toHaveAttribute(
         "href",
-        `/browse/${cat}`,
+        href,
       );
     }
   });
@@ -124,7 +125,7 @@ describe("Home (marketplace landing)", () => {
     listPacksSpy().mockResolvedValue([]);
     renderHome();
     expect(screen.getByTestId("home-hero-headline")).toHaveTextContent(
-      /find the sound/i,
+      /sounds, music & voices/i,
     );
   });
 });

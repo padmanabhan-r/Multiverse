@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import type { Pack } from "@multiverse/shared";
 import { CategoryDeck } from "@/components/CategoryDeck";
 import { CoverShelf } from "@/components/CoverShelf";
@@ -7,6 +8,8 @@ import { FooterCTA } from "@/components/FooterCTA";
 import { HomeSearchHero } from "@/components/HomeSearchHero";
 import { MarketplaceHero } from "@/components/MarketplaceHero";
 import { PackTile } from "@/components/PackTile";
+import { api, type MarketplaceVoice } from "@/lib/api";
+import { plateFor } from "@/lib/stationArt";
 import { usePacks } from "@/lib/queries";
 
 export function Home() {
@@ -16,21 +19,29 @@ export function Home() {
   const trending = usePacks({ sort: "popular", limit: 30 });
   const fresh = usePacks({ sort: "new", limit: 30 });
   const music = usePacks({ category: "music", sort: "new", limit: 8 });
-  const radio = usePacks({ category: "radio_packs", sort: "new", limit: 8 });
+  const sfx = usePacks({ category: "sfx", sort: "new", limit: 8 });
+  const ambient = usePacks({ category: "ambient", sort: "new", limit: 8 });
 
-  // Pin "Noir Rhodes nights" as the curated featured pick. Fall back to the
-  // most-popular non-radio pack if that title was renamed/removed.
+  const [voices, setVoices] = useState<MarketplaceVoice[] | null>(null);
+  useEffect(() => {
+    api.listMarketplaceVoices().then(setVoices).catch(() => setVoices([]));
+  }, []);
+
+  // Radio_packs + broadcast_packs are coming soon — filter from cross-cut shelves.
+  const isComingSoon = (cat: Pack["category"]) =>
+    cat === "radio_packs" || cat === "broadcast_packs";
+
   const heroPack =
     featured.data?.find((p) => p.title === "Noir Rhodes nights") ??
-    featured.data?.find((p) => p.category !== "radio_packs") ??
-    featured.data?.[0] ??
+    featured.data?.find((p) => !isComingSoon(p.category)) ??
+    featured.data?.find((p) => !isComingSoon(p.category)) ??
     null;
 
   const trendingFiltered = (trending.data ?? []).filter(
-    (p) => p.category !== "radio_packs",
+    (p) => !isComingSoon(p.category),
   );
   const freshFiltered = (fresh.data ?? []).filter(
-    (p) => p.category !== "radio_packs",
+    (p) => !isComingSoon(p.category),
   );
 
   const onTileSelect = (id: string) => navigate(`/p/${id}`);
@@ -85,16 +96,36 @@ export function Home() {
         onSelect={onTileSelect}
       />
       <Shelf
-        title="Radio packs"
-        countLabel={radio.data ? `${pad(radio.data.length)} packs` : undefined}
-        link={{
-          label: "Explore radio",
-          onClick: () => navigate("/browse/radio_packs"),
-        }}
-        loading={radio.isLoading}
-        error={radio.isError}
-        items={radio.data ?? []}
+        title="Sound effects"
+        countLabel={sfx.data ? `${pad(sfx.data.length)} packs` : undefined}
+        link={{ label: "Explore SFX", onClick: () => navigate("/browse/sfx") }}
+        loading={sfx.isLoading}
+        error={sfx.isError}
+        items={sfx.data ?? []}
         onSelect={onTileSelect}
+      />
+      <Shelf
+        title="Ambient"
+        countLabel={ambient.data ? `${pad(ambient.data.length)} packs` : undefined}
+        link={{
+          label: "Explore ambient",
+          onClick: () => navigate("/browse/ambient"),
+        }}
+        loading={ambient.isLoading}
+        error={ambient.isError}
+        items={ambient.data ?? []}
+        onSelect={onTileSelect}
+      />
+      <VoiceShelf voices={voices} />
+
+      {/* Coming soon teasers */}
+      <ComingSoonShelf
+        title="Radio packs"
+        blurb="Full in-world FM broadcasts — DJ + bed + ads."
+      />
+      <ComingSoonShelf
+        title="Broadcast packs"
+        blurb="Hour-long themed broadcast blocks."
       />
 
       {/* 5. Footer CTA — closing */}
@@ -154,6 +185,99 @@ function ShelfSkeleton({ title }: { title: string }) {
             "
           />
         ))}
+      </div>
+    </section>
+  );
+}
+
+function VoiceShelf({ voices }: { voices: MarketplaceVoice[] | null }) {
+  const navigate = useNavigate();
+  if (voices === null) return <ShelfSkeleton title="Voices" />;
+  if (voices.length === 0) return null;
+  return (
+    <CoverShelf
+      title="Voices"
+      countLabel={`${pad(voices.length)} voices`}
+      linkLabel="Explore voices"
+      onLinkClick={() => navigate("/voices")}
+      items={voices}
+      renderItem={(v: MarketplaceVoice) => <VoiceShelfTile voice={v} />}
+    />
+  );
+}
+
+function VoiceShelfTile({ voice }: { voice: MarketplaceVoice }) {
+  const plate = plateFor(voice.id);
+  return (
+    <Link
+      to={`/v/${voice.id}`}
+      data-testid={`voice-shelf-tile-${voice.id}`}
+      className="
+        group block w-[180px] flex-shrink-0 rounded-md overflow-hidden
+        border border-glass-soft hover:border-molten/40
+        transition-colors duration-tune ease-tune
+      "
+    >
+      <div
+        className="aspect-square relative"
+        style={{
+          background: voice.cover_art_url
+            ? `center / cover no-repeat url('${voice.cover_art_url}'), ${plate.background}`
+            : plate.background,
+        }}
+      >
+        <span
+          aria-hidden
+          className="absolute inset-0 mvfm-grain opacity-40 pointer-events-none"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 50%, rgba(10,10,12,0.85) 100%)",
+          }}
+        />
+        <div className="absolute top-2 left-2 font-mono text-silver2 text-[9px] tracking-[0.28em] uppercase">
+          Voice
+        </div>
+        <div className="absolute bottom-2 left-2 right-2">
+          <div className="mvfm-display text-warm text-[14px] leading-[0.95] truncate">
+            {voice.title}
+          </div>
+          <div className="font-mono text-molten text-[10px] tracking-[0.1em] mt-1">
+            {voice.price_credits} ⚡
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ComingSoonShelf({
+  title,
+  blurb,
+}: {
+  title: string;
+  blurb: string;
+}) {
+  return (
+    <section data-testid={`shelf-coming-soon-${slug(title)}`}>
+      <div className="flex items-end justify-between mb-3 px-1">
+        <div className="font-mono text-warm/60 text-[12px] tracking-[0.18em] uppercase font-semibold">
+          {title}
+        </div>
+        <div className="font-mono text-molten text-[9.5px] tracking-[0.28em] uppercase">
+          Coming soon
+        </div>
+      </div>
+      <div
+        className="
+          rounded-md border border-dashed border-glass-soft
+          bg-elev-2/30 px-4 py-6 text-center
+        "
+      >
+        <p className="text-silver text-[12px] max-w-md mx-auto">{blurb}</p>
       </div>
     </section>
   );

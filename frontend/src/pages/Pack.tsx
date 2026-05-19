@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { playExclusive, clearCurrent } from "@/lib/audioSingleton";
 import { cn } from "@/lib/cn";
@@ -15,6 +15,8 @@ export function Pack() {
   if (isLoading) return <PackSkeleton />;
   if (isError) return <PackErrorView message={(error as Error)?.message} onRetry={() => refetch()} />;
   if (!pack) return <PackNotFound id={packId} />;
+  // Voice packs are now in the Voice marketplace.
+  if (pack.category === "voice_packs") return <Navigate to="/voices" replace />;
 
   return <PackView pack={pack} />;
 }

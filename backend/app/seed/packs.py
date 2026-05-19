@@ -340,11 +340,13 @@ def _broadcast_packs() -> list[dict[str, Any]]:
 
 
 def all_curated_packs() -> list[dict[str, Any]]:
-    """22 published packs across 6 categories. Order is stable for tests."""
+    """Published packs across 5 categories. Voice purchases live in the
+    Voice marketplace (Voice table → /voices), so voice_packs are no
+    longer seeded as Pack rows. ``_voice_packs()`` retained for legacy
+    callers / tests but no longer included by default."""
     return [
         *_music_packs(),                # 5
         *_sfx_packs(),                  # 5
-        *_voice_packs(),                # 5
         *_ambient_packs(),              # 5
         *_radio_packs_from_stations(),  # 1
         *_broadcast_packs(),            # 1

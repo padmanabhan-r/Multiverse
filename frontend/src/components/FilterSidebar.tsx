@@ -16,6 +16,11 @@ const CATEGORY_LABEL: Record<PackCategory, string> = {
   broadcast_packs: "Broadcast packs",
 };
 
+const COMING_SOON: ReadonlyArray<PackCategory> = [
+  "radio_packs",
+  "broadcast_packs",
+];
+
 const SORT_OPTIONS: Array<{ value: PackSort; label: string }> = [
   { value: "new", label: "Newest" },
   { value: "popular", label: "Popular" },
@@ -80,15 +85,21 @@ export function FilterSidebar({ filters, onChange }: FilterSidebarProps) {
             onClick={() => setCategory(undefined)}
             testId="filter-cat-all"
           />
-          {PACK_CATEGORIES.map((cat) => (
-            <FilterRow
-              key={cat}
-              label={CATEGORY_LABEL[cat]}
-              active={filters.category === cat}
-              onClick={() => setCategory(cat)}
-              testId={`filter-cat-${cat}`}
-            />
-          ))}
+          {PACK_CATEGORIES.map((cat) => {
+            const soon = COMING_SOON.includes(cat);
+            return (
+              <FilterRow
+                key={cat}
+                label={soon ? `${CATEGORY_LABEL[cat]} · soon` : CATEGORY_LABEL[cat]}
+                active={filters.category === cat}
+                onClick={() => {
+                  if (!soon) setCategory(cat);
+                }}
+                disabled={soon}
+                testId={`filter-cat-${cat}`}
+              />
+            );
+          })}
         </div>
       </Section>
 
@@ -164,11 +175,13 @@ function FilterRow({
   active,
   onClick,
   testId,
+  disabled,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
   testId: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -176,14 +189,17 @@ function FilterRow({
       data-testid={testId}
       data-active={active}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         "group flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left",
         "text-[12.5px] font-medium",
         "border-l-2 border-transparent",
         "transition-all duration-fast ease-tune",
-        active
-          ? "border-l-molten bg-molten-tint text-warm"
-          : "text-silver hover:bg-white/[0.03] hover:text-warm",
+        disabled
+          ? "text-silver2/60 cursor-not-allowed italic"
+          : active
+            ? "border-l-molten bg-molten-tint text-warm"
+            : "text-silver hover:bg-white/[0.03] hover:text-warm",
       )}
     >
       {label}

@@ -86,7 +86,7 @@ describe("PackDetailPanel", () => {
 
   it("Preview tab shows Add to cart button with price", () => {
     renderPanel();
-    expect(screen.getByTestId("pack-add-to-cart")).toHaveTextContent(/\$5/);
+    expect(screen.getByTestId("pack-add-to-cart")).toHaveTextContent(/50 ⚡/);
   });
 
   it("Details tab lists category, tags, creator", async () => {

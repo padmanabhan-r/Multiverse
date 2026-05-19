@@ -83,7 +83,7 @@ function FeaturePack({ pack }: { pack: Pack }) {
         </div>
         <div className="font-mono text-silver2 text-[10px] tracking-[0.22em] uppercase">
           {pack.category.replace("_", " ")} ·{" "}
-          ${(pack.price_cents / 100).toFixed(2)}
+          {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
         </div>
       </div>
     </Link>
@@ -125,7 +125,7 @@ function MediumPack({ pack }: { pack: Pack }) {
             {pack.title}
           </div>
           <div className="font-mono text-silver text-[10px] tracking-[0.18em]">
-            ${(pack.price_cents / 100).toFixed(2)}
+            {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
           </div>
         </div>
       </div>
@@ -162,7 +162,7 @@ function SmallPack({ pack }: { pack: Pack }) {
           {pack.title}
         </div>
         <div className="font-mono text-silver text-[10px] tracking-[0.16em]">
-          ${(pack.price_cents / 100).toFixed(2)}
+          {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
         </div>
       </div>
     </Link>

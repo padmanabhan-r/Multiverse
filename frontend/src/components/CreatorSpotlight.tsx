@@ -103,7 +103,7 @@ function SpotlightPack({ pack }: { pack: Pack }) {
         </div>
       </div>
       <div className="font-mono text-molten text-[13px] tracking-[0.12em] flex-shrink-0">
-        ${(pack.price_cents / 100).toFixed(2)}
+        {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
       </div>
     </Link>
   );

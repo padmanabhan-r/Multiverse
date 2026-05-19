@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, api, type MarketplaceVoice } from "@/lib/api";
@@ -12,6 +12,8 @@ export function Voice() {
   const [owned, setOwned] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!voiceId) return;
@@ -25,6 +27,17 @@ export function Voice() {
       })
       .catch((e) => setErr(e instanceof Error ? e.message : "load failed"));
   }, [voiceId]);
+
+  function togglePreview() {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) {
+      el.pause();
+      setPlaying(false);
+    } else {
+      el.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  }
 
   async function buy() {
     if (!voice) return;
@@ -80,6 +93,42 @@ export function Voice() {
           }}
         >
           <span aria-hidden className="absolute inset-0 mvfm-grain opacity-40" />
+          {voice.preview_url && (
+            <>
+              <button
+                type="button"
+                data-testid="voice-preview-toggle"
+                onClick={togglePreview}
+                aria-label={playing ? "Pause preview" : "Play preview"}
+                className="
+                  absolute top-4 right-4 size-14 rounded-full
+                  bg-molten hover:bg-molten-glow shadow-bloom
+                  flex items-center justify-center
+                  transition-transform duration-fast ease-tune
+                  hover:scale-105
+                "
+                style={{ color: "#1a0700" }}
+              >
+                {playing ? (
+                  <svg viewBox="0 0 14 14" fill="currentColor" className="size-5">
+                    <rect x="3" y="2" width="3" height="10" rx="0.5" />
+                    <rect x="8" y="2" width="3" height="10" rx="0.5" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 14 14" fill="currentColor" className="size-5">
+                    <path d="M4 2.5L11 7L4 11.5V2.5Z" />
+                  </svg>
+                )}
+              </button>
+              <audio
+                ref={audioRef}
+                src={voice.preview_url}
+                preload="none"
+                onEnded={() => setPlaying(false)}
+                onPause={() => setPlaying(false)}
+              />
+            </>
+          )}
           <div className="absolute bottom-4 left-4 right-4">
             <div className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase mb-1">
               Voice · by {voice.creator_name}
@@ -99,22 +148,36 @@ export function Voice() {
               {voice.price_credits} <span className="text-molten">⚡</span>
             </div>
             <div className="text-silver2 text-[11px] mt-1">
-              ≈ ${(voice.price_credits / 10).toFixed(2)} · Lifetime access
+              Lifetime access
             </div>
           </div>
 
           {owned ? (
-            <Link
-              to="/library"
-              data-testid="voice-owned-cta"
-              className="
-                block w-full text-center px-4 py-2.5 rounded-md
-                bg-elev-2/60 border border-molten/40 text-molten
-                font-mono text-[11px] tracking-[0.22em] uppercase font-semibold
-              "
-            >
-              You own this voice → Library
-            </Link>
+            <div className="space-y-2">
+              <Link
+                to={`/studio/tts?voiceId=${voice.id}`}
+                data-testid="voice-use-cta"
+                style={{ color: "#1a0700" }}
+                className="
+                  block w-full text-center px-3 py-2.5 rounded-md whitespace-nowrap
+                  bg-molten hover:bg-molten-glow shadow-bloom
+                  font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold
+                "
+              >
+                Use in Studio →
+              </Link>
+              <Link
+                to="/library"
+                data-testid="voice-owned-cta"
+                className="
+                  block w-full text-center px-3 py-2 rounded-md whitespace-nowrap
+                  bg-elev-2/60 border border-molten/40 text-molten
+                  font-mono text-[10px] tracking-[0.18em] uppercase
+                "
+              >
+                Owned · open Library →
+              </Link>
+            </div>
           ) : (
             <button
               type="button"
