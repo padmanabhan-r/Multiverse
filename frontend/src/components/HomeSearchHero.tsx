@@ -12,12 +12,13 @@ const R2_PUBLIC =
   import.meta.env.VITE_R2_PUBLIC_BASE_URL ??
   "https://pub-435ae75e0b144d9ca5df30f156449361.r2.dev";
 
+const _HERO_BG_VERSION = "v2";
 const HERO_BG_IMAGES: ReadonlyArray<string> = [
-  `${R2_PUBLIC}/categories/music.png`,
-  `${R2_PUBLIC}/categories/ambient.png`,
-  `${R2_PUBLIC}/categories/radio_packs.png`,
-  `${R2_PUBLIC}/categories/broadcast_packs.png`,
-  `${R2_PUBLIC}/categories/sfx.png`,
+  `${R2_PUBLIC}/categories/music.png?v=${_HERO_BG_VERSION}`,
+  `${R2_PUBLIC}/categories/ambient.png?v=${_HERO_BG_VERSION}`,
+  `${R2_PUBLIC}/categories/radio_packs.png?v=${_HERO_BG_VERSION}`,
+  `${R2_PUBLIC}/categories/broadcast_packs.png?v=${_HERO_BG_VERSION}`,
+  `${R2_PUBLIC}/categories/sfx.png?v=${_HERO_BG_VERSION}`,
 ];
 
 type HeroCategory =

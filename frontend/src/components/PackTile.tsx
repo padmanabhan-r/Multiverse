@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { Pack, PackCategory } from "@multiverse/shared";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
@@ -9,8 +10,12 @@ export interface PackTileProps {
   size?: PackTileSize;
   active?: boolean;
   onSelect?: (id: string) => void;
+  /** Optional — only invoked if `pack.preview_url` is missing. */
   onPlay?: (id: string) => void;
 }
+
+/** Singleton: only one tile's preview plays at a time across the page. */
+let _currentlyPlaying: HTMLAudioElement | null = null;
 
 const SIZE_PX: Record<PackTileSize, number> = { lg: 220, md: 180, sm: 132 };
 
@@ -33,6 +38,43 @@ export function PackTile({
 }: PackTileProps) {
   const px = SIZE_PX[size];
   const plate = plateFor(plateSeedFromPack(pack));
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      const a = audioRef.current;
+      if (a) {
+        a.pause();
+        if (_currentlyPlaying === a) _currentlyPlaying = null;
+      }
+    };
+  }, []);
+
+  function togglePreview() {
+    if (!pack.preview_url) {
+      // No preview audio → fall back to opening the pack page.
+      onPlay?.(pack.id);
+      return;
+    }
+    let audio = audioRef.current;
+    if (!audio) {
+      audio = new Audio(pack.preview_url);
+      audio.onended = () => setPlaying(false);
+      audio.onpause = () => setPlaying(false);
+      audioRef.current = audio;
+    }
+    if (playing) {
+      audio.pause();
+      return;
+    }
+    if (_currentlyPlaying && _currentlyPlaying !== audio) {
+      _currentlyPlaying.pause();
+    }
+    _currentlyPlaying = audio;
+    audio.currentTime = 0;
+    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  }
 
   return (
     <article
@@ -129,10 +171,12 @@ export function PackTile({
             data-testid="pack-tile-play-ring"
             onClick={(e) => {
               e.stopPropagation();
-              onPlay?.(pack.id);
+              togglePreview();
             }}
             role="button"
-            aria-label={`Preview ${pack.title}`}
+            aria-label={
+              playing ? `Pause preview of ${pack.title}` : `Preview ${pack.title}`
+            }
             tabIndex={0}
             className={cn(
               "absolute inset-0 m-auto",
@@ -140,18 +184,28 @@ export function PackTile({
               "bg-base/50 backdrop-blur-[6px]",
               "shadow-[inset_0_0_0_1.5px_var(--mvfm-molten),0_0_22px_-4px_var(--mvfm-molten-dim)]",
               "opacity-0 group-hover:opacity-100 transition-opacity duration-tune ease-tune",
-              active && "opacity-100",
+              (active || playing) && "opacity-100",
             )}
           >
-            <span
-              className="block w-0 h-0 ml-0.5"
-              aria-hidden
-              style={{
-                borderLeft: "9px solid var(--mvfm-molten)",
-                borderTop: "6px solid transparent",
-                borderBottom: "6px solid transparent",
-              }}
-            />
+            {playing ? (
+              <span
+                aria-hidden
+                className="flex items-center gap-0.5"
+              >
+                <span className="block w-1 h-3 bg-molten rounded-sm" />
+                <span className="block w-1 h-3 bg-molten rounded-sm" />
+              </span>
+            ) : (
+              <span
+                className="block w-0 h-0 ml-0.5"
+                aria-hidden
+                style={{
+                  borderLeft: "9px solid var(--mvfm-molten)",
+                  borderTop: "6px solid transparent",
+                  borderBottom: "6px solid transparent",
+                }}
+              />
+            )}
           </span>
         </div>
 

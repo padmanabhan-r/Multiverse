@@ -40,46 +40,52 @@ CATEGORY_DIR: Path = (
 _PROMPTS: dict[str, str] = {
     "sfx": (
         "Cinematic collage thumbnail for a 'Sound effects' category showing "
-        "variety. A dark near-black canvas with several layered icons + scene "
+        "variety. Dark moody canvas with several layered icons + scene "
         "fragments arranged in a balanced composition: a game controller "
         "silhouette, a film clapperboard, a smartphone showing a short-video "
         "reel, an explosion spark, a footstep impact ring, a coin pickup "
-        "burst, a cartoon laugh-track speech bubble, a meme thumbs-up. All "
-        "lit with warm molten-orange accent rim light, painterly, restrained "
-        "palette. Conveys: SFX for games, films, videos, reels, memes. No "
-        "text, no logos, no brand marks."
+        "burst, a cartoon laugh-track speech bubble, a meme thumbs-up. "
+        "Mixed lighting — neon, sparks, screen glow, daylight slivers — "
+        "rather than a single locked colour. Painterly. Conveys: SFX for "
+        "games, films, videos, reels, memes. No text, no logos, no brand "
+        "marks."
     ),
     "music": (
-        "Cinematic thumbnail for a 'Music' category. Dark near-black scene "
-        "with a single warm electric piano or analog synth lit by molten-orange "
-        "rim light. Painterly, moody. No text, no logos."
+        "Cinematic thumbnail for a 'Music' category. Moody scene with a "
+        "single warm electric piano or analog synth, scene-appropriate "
+        "studio lighting (warm tungsten, soft daylight, or stage rim — "
+        "your choice). Painterly. No text, no logos."
     ),
     "voice_packs": (
         "Cinematic collage thumbnail for a 'Voices' category showing variety "
-        "of vocal archetypes. Dark near-black background with a row of "
-        "expressive character silhouettes lit by molten-orange rim light: "
-        "a gravelly cowboy-outlaw narrator in a duster coat and hat, a "
-        "smoky noir detective in a fedora, a sci-fi corporate AI assistant "
-        "with a clean geometric profile, a streetwise rap-style hype "
-        "narrator, a soothing late-night radio DJ at a vintage mic, and a "
-        "fairy-tale storyteller silhouette. Painterly, cinematic, restrained "
-        "palette. Conveys creative voice variety. No text, no logos, no "
-        "real-person likenesses, no brand IP."
+        "of vocal archetypes. Dark moody background with a row of expressive "
+        "character silhouettes, each lit by lighting appropriate to its "
+        "world: a gravelly cowboy-outlaw narrator under campfire amber, a "
+        "smoky noir detective under a tungsten lamp, a sci-fi corporate AI "
+        "assistant under cool white-blue, a streetwise rap-style hype "
+        "narrator under neon magenta/cyan, a soothing late-night radio DJ "
+        "under warm broadcast key, and a fairy-tale storyteller in candlelit "
+        "warmth. Painterly, cinematic, varied palette. Conveys creative "
+        "voice variety. No text, no logos, no real-person likenesses, no "
+        "brand IP."
     ),
     "ambient": (
-        "Cinematic thumbnail for an 'Ambient beds' category. Dark near-black "
-        "landscape with fog, distant molten-orange horizon glow, painterly "
-        "haze, atmospheric depth. No text, no figures."
+        "Cinematic thumbnail for an 'Ambient beds' category. Atmospheric "
+        "landscape — fog, distant horizon, painterly haze. Lighting can be "
+        "any time of day — dawn cool, midday daylight, dusk amber, midnight "
+        "blue. Mood: atmospheric depth. No text, no figures."
     ),
     "radio_packs": (
-        "Cinematic thumbnail for a 'Radio packs' category. Dark near-black "
-        "vintage radio set with warm molten-orange dial glow, painterly, "
+        "Cinematic thumbnail for a 'Radio packs' category. Vintage radio "
+        "set with warm dial glow — colour of the glow is up to the era "
+        "(amber for 1940s, green for 1970s, neon for 1980s). Painterly, "
         "retro-futurist. No text."
     ),
     "broadcast_packs": (
-        "Cinematic thumbnail for a 'Broadcast packs' category. Dark near-black "
-        "DJ broadcast desk silhouette with warm molten-orange console glow, "
-        "painterly, professional. No text."
+        "Cinematic thumbnail for a 'Broadcast packs' category. DJ broadcast "
+        "desk silhouette with mixer + console glow — varied console "
+        "colours (red, green, amber, blue VU meters). Painterly, "
+        "professional. No text."
     ),
 }
 

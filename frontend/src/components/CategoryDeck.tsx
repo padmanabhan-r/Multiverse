@@ -7,8 +7,9 @@ const R2_PUBLIC =
   "https://pub-435ae75e0b144d9ca5df30f156449361.r2.dev";
 
 /** Gemini-generated thumbnail per category (uploaded to R2). */
+const _CATEGORY_THUMB_VERSION = "v2";
 function thumbnailUrl(category: PackCategory): string {
-  return `${R2_PUBLIC}/categories/${category}.png`;
+  return `${R2_PUBLIC}/categories/${category}.png?v=${_CATEGORY_THUMB_VERSION}`;
 }
 
 interface CardSpec {

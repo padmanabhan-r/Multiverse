@@ -52,9 +52,10 @@ _PERSONA_DIRECTION: dict[str, str] = {
         "fantasy, gruff, ale-warm."
     ),
     "Corporate PR voice": (
-        "Polished poised figure in soft corporate lighting against a sterile "
-        "atrium backdrop, satellite logo glow on a far wall. Mood: bright, "
-        "bland-sleek, mega-corp."
+        "Polished poised figure framed head-and-shoulders in a sleek "
+        "corporate atrium with cool white-grey lighting and reflective glass. "
+        "Subject's full head and face are visible and centred in the frame. "
+        "Crisp business attire. Mood: bright, polished, mega-corp."
     ),
 }
 
@@ -73,13 +74,17 @@ def _build_voice_cover_prompt(voice: Voice) -> str:
         f"Scene: {direction}",
         (
             "Style: painterly, cinematic, photo-real-leaning. Single-subject "
-            "portrait or implied silhouette. Dramatic rim light. 1:1 square "
-            "composition."
+            "portrait — head and shoulders FULLY visible inside the frame, "
+            "never cropped at the top. 1:1 square composition with the face "
+            "centred in the upper third."
         ),
         (
-            "Locked palette: near-black background (#0A0A0C) with warm "
-            "molten-orange (#FF6A1F) rim or accent light. No purple, no blue. "
-            "No microphones. No text, no logos, no brand marks."
+            "Palette: scene-appropriate to the persona — noir uses warm "
+            "amber/orange lamps; broadcast uses cool white; fantasy uses "
+            "warm hearth tones; corporate uses cool white-grey. No locked "
+            "single colour. Background dark and moody overall, but lighting "
+            "matches the world. No purple/blue gels everywhere. No microphones. "
+            "No text, no logos, no brand marks."
         ),
     ]
     return " ".join(p for p in parts if p)

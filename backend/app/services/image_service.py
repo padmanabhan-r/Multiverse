@@ -38,10 +38,12 @@ _CATEGORY_STYLE: dict[str, str] = {
         "Cinematic. Never abstract waveforms."
     ),
     "voice_packs": (
-        "character portrait silhouette — single figure, dramatic rim light, "
-        "molten-orange backlight. Convey the archetype implied by the title: "
-        "noir detective, fairy-tale narrator, sci-fi AI, hype host, cowboy "
-        "outlaw, etc. Never abstract waveforms; never a microphone."
+        "character portrait — single figure, head and shoulders fully in "
+        "frame, dramatic rim light scene-appropriate to the archetype "
+        "(noir lamp, broadcast key light, hearth glow, corporate softbox). "
+        "Convey the archetype implied by the title: noir detective, "
+        "fairy-tale narrator, sci-fi AI, hype host, cowboy outlaw, etc. "
+        "Never abstract waveforms; never a microphone."
     ),
     "ambient": (
         "environmental landscape — wide painterly atmosphere, deep depth of "
@@ -90,9 +92,11 @@ def _build_prompt(
         parts.append(f"Mood: {pack_moods}.")
     parts.append(f"Creative direction: {style}")
     parts.append(
-        "Locked palette: near-black background (#0A0A0C) with warm "
-        "molten-orange (#FF6A1F) rim or accent light. No purple, no blue. "
-        "No text, no logos, no brand marks. 1:1 square composition."
+        "Palette: scene-appropriate to the subject. Cinematic, moody, "
+        "dark background overall, but lighting and accent colours match "
+        "the world (warm amber for noir / hearth, cool white for broadcast "
+        "or corporate, neon for cyberpunk, daylight for outdoor). No locked "
+        "single hue. No text, no logos, no brand marks. 1:1 square composition."
     )
     return " ".join(parts)
 
