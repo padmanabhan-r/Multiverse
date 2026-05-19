@@ -55,6 +55,12 @@ export function PackTile({
       audio = new Audio(pack.preview_url);
       audio.onended = () => setPlaying(false);
       audio.onpause = () => setPlaying(false);
+      audio.ontimeupdate = () => {
+        if (pack.category === "music" && audio!.currentTime >= 30) {
+          audio!.pause();
+          audio!.currentTime = 0;
+        }
+      };
       audioRef.current = audio;
     }
     if (playing) {

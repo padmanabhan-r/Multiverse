@@ -32,12 +32,26 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
   const previewRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
 
-  const previewSrc = samples?.[0]?.audio_url ?? pack.preview_url;
+  // Music packs: use pack.preview_url and cap at 30 s.
+  // Other categories: play full first sample.
+  const isMusic = pack.category === "music";
+  const previewSrc = isMusic
+    ? (pack.preview_url ?? samples?.[0]?.audio_url)
+    : (samples?.[0]?.audio_url ?? pack.preview_url);
+  const PREVIEW_CAP_S = 30;
 
   function togglePreview() {
     const el = previewRef.current;
     if (!el || !previewSrc) return;
-    if (playing) { el.pause(); } else { playExclusive(el); }
+    if (playing) { el.pause(); } else { el.currentTime = 0; playExclusive(el); }
+  }
+
+  function handlePreviewTimeUpdate() {
+    const el = previewRef.current;
+    if (el && isMusic && el.currentTime >= PREVIEW_CAP_S) {
+      el.pause();
+      el.currentTime = 0;
+    }
   }
 
   const totalMs = samples?.length
@@ -158,6 +172,7 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
               onPlay={() => setPlaying(true)}
               onPause={() => { setPlaying(false); clearCurrent(previewRef.current!); }}
               onEnded={() => { setPlaying(false); clearCurrent(previewRef.current!); }}
+              onTimeUpdate={handlePreviewTimeUpdate}
             />
           )}
 

@@ -13,10 +13,12 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db.models import Bundle, CreatorProfile, Pack, User
 from app.db.session import get_db
 from app.routers.bundles import BundleDTO
 from app.routers.packs import PackDTO
+from app.services import clerk_service
 
 router = APIRouter(tags=["creators"])
 
@@ -45,11 +47,22 @@ def storefront(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "creator not found")
 
     profile = db.get(CreatorProfile, creator_id)
-    # Clerk username wins; profile.display_name is fallback for legacy rows.
+
+    # If username not yet synced, try Clerk Management API (best-effort).
+    if not user.username:
+        try:
+            settings = get_settings()
+            clerk_profile = clerk_service.fetch_user_profile(creator_id, settings)
+            if clerk_profile.username:
+                user.username = clerk_profile.username
+                db.commit()
+        except Exception:  # noqa: BLE001
+            pass
+
     display_name = (
         user.username
         or (profile.display_name if profile and profile.display_name else None)
-        or creator_id
+        or "Creator"  # never expose raw Clerk ID
     )
 
     packs = list(
