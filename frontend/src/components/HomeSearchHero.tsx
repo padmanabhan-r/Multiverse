@@ -107,7 +107,7 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
     <section
       data-testid="home-hero"
       className="
-        relative w-full overflow-hidden rounded-xl
+        relative w-full rounded-xl
         border border-glass-soft
         px-5 sm:px-10 lg:px-14
         py-12 sm:py-16 lg:py-20
