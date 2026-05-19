@@ -57,7 +57,7 @@ router = APIRouter(prefix="/studio", tags=["studio"])
 
 
 class EnhanceBody(BaseModel):
-    prompt: str = Field(min_length=1, max_length=400)
+    prompt: str = Field(min_length=1, max_length=2000)
     kind: Literal["sfx", "music", "voice", "ambient"]
 
 
@@ -192,7 +192,7 @@ def _run_generator(
 
 class SfxGenerateBody(BaseModel):
     pack_id: str = Field(min_length=1, max_length=96)
-    prompt: str = Field(min_length=1, max_length=400)
+    prompt: str = Field(min_length=1, max_length=2000)
     duration_seconds: float = Field(ge=0.5, le=30.0)
     loop: bool = False
     title: str = Field(min_length=1, max_length=120)
@@ -234,8 +234,8 @@ def generate_sfx_endpoint(
 
 class MusicGenerateBody(BaseModel):
     pack_id: str = Field(min_length=1, max_length=96)
-    prompt: str = Field(min_length=1, max_length=400)
-    music_length_ms: int = Field(ge=10_000, le=120_000)
+    prompt: str = Field(min_length=1, max_length=2000)
+    music_length_ms: int = Field(ge=10_000, le=300_000)
     title: str = Field(min_length=1, max_length=120)
 
 
@@ -414,7 +414,7 @@ def generate_hero_endpoint(
 
 class AmbientGenerateBody(BaseModel):
     pack_id: str = Field(min_length=1, max_length=96)
-    prompt: str = Field(min_length=1, max_length=400)
+    prompt: str = Field(min_length=1, max_length=2000)
     duration_seconds: float = Field(ge=5.0, le=30.0)
     title: str = Field(min_length=1, max_length=120)
 

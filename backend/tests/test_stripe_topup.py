@@ -85,7 +85,7 @@ def test_topup_creates_checkout_session(authed_client: TestClient) -> None:
     assert params["mode"] == "payment"
     assert len(params["line_items"]) == 1
     li = params["line_items"][0]
-    assert li["price_data"]["unit_amount"] == 1800  # $18.00 for 200 credits
+    assert li["price_data"]["unit_amount"] == 900  # $9.00 for 200 credits
     assert li["price_data"]["currency"] == "usd"
     assert "200" in li["price_data"]["product_data"]["name"]
     assert params["metadata"]["kind"] == "credit_topup"

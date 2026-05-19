@@ -203,12 +203,12 @@ Voice IDs are never hardcoded; the five seeded marketplace voices live in `Voice
 | Plan / pack | Price | Credits | Notes |
 |---|---|---|---|
 | Free trial | $0 | 50 (one-time) | Granted on first sign-in via `grant_trial`, idempotent |
-| Top-up: small | $5 | 50 | $0.100 / credit |
-| Top-up: standard | $18 | 200 | $0.090 / credit · 10% off |
-| Top-up: bulk | $40 | 500 | $0.080 / credit · 20% off |
-| Top-up: studio | $70 | 1000 | $0.070 / credit · 30% off |
-| **Creator** subscription | $9/mo | +200/month | Rollover preserved |
-| **Pro Studio** subscription | $29/mo | +1000/month | Rollover preserved |
+| Top-up: small | $3 | 50 | $0.060 / credit |
+| Top-up: standard | $9 | 200 | $0.045 / credit |
+| Top-up: bulk | $18 | 500 | $0.036 / credit |
+| Top-up: studio | $30 | 1000 | $0.030 / credit · cheapest per-credit rate |
+| **Creator** subscription | $9/mo | +150/month | Rollover preserved, dashboard analytics |
+| **Pro Studio** subscription | $29/mo | +500/month | Rollover preserved, priority queue, bundles |
 
 Voice purchase: 50 credits each. TTS usage: 1 credit per ≤5 min of audio output. Pack purchases: creator-set, currently 5–150 credit range.
 

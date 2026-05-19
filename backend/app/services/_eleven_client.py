@@ -16,7 +16,7 @@ import httpx
 from app.config import Settings, get_settings
 
 ELEVEN_API_BASE = "https://api.elevenlabs.io"
-DEFAULT_TIMEOUT_S = 90.0  # SFX/voice usually return ≤ 30 s; music can take 60 s+
+DEFAULT_TIMEOUT_S = 300.0  # SFX/voice ≤30 s; music up to 5 min generations
 
 
 def eleven_client(settings: Settings | None = None) -> httpx.Client:

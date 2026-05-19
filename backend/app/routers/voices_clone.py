@@ -46,7 +46,7 @@ PublishKind = Literal["private", "marketplace_draft"]
 
 
 class DesignPreviewBody(BaseModel):
-    prompt: str = Field(min_length=1, max_length=600)
+    prompt: str = Field(min_length=1, max_length=2000)
     name: str = Field(min_length=1, max_length=80)
     gender: str | None = Field(default=None, max_length=24)
     age: str | None = Field(default=None, max_length=24)

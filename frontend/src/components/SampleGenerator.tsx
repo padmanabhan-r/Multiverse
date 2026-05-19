@@ -17,8 +17,9 @@ interface Props {
 const MUSIC_LENGTHS = [
   { ms: 30_000, label: "30 s" },
   { ms: 60_000, label: "60 s" },
-  { ms: 90_000, label: "90 s" },
-  { ms: 120_000, label: "120 s" },
+  { ms: 120_000, label: "2 min" },
+  { ms: 180_000, label: "3 min" },
+  { ms: 300_000, label: "5 min" },
 ] as const;
 
 export function SampleGenerator({

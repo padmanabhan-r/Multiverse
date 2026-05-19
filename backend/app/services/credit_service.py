@@ -18,22 +18,26 @@ from sqlalchemy.orm import Session
 
 from app.db.models import CreditBalance, CreditLedger, PackCategory
 
-# Economy: 1 credit ≈ $0.05 USD.
+# Economy: monthly subscription grants. Subscribers get fewer credits
+# per dollar than top-up packs — the value is auto-renewal, rollover,
+# and tier perks (priority generation + creator dashboard analytics).
+# Stops the "subscribe one month then cancel" arbitrage.
 TIER_MONTHLY_CREDITS: dict[str, int] = {
     "free": 0,
-    "creator": 200,
-    "pro_studio": 1000,
+    "creator": 150,    # $9/mo → 150 credits = $0.060/credit
+    "pro_studio": 500,  # $29/mo → 500 credits = $0.058/credit
 }
 FREE_TRIAL_CREDITS: int = 50
 
 # Stripe credit top-up packs: {credits: price_cents}.
-# Anchored at ~10 credits ≈ $1, discounted at volume so buyers feel rewarded
-# for bigger packs without undercutting subscription value.
+# Priced just above subscription rates so subs stay the best deal for
+# recurring users, but one-off top-ups don't punish casual buyers.
+# Reference: Creator sub = $9/200 = $0.045/credit, Pro = $29/1000 = $0.029/credit.
 TOPUP_PACKS: dict[int, int] = {
-    50: 500,    # $5.00   — $0.100/credit
-    200: 1800,  # $18.00  — $0.090/credit (10% off)
-    500: 4000,  # $40.00  — $0.080/credit (20% off)
-    1000: 7000,  # $70.00 — $0.070/credit (30% off)
+    50: 300,    # $3.00  — $0.060/credit (matches Creator sub rate)
+    200: 900,   # $9.00  — $0.045/credit
+    500: 1800,  # $18.00 — $0.036/credit
+    1000: 3000,  # $30.00 — $0.030/credit (always-better than any sub-then-cancel play)
 }
 
 # Pack purchase prices by category (credits).

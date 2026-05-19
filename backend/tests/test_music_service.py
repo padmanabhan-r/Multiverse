@@ -62,11 +62,11 @@ def test_generate_music_posts_to_music_endpoint() -> None:
     assert body["model_id"] == "music_v1"
 
 
-def test_generate_music_clamps_to_120s() -> None:
+def test_generate_music_clamps_to_max() -> None:
     mc = _mock_client(_fake_response())
     with patch("app.services.music_service.eleven_client", return_value=mc):
-        music_service.generate_music(prompt="x", music_length_ms=600_000)
-    assert mc.post.call_args.kwargs["json"]["music_length_ms"] == 120_000
+        music_service.generate_music(prompt="x", music_length_ms=900_000)
+    assert mc.post.call_args.kwargs["json"]["music_length_ms"] == 300_000
 
 
 def test_generate_music_rejects_under_10s() -> None:

@@ -37,10 +37,10 @@ const TIERS: Tier[] = [
     name: "Creator",
     price: "$9",
     period: "/ mo",
-    credits: "200 credits / month",
+    credits: "150 credits / month",
     features: [
       "Everything in Free",
-      "200 credits every month",
+      "150 credits every month — rollover preserved",
       "Publish unlimited packs to marketplace",
       "Studio — generate SFX, music, voice + ambient",
       "Creator dashboard + sales analytics",
@@ -54,11 +54,10 @@ const TIERS: Tier[] = [
     name: "Pro Studio",
     price: "$29",
     period: "/ mo",
-    credits: "1 000 credits / month",
+    credits: "500 credits / month",
     features: [
       "Everything in Creator",
-      "1 000 credits every month",
-      "Commercial license on generated packs",
+      "500 credits every month — rollover preserved",
       "Priority generation queue",
       "Bundle creation — group packs + sell as a set",
     ],
@@ -198,6 +197,41 @@ export function Pricing() {
         ))}
       </div>
 
+      {/* Credit top-ups — one-time, no commitment */}
+      <div
+        data-testid="topup-banner"
+        className="
+          relative rounded-xl border border-molten/40 bg-molten-tint/40
+          p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-5
+        "
+      >
+        <div className="flex-1 space-y-2">
+          <div className="font-mono text-molten text-[10px] tracking-[0.28em] uppercase">
+            Or skip the subscription
+          </div>
+          <h3 className="font-display text-warm text-[22px] sm:text-[26px] leading-[1.05]">
+            Buy credits one-time — no monthly commitment.
+          </h3>
+          <p className="text-silver text-[13px] leading-[1.5] max-w-prose">
+            4 pack sizes from 50 to 1000 credits. Best per-credit rate of any
+            plan. Cheapest path if you only need credits occasionally.
+          </p>
+        </div>
+        <Link
+          to="/credits"
+          data-testid="cta-topup"
+          style={{ color: "#1a0700" }}
+          className="
+            inline-flex items-center px-5 py-3 rounded-md
+            bg-molten hover:bg-molten-glow shadow-bloom
+            font-mono text-[11px] tracking-[0.22em] uppercase font-semibold
+            whitespace-nowrap
+          "
+        >
+          Top up credits →
+        </Link>
+      </div>
+
       {/* Credit cost legend */}
       <div
         data-testid="credit-legend"
@@ -207,8 +241,8 @@ export function Pricing() {
           Studio credit costs
         </h2>
         <p className="text-silver text-[13px] leading-[1.5]">
-          Credits reset monthly — no rollover. Unused credits expire at the end of
-          your billing cycle.
+          Subscription credits stack — unused credits roll over month-to-month.
+          Top-up credits never expire.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {CREDIT_COSTS.map(({ category, credits }) => (

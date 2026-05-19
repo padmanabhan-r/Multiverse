@@ -2,7 +2,8 @@
 
 POST /v1/music with `prompt + music_length_ms`. CLAUDE.md locks
 ``force_instrumental=True`` — buyers buy beds, not licensed songs.
-Hard cap at 120s in sync mode (longer pushes the timeout window).
+Cap raised to 300s (5 min) to match ElevenLabs `music_v1` ceiling.
+Longer generations require the bumped httpx timeout in _eleven_client.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from app.config import get_settings
 from app.services._eleven_client import eleven_client
 
 MIN_MS = 10_000
-MAX_MS = 120_000
+MAX_MS = 300_000  # 5 min
 
 
 class MusicGenerationError(RuntimeError):
