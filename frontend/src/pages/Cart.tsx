@@ -202,9 +202,6 @@ function CartLine({
             {CATEGORY_LABEL[item.category]}
           </span>
         </div>
-        <div className="font-mono text-silver2 text-[10px] tracking-[0.14em] uppercase mt-0.5">
-          {item.license_kind} license
-        </div>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
         <span className="font-mono text-warm text-[14px] font-semibold tabular-nums">

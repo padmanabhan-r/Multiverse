@@ -210,22 +210,6 @@ export function StudioPublish() {
           />
         </Field>
 
-        <Field label="Commercial license multiplier" htmlFor="pub-mult">
-          <select
-            id="pub-mult"
-            data-testid="publish-multiplier"
-            value={multiplier}
-            onChange={(e) => setMultiplier(e.target.value)}
-            className={inputCls}
-          >
-            {["1.5", "2", "3", "5", "10"].map((m) => (
-              <option key={m} value={m}>
-                {m}× of personal price
-              </option>
-            ))}
-          </select>
-        </Field>
-
         {error && (
           <div data-testid="publish-error" className="text-molten text-[12px]">
             {error}

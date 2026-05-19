@@ -200,7 +200,6 @@ function SalesTable({ rows }: { rows: SaleRow[] }) {
       <thead className="text-silver2 font-mono text-[10px] tracking-[0.22em] uppercase">
         <tr>
           <th className="text-left py-2">Pack</th>
-          <th className="text-left">License</th>
           <th className="text-right">Paid</th>
           <th className="text-right">When</th>
         </tr>
@@ -213,7 +212,6 @@ function SalesTable({ rows }: { rows: SaleRow[] }) {
             data-testid={`sale-${r.purchase_id}`}
           >
             <td className="py-2">{r.pack_title}</td>
-            <td>{r.license_kind}</td>
             <td className="text-right">{Math.round(r.price_paid_cents / 10)} ⚡</td>
             <td className="text-right text-silver">
               {r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}
