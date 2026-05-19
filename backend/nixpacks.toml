@@ -1,15 +1,16 @@
-# Tell nixpacks: this is a Python 3.12 project managed by uv.
-# Railway's nixpacks auto-detector handles uv via pyproject.toml, but we
-# pin Python version + install command explicitly to avoid drift.
+# Python 3.12 backend installed via pip from requirements.txt.
+# Regenerate locally with:
+#   cd backend && uv export --no-dev --format requirements-txt -o requirements.txt
 
 [phases.setup]
 nixPkgs = ["python312", "gcc", "ffmpeg"]
 
 [phases.install]
 cmds = [
-  "curl -LsSf https://astral.sh/uv/install.sh | sh",
-  "/root/.local/bin/uv sync --frozen --no-dev",
+  "python -m venv /opt/venv",
+  ". /opt/venv/bin/activate && pip install --upgrade pip",
+  ". /opt/venv/bin/activate && pip install --require-hashes -r requirements.txt",
 ]
 
 [start]
-cmd = "/root/.local/bin/uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+cmd = "/opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT"
