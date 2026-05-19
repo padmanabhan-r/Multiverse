@@ -1,0 +1,41 @@
+# Railway service config — backend (FastAPI).
+#
+# In Railway dashboard:
+#   1. New Project → Deploy from GitHub repo: padmanabhan-r/Multiverse
+#   2. Service settings → Root Directory: `backend`
+#   3. Variables tab → paste from your .env.local (see CHECKLIST below)
+#   4. Networking → Generate Domain → copy the *.up.railway.app URL
+#
+# CHECKLIST — required env vars:
+#   APP_ENV=production
+#   DATABASE_URL=<Neon connection string>
+#   DATABASE_URL_SYNC=<same Neon URL>
+#   CLERK_SECRET_KEY=sk_test_...
+#   CLERK_JWT_ISSUER=https://<your-clerk-domain>.clerk.accounts.dev
+#   CLERK_JWT_AUDIENCE=<your-clerk-jwt-audience>  (optional)
+#   STRIPE_SECRET_KEY=sk_test_...
+#   STRIPE_WEBHOOK_SECRET=whsec_...   (from Stripe dashboard endpoint, NOT stripe listen)
+#   STRIPE_PRICE_CREATOR=price_...
+#   STRIPE_PRICE_PRO_STUDIO=price_...
+#   STRIPE_SUCCESS_URL=https://<vercel-domain>/billing/success
+#   STRIPE_CANCEL_URL=https://<vercel-domain>/billing/cancel
+#   ELEVENLABS_API_KEY=...
+#   ANTHROPIC_API_KEY=...
+#   GEMINI_API_KEY=...
+#   OPENAI_API_KEY=...
+#   R2_ACCOUNT_ID=...
+#   R2_ACCESS_KEY_ID=...
+#   R2_SECRET_ACCESS_KEY=...
+#   R2_BUCKET=multiverse
+#   R2_PUBLIC_BASE_URL=https://pub-435ae75e0b144d9ca5df30f156449361.r2.dev
+#   CORS_ORIGINS=https://<vercel-domain>
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

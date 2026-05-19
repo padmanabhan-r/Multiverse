@@ -196,8 +196,6 @@ def test_credit_ledger_reasons_table_covers_all_actions() -> None:
         "gen_music",
         "gen_voice_design",
         "gen_voice_clone_ivc",
-        "gen_voice_clone_pvc",
-        "gen_voice_clone_refund",
         "gen_tts",
         "buy_pack",
         "buy_voice",

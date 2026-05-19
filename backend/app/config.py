@@ -22,7 +22,6 @@ class Settings(BaseSettings):
     # Zero-config local dev → sqlite. Production override via env.
     DATABASE_URL: str = "sqlite:///./dev.db"
     DATABASE_URL_SYNC: str | None = None
-    REDIS_URL: str = "redis://localhost:6379/0"
 
     CLERK_SECRET_KEY: str = ""
     CLERK_JWT_ISSUER: str = ""

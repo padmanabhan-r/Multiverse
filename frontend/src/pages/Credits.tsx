@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { api, type CreditsResponse, type LedgerEntry } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
+interface TopupPack {
+  credits: number;
+  price_cents: number;
+}
+
 const REASON_LABEL: Record<string, string> = {
   trial_grant: "Free trial",
   monthly_grant: "Monthly subscription",
@@ -25,16 +30,31 @@ const REASON_LABEL: Record<string, string> = {
 export function Credits() {
   const [me, setMe] = useState<CreditsResponse | null>(null);
   const [ledger, setLedger] = useState<LedgerEntry[] | null>(null);
+  const [packs, setPacks] = useState<TopupPack[] | null>(null);
+  const [busyPack, setBusyPack] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([api.myCredits(), api.ledger(50)])
-      .then(([m, l]) => {
+    Promise.all([api.myCredits(), api.ledger(50), api.listTopupPacks()])
+      .then(([m, l, p]) => {
         setMe(m);
         setLedger(l);
+        setPacks(p.packs);
       })
       .catch((e) => setErr(e instanceof Error ? e.message : "load failed"));
   }, []);
+
+  async function topup(credits: number) {
+    setBusyPack(credits);
+    setErr(null);
+    try {
+      const { url } = await api.topupCredits(credits);
+      window.location.href = url;
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "top-up failed");
+      setBusyPack(null);
+    }
+  }
 
   if (err) return <div className="text-molten">{err}</div>;
   if (!me || !ledger)
@@ -58,30 +78,52 @@ export function Credits() {
         </p>
       </header>
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          to="/pricing"
-          data-testid="topup-cta"
-          className="
-            inline-flex items-center px-4 py-2.5 rounded-md bg-molten
-            font-mono text-[11px] tracking-[0.22em] uppercase font-semibold
-            hover:bg-molten-glow shadow-bloom
-          "
-          style={{ color: "#1a0700" }}
-        >
-          Top up credits
-        </Link>
+      <section className="space-y-3" data-testid="topup-section">
+        <div className="flex items-baseline justify-between px-1">
+          <h2 className="font-mono text-warm text-[12px] tracking-[0.22em] uppercase font-semibold">
+            Top up credits
+          </h2>
+          <span className="font-mono text-silver2 text-[10px] tracking-[0.22em] uppercase">
+            Stripe · test mode
+          </span>
+        </div>
+        {packs === null ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-24 rounded-lg bg-elev-2 animate-pulse shadow-[inset_0_0_0_1px_var(--mvfm-border-soft)]"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {packs.map((p, i) => (
+              <TopupTile
+                key={p.credits}
+                pack={p}
+                busy={busyPack === p.credits}
+                disabled={busyPack !== null && busyPack !== p.credits}
+                badge={
+                  i === 1 ? "Popular" : i === packs.length - 1 ? "Best value" : null
+                }
+                onClick={() => topup(p.credits)}
+              />
+            ))}
+          </div>
+        )}
+        {err && <div className="text-molten text-[12px]">{err}</div>}
         <Link
           to="/browse"
           className="
-            inline-flex items-center px-4 py-2.5 rounded-md
+            inline-flex items-center px-3 py-1.5 rounded-md
             bg-elev-2/60 border border-glass-soft text-silver hover:text-warm
-            font-mono text-[11px] tracking-[0.22em] uppercase
+            font-mono text-[10px] tracking-[0.22em] uppercase
           "
         >
-          Browse the catalog
+          Browse the catalog →
         </Link>
-      </div>
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-mono text-warm text-[11px] tracking-[0.28em] uppercase">
@@ -145,5 +187,57 @@ export function Credits() {
         )}
       </section>
     </section>
+  );
+}
+
+function TopupTile({
+  pack,
+  busy,
+  disabled,
+  badge,
+  onClick,
+}: {
+  pack: TopupPack;
+  busy: boolean;
+  disabled: boolean;
+  badge: string | null;
+  onClick: () => void;
+}) {
+  const dollars = (pack.price_cents / 100).toFixed(0);
+  const perCredit = (pack.price_cents / pack.credits / 100).toFixed(3);
+  return (
+    <button
+      type="button"
+      data-testid={`topup-tile-${pack.credits}`}
+      onClick={onClick}
+      disabled={busy || disabled}
+      className={cn(
+        "relative text-left p-4 rounded-lg",
+        "border border-glass-soft bg-elev-2/60",
+        "hover:border-molten/60 hover:bg-molten-tint/40",
+        "transition-colors duration-fast ease-tune",
+        (busy || disabled) && "opacity-60 cursor-not-allowed",
+      )}
+    >
+      {badge && (
+        <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-pill bg-molten-tint border border-molten/40 font-mono text-molten text-[8.5px] tracking-[0.22em] uppercase">
+          {badge}
+        </span>
+      )}
+      <div className="mvfm-display text-warm text-[22px] leading-none">
+        {pack.credits} <span className="text-molten text-[18px]">⚡</span>
+      </div>
+      <div className="font-mono text-warm text-[14px] tracking-tight mt-2">
+        ${dollars}
+      </div>
+      <div className="font-mono text-silver2 text-[9.5px] tracking-[0.18em] uppercase mt-1">
+        ${perCredit} / credit
+      </div>
+      {busy && (
+        <div className="mt-2 font-mono text-molten text-[10px] tracking-[0.22em] uppercase">
+          Opening Stripe…
+        </div>
+      )}
+    </button>
   );
 }

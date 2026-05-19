@@ -26,6 +26,16 @@ TIER_MONTHLY_CREDITS: dict[str, int] = {
 }
 FREE_TRIAL_CREDITS: int = 50
 
+# Stripe credit top-up packs: {credits: price_cents}.
+# Anchored at ~10 credits ≈ $1, discounted at volume so buyers feel rewarded
+# for bigger packs without undercutting subscription value.
+TOPUP_PACKS: dict[int, int] = {
+    50: 500,    # $5.00   — $0.100/credit
+    200: 1800,  # $18.00  — $0.090/credit (10% off)
+    500: 4000,  # $40.00  — $0.080/credit (20% off)
+    1000: 7000,  # $70.00 — $0.070/credit (30% off)
+}
+
 # Pack purchase prices by category (credits).
 PACK_PURCHASE_CREDITS: dict[str, int] = {
     "sfx": 2,
@@ -64,7 +74,6 @@ _ACTION_COSTS: dict[str, int] = {
     "gen_music_120s": 3,
     "gen_voice_design": 5,
     "gen_voice_clone_ivc": 10,
-    "gen_voice_clone_pvc": 50,
     "gen_tts_5min": 1,
 }
 
@@ -226,20 +235,19 @@ def grant_monthly(
     user_id: str,
     tier: Literal["free", "creator", "pro_studio"],
 ) -> CreditBalance:
-    """Monthly subscription top-up. Resets balance to the tier grant.
+    """Monthly subscription credit grant. Always ADDS the tier amount on top
+    of the existing balance — no reset, no cap. Unused credits roll over.
 
-    No rollover. Writes a ``monthly_grant`` ledger row capturing the net
-    change (positive if rising, negative if previous balance > new grant —
-    rare but possible for downgrades).
+    Caller must guarantee single invocation per billing cycle (use Stripe
+    ``billing_reason`` to skip duplicate invoice.paid + checkout webhooks).
     """
     row = ensure_balance(db, user_id)
     target = TIER_MONTHLY_CREDITS.get(tier, 0)
-    delta = target - row.balance
-    if delta != 0:
+    if target > 0:
         ledger_entry(
             db,
             user_id=user_id,
-            delta=delta,
+            delta=target,
             reason="monthly_grant",
             note=f"tier={tier}",
         )

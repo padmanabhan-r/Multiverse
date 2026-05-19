@@ -1,22 +1,25 @@
-"""Voice creation routes — Design / IVC / PVC + two-path fork.
+"""Voice creation routes — Design / IVC + two-path fork.
 
 All routes here mutate the ``voices`` table (and credit ledger) on behalf
 of the authenticated creator. They share an atomic pattern: debit credits
 first, call upstream ElevenLabs second, refund on any failure.
+
+Professional Voice Cloning (PVC) is gated behind a "coming soon" banner
+in the UI — the upstream training flow takes 24–72h and we don't run
+the async worker locally for the hackathon.
 """
 
 from __future__ import annotations
 
 import base64
 import json
-import uuid
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.db.models import Voice, VoiceCloneJob
+from app.db.models import Voice
 from app.db.session import get_db
 from app.deps import CurrentUser
 from app.services import (
@@ -28,13 +31,10 @@ from app.services import (
 )
 from app.services.credit_service import InsufficientCreditsError
 from app.services.voice_clone_service import UploadedAudio
-from app.workers.queue import PvcEnqueueDep
 
 
 IVC_MAX_FILE_BYTES = 25 * 1024 * 1024
 IVC_MAX_TOTAL_BYTES = 50 * 1024 * 1024
-PVC_MAX_FILE_BYTES = 50 * 1024 * 1024
-PVC_MAX_TOTAL_BYTES = 250 * 1024 * 1024
 
 router = APIRouter(tags=["voices-clone"])
 
@@ -71,18 +71,6 @@ class DesignSaveBody(BaseModel):
     publish_kind: PublishKind = "private"
 
 
-class VoiceCloneJobDTO(BaseModel):
-    id: str
-    voice_id: str
-    status: str
-    poll_attempts: int
-    credits_spent: int
-    refunded: bool
-    error_message: str | None
-    created_at: str | None
-    completed_at: str | None
-
-
 class VoiceCreatedDTO(BaseModel):
     id: str
     creator_id: str
@@ -97,20 +85,6 @@ class VoiceCreatedDTO(BaseModel):
     training_status: str
     is_private: bool
     requires_verification: bool
-
-
-def _job_to_dto(j: VoiceCloneJob) -> VoiceCloneJobDTO:
-    return VoiceCloneJobDTO(
-        id=j.id,
-        voice_id=j.voice_id,
-        status=j.status,
-        poll_attempts=j.poll_attempts,
-        credits_spent=j.credits_spent,
-        refunded=j.refunded,
-        error_message=j.error_message,
-        created_at=j.created_at.isoformat() if j.created_at else None,
-        completed_at=j.completed_at.isoformat() if j.completed_at else None,
-    )
 
 
 def _voice_to_dto(v: Voice) -> VoiceCreatedDTO:
@@ -421,136 +395,6 @@ async def clone_instant_endpoint(
     db.commit()
     db.refresh(voice)
     return _voice_to_dto(voice)
-
-
-# ─── Professional Voice Cloning ───────────────────────────────────────────
-
-
-@router.post(
-    "/voices/clone/professional",
-    response_model=VoiceCloneJobDTO,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-async def clone_professional_endpoint(
-    user: CurrentUser,
-    db: Annotated[Session, Depends(get_db)],
-    enqueue: PvcEnqueueDep,
-    name: Annotated[str, Form(min_length=1, max_length=80)],
-    description: Annotated[str, Form(max_length=2000)] = "",
-    language: Annotated[str, Form(min_length=2, max_length=16)] = "en",
-    publish_kind: Annotated[PublishKind, Form()] = "private",
-    files: list[UploadFile] = File(...),
-) -> VoiceCloneJobDTO:
-    samples = await _read_uploads(
-        files,
-        per_file_max=PVC_MAX_FILE_BYTES,
-        total_max=PVC_MAX_TOTAL_BYTES,
-    )
-
-    cost = _debit_or_402(db, user.user_id, "gen_voice_clone_pvc")
-
-    # 1. Create PVC voice metadata on ElevenLabs.
-    try:
-        pvc = voice_clone_service.create_pvc_voice(
-            name=name, description=description, language=language
-        )
-    except ValueError as exc:
-        _refund(db, user.user_id, cost)
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)
-        ) from exc
-    except voice_clone_service.VoiceCloneError as exc:
-        _refund(db, user.user_id, cost)
-        raise HTTPException(
-            status.HTTP_502_BAD_GATEWAY, f"pvc create failed: {exc}"
-        ) from exc
-
-    # 2. R2 source archive (so we can resume / audit if training fails).
-    try:
-        _upload_sources_to_r2(pvc.eleven_voice_id, samples)
-    except Exception as exc:  # noqa: BLE001
-        try:
-            voice_clone_service.delete_eleven_voice(pvc.eleven_voice_id)
-        except voice_clone_service.VoiceCloneError:
-            pass
-        _refund(db, user.user_id, cost)
-        raise HTTPException(
-            status.HTTP_502_BAD_GATEWAY, f"storage write failed: {exc}"
-        ) from exc
-
-    # 3. Upload samples to ElevenLabs → triggers training.
-    try:
-        voice_clone_service.upload_pvc_samples(
-            pvc.eleven_voice_id, files=samples
-        )
-    except voice_clone_service.VoiceCloneError as exc:
-        try:
-            voice_clone_service.delete_eleven_voice(pvc.eleven_voice_id)
-        except voice_clone_service.VoiceCloneError:
-            pass
-        _refund(db, user.user_id, cost)
-        raise HTTPException(
-            status.HTTP_502_BAD_GATEWAY, f"pvc samples failed: {exc}"
-        ) from exc
-
-    # 4. Persist Voice + VoiceCloneJob rows.
-    try:
-        voice = voice_asset_service.create_draft(
-            db,
-            creator_id=user.user_id,
-            title=name,
-            description=description,
-            eleven_voice_id=pvc.eleven_voice_id,
-            clone_kind="pvc",
-            training_status="queued",
-            is_private=(publish_kind == "private"),
-        )
-    except ValueError as exc:
-        try:
-            voice_clone_service.delete_eleven_voice(pvc.eleven_voice_id)
-        except voice_clone_service.VoiceCloneError:
-            pass
-        _refund(db, user.user_id, cost)
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)
-        ) from exc
-
-    job = VoiceCloneJob(
-        id=uuid.uuid4().hex,
-        voice_id=voice.id,
-        creator_id=user.user_id,
-        kind="pvc",
-        eleven_voice_id=pvc.eleven_voice_id,
-        status="queued",
-        credits_spent=cost,
-    )
-    db.add(job)
-    db.commit()
-    db.refresh(job)
-
-    # 5. Enqueue the first poll (no-op if no Redis available).
-    await enqueue(job.id)
-
-    return _job_to_dto(job)
-
-
-@router.get(
-    "/voices/clone/jobs/{job_id}",
-    response_model=VoiceCloneJobDTO,
-)
-def get_clone_job_endpoint(
-    job_id: str,
-    user: CurrentUser,
-    db: Annotated[Session, Depends(get_db)],
-) -> VoiceCloneJobDTO:
-    job = db.get(VoiceCloneJob, job_id)
-    if job is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "job not found")
-    if job.creator_id != user.user_id:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, "cannot view another creator's job"
-        )
-    return _job_to_dto(job)
 
 
 # ─── Two-path fork ────────────────────────────────────────────────────────

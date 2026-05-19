@@ -258,9 +258,11 @@ def generate_cover_for_pack(
     """Owner-gated wrapper for creator-side cover generation.
 
     Writes a new Gemini cover (overwriting any existing PNG so the creator
-    can iterate), updates ``pack.cover_art_url`` to the served URL, and
-    returns the served URL.
+    can iterate), uploads to R2 so the cross-origin frontend can fetch it,
+    updates ``pack.cover_art_url``, and returns the public URL.
     """
+    from app.services import r2_service
+
     pack = db.get(Pack, pack_id)
     if pack is None:
         raise CoverPackNotFoundError(f"pack not found: {pack_id}")
@@ -269,7 +271,7 @@ def generate_cover_for_pack(
             f"user {requesting_user_id} does not own pack {pack_id}"
         )
 
-    generate_pack_cover(
+    file_path = generate_pack_cover(
         pack_id=pack.id,
         title=pack.title,
         category=pack.category,
@@ -279,8 +281,18 @@ def generate_cover_for_pack(
         overwrite=True,
     )
 
-    # Served via FastAPI StaticFiles mount under /static (see main.py).
-    cover_url = f"/static/images/packs/{pack.id}.png"
+    cover_url: str
+    try:
+        with open(file_path, "rb") as fh:
+            data = fh.read()
+        cover_url = r2_service.put_bytes(
+            key=f"covers/{pack.id}.png",
+            data=data,
+            content_type="image/png",
+        )
+    except Exception:  # noqa: BLE001 — fall back to local static if R2 fails
+        cover_url = f"/static/images/packs/{pack.id}.png"
+
     pack.cover_art_url = cover_url
     db.flush()
     return cover_url

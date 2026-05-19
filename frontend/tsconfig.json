@@ -15,9 +15,8 @@
     "noFallthroughCasesInSwitch": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@multiverse/shared": ["../shared/src/index.ts"],
       "@multiverse/shared/*": ["../shared/src/*"]
     },

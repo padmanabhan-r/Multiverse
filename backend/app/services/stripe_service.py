@@ -141,6 +141,61 @@ def _line_product_name(pl: PricedLine) -> str:
     return f"{pl.title}{suffix}"
 
 
+def create_topup_checkout(
+    db: Session,
+    settings: Settings,
+    *,
+    user_id: str,
+    email: str | None,
+    credits: int,
+) -> str:
+    """Create a Stripe Checkout session for buying a credit top-up pack.
+
+    Validates ``credits`` is one of the offered tiers in
+    ``credit_service.TOPUP_PACKS``. Embeds ``kind=credit_topup`` + credits
+    in metadata so the webhook can grant the right amount.
+    """
+    if credits not in credit_service.TOPUP_PACKS:
+        raise ValueError(f"unknown credit top-up pack: {credits}")
+    price_cents = credit_service.TOPUP_PACKS[credits]
+    customer_id = ensure_customer(db, settings, user_id, email)
+
+    success_url = (
+        f"{settings.STRIPE_SUCCESS_URL}"
+        f"{'&' if '?' in settings.STRIPE_SUCCESS_URL else '?'}"
+        f"session_id={{CHECKOUT_SESSION_ID}}"
+    )
+
+    session = _client(settings).checkout.sessions.create(
+        params={
+            "mode": "payment",
+            "customer": customer_id,
+            "line_items": [
+                {
+                    "quantity": 1,
+                    "price_data": {
+                        "currency": "usd",
+                        "unit_amount": price_cents,
+                        "product_data": {
+                            "name": f"{credits} Multiverse credits",
+                            "metadata": {"credits": str(credits)},
+                        },
+                    },
+                }
+            ],
+            "success_url": success_url,
+            "cancel_url": settings.STRIPE_CANCEL_URL,
+            "metadata": {
+                "kind": "credit_topup",
+                "clerk_user_id": user_id,
+                "credits": str(credits),
+                "price_cents": str(price_cents),
+            },
+        }
+    )
+    return session.url or ""
+
+
 def create_portal_session(db: Session, settings: Settings, user_id: str) -> str:
     user = db.get(User, user_id)
     if user is None or not user.stripe_customer_id:
@@ -202,6 +257,8 @@ def handle_event(db: Session, event: stripe.Event) -> dict[str, str]:
         kind = _metadata_get(event.data.object, "kind")  # type: ignore[attr-defined]
         if kind == "marketplace_cart":
             _handle_marketplace_cart_completed(db, event)
+        elif kind == "credit_topup":
+            _handle_credit_topup_completed(db, event)
         else:
             _handle_subscription_completed(db, event)
     elif etype == "customer.subscription.updated":
@@ -219,13 +276,20 @@ def handle_event(db: Session, event: stripe.Event) -> dict[str, str]:
                     user.tier_expires_at = datetime.fromtimestamp(cpe, tz=timezone.utc)
     elif etype == "invoice.paid":
         # Monthly recurring grant: re-fill Studio credits per the user's tier.
-        customer_id = _customer_id_from_event(event)
-        if customer_id:
-            user = db.execute(
-                select(User).where(User.stripe_customer_id == customer_id)
-            ).scalar_one_or_none()
-            if user is not None and user.tier in ("creator", "pro_studio"):
-                credit_service.grant_monthly(db, user.id, user.tier)  # type: ignore[arg-type]
+        # Skip the first invoice for a new subscription —
+        # ``_handle_subscription_completed`` already granted cycle #1.
+        obj: Any = event.data.object  # type: ignore[attr-defined]
+        billing_reason = _bracket_get(obj, "billing_reason")
+        if billing_reason == "subscription_create":
+            pass  # checkout.session.completed already credited the first cycle
+        else:
+            customer_id = _customer_id_from_event(event)
+            if customer_id:
+                user = db.execute(
+                    select(User).where(User.stripe_customer_id == customer_id)
+                ).scalar_one_or_none()
+                if user is not None and user.tier in ("creator", "pro_studio"):
+                    credit_service.grant_monthly(db, user.id, user.tier)  # type: ignore[arg-type]
     elif etype in ("customer.subscription.deleted", "invoice.payment_failed"):
         customer_id = _customer_id_from_event(event)
         if customer_id:
@@ -322,5 +386,38 @@ def _handle_marketplace_cart_completed(db: Session, event: stripe.Event) -> None
                 stripe_session_id=str(session_id) if session_id else None,
             )
         )
+
+
+def _handle_credit_topup_completed(db: Session, event: stripe.Event) -> None:
+    """Grant credits to the buyer after a successful top-up checkout.
+
+    Idempotent via ProcessedEvent (caller already wrote the row before this
+    function runs). Reads credits from session metadata — server-set at
+    checkout-creation time, never trusted from the client.
+    """
+    clerk_id = _clerk_user_id_from_event(event)
+    if not clerk_id:
+        return
+    raw_credits = _metadata_get(event.data.object, "credits")  # type: ignore[attr-defined]
+    if not raw_credits:
+        return
+    try:
+        credits = int(raw_credits)
+    except ValueError:
+        return
+    if credits <= 0:
+        return
+
+    if db.get(User, clerk_id) is None:
+        db.add(User(id=clerk_id))
+        db.flush()
+
+    credit_service.ledger_entry(
+        db,
+        user_id=clerk_id,
+        delta=credits,
+        reason="topup",
+        note=f"top-up: {credits} credits",
+    )
 
 

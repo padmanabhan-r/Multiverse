@@ -18,8 +18,8 @@ export function Studio() {
   const [drafts, setDrafts] = useState<Pack[] | null>(null);
   const [published, setPublished] = useState<Pack[] | null>(null);
 
-  useEffect(() => {
-    api
+  function loadPacks() {
+    return api
       .listMyPacks()
       .then((all) => {
         setDrafts(all.filter((p) => p.status === "draft"));
@@ -29,7 +29,23 @@ export function Studio() {
         setDrafts([]);
         setPublished([]);
       });
+  }
+
+  useEffect(() => {
+    loadPacks();
   }, []);
+
+  async function deleteDraft(id: string, title: string) {
+    if (!window.confirm(`Delete draft "${title}"? This can't be undone.`)) {
+      return;
+    }
+    try {
+      await api.deletePack(id);
+      setDrafts((prev) => (prev ? prev.filter((p) => p.id !== id) : prev));
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "delete failed");
+    }
+  }
 
   return (
     <section data-testid="studio-page" className="space-y-8 pb-8">
@@ -82,7 +98,13 @@ export function Studio() {
         </div>
       </header>
 
-      <Section title="Drafts" testId="drafts-section" packs={drafts} draft />
+      <Section
+        title="Drafts"
+        testId="drafts-section"
+        packs={drafts}
+        draft
+        onDelete={deleteDraft}
+      />
       <hr className="border-glass-soft" />
       <Section title="Published" testId="published-section" packs={published} />
     </section>
@@ -94,11 +116,13 @@ function Section({
   testId,
   packs,
   draft = false,
+  onDelete,
 }: {
   title: string;
   testId: string;
   packs: Pack[] | null;
   draft?: boolean;
+  onDelete?: (id: string, title: string) => void;
 }) {
   if (packs === null) {
     return (
@@ -135,7 +159,7 @@ function Section({
       <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {packs.map((p) => (
           <li key={p.id}>
-            <StudioPackCard pack={p} draft={draft} />
+            <StudioPackCard pack={p} draft={draft} onDelete={onDelete} />
           </li>
         ))}
       </ul>
@@ -164,21 +188,30 @@ function SectionHeader({
   );
 }
 
-function StudioPackCard({ pack, draft }: { pack: Pack; draft: boolean }) {
+function StudioPackCard({
+  pack,
+  draft,
+  onDelete,
+}: {
+  pack: Pack;
+  draft: boolean;
+  onDelete?: (id: string, title: string) => void;
+}) {
   const plate = plateFor(pack.id);
   const price =
     pack.price_credits ?? Math.round((pack.price_cents ?? 0) / 10);
   const to = draft ? `/studio/draft/${pack.id}` : `/p/${pack.id}`;
   return (
-    <Link
-      to={to}
-      data-testid={`pack-link-${pack.id}`}
-      className={cn(
-        "group block rounded-lg overflow-hidden",
-        "border border-glass-soft hover:border-molten/40",
-        "transition-colors duration-tune ease-tune",
-      )}
-    >
+    <div className="relative group">
+      <Link
+        to={to}
+        data-testid={`pack-link-${pack.id}`}
+        className={cn(
+          "block rounded-lg overflow-hidden",
+          "border border-glass-soft hover:border-molten/40",
+          "transition-colors duration-tune ease-tune",
+        )}
+      >
       <div
         className="aspect-square relative"
         style={{
@@ -221,6 +254,32 @@ function StudioPackCard({ pack, draft }: { pack: Pack; draft: boolean }) {
           </div>
         </div>
       </div>
-    </Link>
+      </Link>
+      {draft && onDelete && (
+        <button
+          type="button"
+          data-testid={`pack-delete-${pack.id}`}
+          aria-label={`Delete draft ${pack.title}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete(pack.id, pack.title);
+          }}
+          className="
+            absolute top-2 right-12 z-10 size-7 rounded-full
+            bg-elev-2/80 border border-glass-soft backdrop-blur-sm
+            text-silver hover:text-molten hover:border-molten/60
+            opacity-0 group-hover:opacity-100 focus:opacity-100
+            transition-opacity duration-fast ease-tune
+            flex items-center justify-center
+          "
+        >
+          <svg viewBox="0 0 14 14" fill="none" aria-hidden className="size-3.5">
+            <path d="M3 4h8m-6 0V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1m1 0v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4m2 2v5m2-5v5"
+              stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+    </div>
   );
 }

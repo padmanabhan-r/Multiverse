@@ -3,6 +3,8 @@ import { Route, Routes } from "react-router-dom";
 import { Shell } from "@/layouts/Shell";
 import { BottomPlayer } from "@/components/BottomPlayer";
 import { RightPanel } from "@/components/RightPanel";
+import { BillingCancel } from "@/pages/BillingCancel";
+import { BillingSuccess } from "@/pages/BillingSuccess";
 import { Browse } from "@/pages/Browse";
 import { Cart } from "@/pages/Cart";
 import { Home } from "@/pages/Home";
@@ -92,6 +94,8 @@ export function App() {
         <Route path="/creator" element={<Creator />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/credits" element={<Credits />} />
+        <Route path="/billing/success" element={<BillingSuccess />} />
+        <Route path="/billing/cancel" element={<BillingCancel />} />
         <Route path="/voices" element={<Voices />} />
         <Route path="/v/:voiceId" element={<Voice />} />
         <Route path="/studio/tts" element={<StudioTTS />} />

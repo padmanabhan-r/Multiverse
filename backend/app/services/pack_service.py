@@ -93,6 +93,29 @@ def get_pack(db: Session, pack_id: str) -> Pack:
     return pack
 
 
+class PackNotDeletableError(ValueError):
+    """Raised when trying to delete a pack that isn't in draft status."""
+
+
+def delete_pack(db: Session, pack_id: str, requesting_user_id: str) -> None:
+    """Delete a draft pack (cascades to PackSamples).
+
+    Owner-gated. Refuses to delete published packs — buyers may own them
+    (Purchase FK has ``ondelete=RESTRICT``). Creators must unpublish first.
+    """
+    pack = get_pack(db, pack_id)
+    if pack.creator_id != requesting_user_id:
+        raise PackPermissionError(
+            f"user {requesting_user_id} cannot delete pack {pack_id}"
+        )
+    if pack.status != "draft":
+        raise PackNotDeletableError(
+            f"pack {pack_id} is {pack.status}; only drafts can be deleted"
+        )
+    db.delete(pack)
+    db.flush()
+
+
 @dataclass(slots=True)
 class DraftInput:
     creator_id: str

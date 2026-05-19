@@ -313,6 +313,28 @@ def publish_pack_endpoint(
     return PackDTO.from_model(pack)
 
 
+@router.delete(
+    "/packs/{pack_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+def delete_pack_endpoint(
+    pack_id: str,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    try:
+        pack_service.delete_pack(db, pack_id, user.user_id)
+    except PackNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "pack not found") from exc
+    except PackPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except pack_service.PackNotDeletableError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # ─── Sample CRUD (Sh.1) ────────────────────────────────────────────────────
 
 

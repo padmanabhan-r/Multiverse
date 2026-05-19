@@ -9,7 +9,6 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { AudioDropZone } from "@/components/voicepack/AudioDropZone";
-import { CloneJobStatus } from "@/components/voicepack/CloneJobStatus";
 import { MicRecorder } from "@/components/voicepack/MicRecorder";
 
 type Method = "design" | "ivc" | "pvc";
@@ -358,7 +357,10 @@ export function StudioVoiceNew() {
 
       {step === "job" && pvcJob && (
         <div className="space-y-3">
-          <CloneJobStatus jobId={pvcJob.id} />
+          <div className="p-4 rounded-lg border border-dashed border-glass-soft bg-elev-2/30 text-silver text-[13px]">
+            Professional Voice Cloning is coming soon. Try Voice Design or
+            Instant Voice Clone for now.
+          </div>
           <Link
             to="/creator"
             className="text-[10px] font-mono uppercase tracking-[0.22em] text-silver hover:text-warm"
@@ -390,7 +392,13 @@ function MethodPicker({
   method: Method;
   onSelect: (m: Method) => void;
 }) {
-  const opts: Array<{ id: Method; title: string; cost: string; copy: string }> = [
+  const opts: Array<{
+    id: Method;
+    title: string;
+    cost: string;
+    copy: string;
+    comingSoon?: boolean;
+  }> = [
     {
       id: "design",
       title: "Voice Design",
@@ -406,8 +414,9 @@ function MethodPicker({
     {
       id: "pvc",
       title: "Professional Voice Clone",
-      cost: "50 credits",
-      copy: "Upload several minutes of audio. We train a high-fidelity clone (24–72 h).",
+      cost: "Coming soon",
+      copy: "Upload several minutes of audio. High-fidelity clone trained over 24–72 h.",
+      comingSoon: true,
     },
   ];
   return (
@@ -417,14 +426,26 @@ function MethodPicker({
           key={o.id}
           type="button"
           data-testid={`method-${o.id}`}
-          onClick={() => onSelect(o.id)}
+          onClick={() => {
+            if (o.comingSoon) return;
+            onSelect(o.id);
+          }}
+          disabled={o.comingSoon}
+          aria-disabled={o.comingSoon}
           className={cn(
-            "text-left p-4 rounded-lg border space-y-2",
-            method === o.id
-              ? "border-molten/60 bg-molten-tint"
-              : "border-glass-soft hover:border-warm/40",
+            "relative text-left p-4 rounded-lg border space-y-2",
+            o.comingSoon
+              ? "border-glass-soft/60 bg-elev-2/30 opacity-60 cursor-not-allowed"
+              : method === o.id
+                ? "border-molten/60 bg-molten-tint"
+                : "border-glass-soft hover:border-warm/40",
           )}
         >
+          {o.comingSoon && (
+            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-pill bg-molten-tint border border-molten/40 font-mono text-molten text-[8.5px] tracking-[0.22em] uppercase">
+              Coming soon
+            </span>
+          )}
           <div className="text-warm font-display text-lg">{o.title}</div>
           <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-molten">
             {o.cost}

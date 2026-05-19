@@ -170,56 +170,11 @@ describe("StudioVoiceNew", () => {
     expect(screen.queryByTestId("preview-picker")).toBeNull();
   });
 
-  it("PVC flow posts FormData, lands on job status pane", async () => {
-    clonePvcMock.mockResolvedValue({
-      id: "job_abc",
-      voice_id: "v_pvc",
-      status: "queued",
-      poll_attempts: 0,
-      credits_spent: 50,
-      refunded: false,
-      error_message: null,
-      created_at: null,
-      completed_at: null,
-    });
-    getCloneJobMock.mockResolvedValue({
-      id: "job_abc",
-      voice_id: "v_pvc",
-      status: "queued",
-      poll_attempts: 1,
-      credits_spent: 50,
-      refunded: false,
-      error_message: null,
-      created_at: null,
-      completed_at: null,
-    });
-
+  it("PVC method is disabled with 'coming soon' badge", () => {
     renderWizard();
-    fireEvent.click(screen.getByTestId("method-pvc"));
-
-    fireEvent.change(screen.getByTestId("pvc-name"), {
-      target: { value: "ProMe" },
-    });
-    const f1 = new File([new Uint8Array(100_000)], "a.mp3", { type: "audio/mpeg" });
-    const f2 = new File([new Uint8Array(100_000)], "b.mp3", { type: "audio/mpeg" });
-    const input = screen.getByTestId("audio-dropzone-input") as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [f1, f2] } });
-
-    await waitFor(() =>
-      expect(screen.getByTestId("pvc-file-status")).toBeInTheDocument(),
-    );
-    fireEvent.click(screen.getByTestId("pvc-continue"));
-    fireEvent.click(screen.getByTestId("fork-private"));
-
-    await waitFor(() => expect(clonePvcMock).toHaveBeenCalled());
-    const form = clonePvcMock.mock.calls[0][0] as FormData;
-    expect(form.get("name")).toBe("ProMe");
-    expect(form.get("language")).toBe("en");
-    expect(form.getAll("files")).toHaveLength(2);
-
-    await waitFor(() =>
-      expect(screen.getByTestId("clone-job-status")).toBeInTheDocument(),
-    );
+    const btn = screen.getByTestId("method-pvc");
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveTextContent(/coming soon/i);
   });
 
   it("IVC upload flow posts FormData and navigates", async () => {

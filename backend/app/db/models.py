@@ -544,8 +544,6 @@ CREDIT_LEDGER_REASONS: tuple[str, ...] = (
     "gen_music",
     "gen_voice_design",
     "gen_voice_clone_ivc",
-    "gen_voice_clone_pvc",
-    "gen_voice_clone_refund",
     "gen_tts",
     "buy_pack",
     "buy_voice",
@@ -557,53 +555,3 @@ CREDIT_LEDGER_REASONS: tuple[str, ...] = (
     "trial_grant",
     "admin_adjust",
 )
-
-
-class VoiceCloneJob(Base):
-    """Async tracking row for Professional Voice Cloning.
-
-    PVC training on ElevenLabs takes 24–72h. The ARQ worker polls
-    `GET /v1/voices/{voice_id}` periodically and updates this row's
-    ``status`` to mirror their ``fine_tuning_state``. Refunds for failed
-    training go through ``gen_voice_clone_refund`` once, guarded by the
-    ``refunded`` flag (idempotent across worker retries).
-    """
-
-    __tablename__ = "voice_clone_jobs"
-
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # uuid
-    voice_id: Mapped[str] = mapped_column(
-        ForeignKey("voices.id", ondelete="CASCADE"), index=True, nullable=False
-    )
-    creator_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
-    )
-    kind: Mapped[str] = mapped_column(String(8), nullable=False, default="pvc")
-    eleven_voice_id: Mapped[str] = mapped_column(String(96), nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(24), nullable=False, default="queued"
-    )
-    last_polled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    poll_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    credits_spent: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    refunded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    error_message: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-
-    __table_args__ = (
-        CheckConstraint(
-            "status in ('queued','fine_tuning','fine_tuned','failed')",
-            name="ck_voice_clone_jobs_status",
-        ),
-        CheckConstraint("kind = 'pvc'", name="ck_voice_clone_jobs_kind"),
-        Index(
-            "ix_voice_clone_jobs_status_polled", "status", "last_polled_at"
-        ),
-    )

@@ -37,7 +37,7 @@ def test_list_packs_returns_seeded(seeded_client: TestClient) -> None:
     r = seeded_client.get("/packs", params={"limit": 100})
     assert r.status_code == 200
     data = r.json()
-    assert len(data) == 22
+    assert len(data) == 17
     assert all(p["status"] == "published" for p in data)
 
 

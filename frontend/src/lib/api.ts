@@ -107,6 +107,8 @@ export interface ApiClient {
   me: () => Promise<MeResponse>;
   subscribe: (tier: "creator" | "pro_studio") => Promise<{ url: string }>;
   portal: () => Promise<{ url: string }>;
+  topupCredits: (credits: number) => Promise<{ url: string }>;
+  listTopupPacks: () => Promise<{ packs: Array<{ credits: number; price_cents: number }> }>;
   listPacks: (filters?: PackListFilters) => Promise<Pack[]>;
   getPack: (packId: string) => Promise<Pack>;
   checkoutCart: (items: CartItem[]) => Promise<{ url: string }>;
@@ -196,6 +198,7 @@ export interface ApiClient {
       license_commercial_multiplier: number;
     }>,
   ) => Promise<Pack>;
+  deletePack: (packId: string) => Promise<void>;
   listMarketplaceVoices: () => Promise<MarketplaceVoice[]>;
   getMarketplaceVoice: (voiceId: string) => Promise<MarketplaceVoice>;
   purchaseVoice: (voiceId: string) => Promise<VoiceAccessRecord>;
@@ -317,6 +320,12 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
         body: JSON.stringify({ tier }),
       }),
     portal: () => request("/billing/portal", { method: "POST" }),
+    topupCredits: (credits) =>
+      request("/billing/topup", {
+        method: "POST",
+        body: JSON.stringify({ credits }),
+      }),
+    listTopupPacks: () => request("/billing/topup/packs"),
     listPacks: (filters = {}) => {
       const params = packFiltersToQuery(filters);
       const qs = params.toString();
@@ -453,6 +462,10 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
       request<Pack>(`/packs/${encodeURIComponent(packId)}`, {
         method: "PATCH",
         body: JSON.stringify(patch),
+      }),
+    deletePack: (packId) =>
+      request<void>(`/packs/${encodeURIComponent(packId)}`, {
+        method: "DELETE",
       }),
     listMarketplaceVoices: () => request<MarketplaceVoice[]>("/voices"),
     getMarketplaceVoice: (voiceId) =>
