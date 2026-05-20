@@ -49,7 +49,7 @@
 
 Multiverse has four product surfaces, all wired through one credit ledger:
 
-- **Voices marketplace** — Five character voices designed via ElevenLabs Voice Design (Detective narrator, Radio ID host, Newsreader cold, Tavern keep, Corporate PR voice). Each is previewable, buyable for 50 credits, then usable for unlimited TTS in Studio.
+- **Voices marketplace** — Six character voices designed via ElevenLabs Voice Design (Detective narrator, Radio ID host, Newsreader cold, Tavern keep, Corporate PR voice, Outlaw gunslinger). Each is previewable, buyable for 25 credits, then usable for unlimited TTS in Studio.
 - **Packs marketplace** — Music, SFX, and Ambient packs across creator listings. Browsable by category with a filter sidebar. Priced in credits. Instant unlock on purchase.
 - **Studio** — Voice Design (text-to-voice with 3 preview picks), Instant Voice Clone (IVC) from uploaded audio, a TTS composer wired to any owned voice, and pack drafts with one-click cover-art generation. Drafts autosave; trash a draft anytime.
 - **Library + creator dashboard** — Everything you generated or bought, plus a sales view for creators (royalty earnings, draft → publish flow).
@@ -66,9 +66,9 @@ The same user can be both a buyer and a creator. The credit ledger keeps the acc
 
 **3. Preview** — Click any voice. The detail page has a floating play button that streams the R2-hosted MP3 preview. Pack detail pages preview the first sample.
 
-**4. Buy with credits** — Click **Buy for 50 ⚡**. Credits are debited, ownership is recorded in `VoiceAccess` / `Purchase` rows, the buyer is redirected to Studio or Library.
+**4. Buy with credits** — Click **Buy for 25 ⚡**. Credits are debited, ownership is recorded in `VoiceAccess` / `Purchase` rows, the buyer is redirected to Studio or Library.
 
-**5. Out of credits? Top up.** — `/credits` shows four Stripe-backed top-up tiles: **50 / 200 / 500 / 1000** credits ($5 → $70, volume-discounted). One click → Stripe Checkout → return to `/billing/success` → balance refreshes within ~2 s.
+**5. Out of credits? Top up.** — `/credits` shows four Stripe-backed top-up tiles: **50 / 200 / 500 / 1000** credits ($3 → $30, volume-discounted). One click → Stripe Checkout → return to `/billing/success` → balance refreshes within ~2 s.
 
 **6. Use the voice** — Owned voices land in the Studio TTS composer (`/studio/tts?voiceId=…`). Type any text, get a per-call MP3 served from ElevenLabs `eleven_flash_v2_5`. 1 credit per ≤5 min of output.
 
@@ -193,7 +193,7 @@ Five ElevenLabs surfaces are wired into production:
 | **SFX + Ambient** | `POST /v1/sound-generation` (`eleven_text_to_sound_v2`) | Studio one-shot sample generation for SFX and looping ambient beds |
 | **Music** | `POST /v1/music` (`music_v1`) | Studio music-pack track generation |
 
-Voice IDs are never hardcoded; the five seeded marketplace voices live in `Voice.eleven_voice_id` columns populated by `app.scripts.seed_designed_voices`. Model IDs are centralised in `backend/app/config.py`.
+Voice IDs are never hardcoded; the six seeded marketplace voices live in `Voice.eleven_voice_id` columns populated by `app.scripts.seed_designed_voices` (+ `app.scripts.add_outlaw_voice`). Model IDs are centralised in `backend/app/config.py`.
 
 ---
 
@@ -209,7 +209,7 @@ Voice IDs are never hardcoded; the five seeded marketplace voices live in `Voice
 | **Creator** subscription | $9/mo | +200/month | Same rate as $9 top-up · rollover · dashboard analytics |
 | **Pro Studio** subscription | $29/mo | +950/month | Within ~5% of $30 top-up rate · rollover · priority queue · bundles |
 
-Voice purchase: 50 credits each. TTS usage: 1 credit per ≤5 min of audio output. Pack purchases: creator-set, currently 5–150 credit range.
+Voice purchase: 25 credits each. TTS usage: 1 credit per ≤5 min of audio output. Pack purchases: creator-set, currently 5–150 credit range.
 
 Creator royalty: **70 %** of every purchase, credited to the seller's `CreditBalance`. Stripe Connect cash payouts are on the roadmap.
 
@@ -235,7 +235,7 @@ Creator royalty: **70 %** of every purchase, credited to the seller's `CreditBal
 | **Object storage** | Cloudflare R2 (S3-compatible) via boto3 1.35 |
 | **Frontend deploy** | Vercel (root dir `frontend`, SPA rewrites) |
 | **Backend deploy** | Railway (nixpacks + pip-installed `requirements.txt`) |
-| **Tests** | pytest 9 + pytest-asyncio + pytest-httpx (310+ backend tests), Vitest 2 + React Testing Library + Playwright (166+ frontend tests) |
+| **Tests** | pytest 9 + pytest-asyncio + pytest-httpx (330+ backend tests), Vitest 2 + React Testing Library + Playwright (165+ frontend tests) |
 | **Lint / format** | Ruff + Black (Python), Biome (TS) |
 | **Package managers** | uv (backend), pnpm 10 workspaces (frontend + shared) |
 
@@ -324,10 +324,10 @@ Copy the printed `whsec_…` into `STRIPE_WEBHOOK_SECRET` in `.env.local` and re
 ### Tests
 
 ```bash
-# Backend: 310+ tests
+# Backend: 330+ tests
 cd backend && uv run pytest
 
-# Frontend: 166+ tests
+# Frontend: 165+ tests
 pnpm --filter frontend test
 ```
 
