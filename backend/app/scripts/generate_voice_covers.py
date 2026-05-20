@@ -30,32 +30,37 @@ from app.db.session import _session_factory, reset_engine_for_tests
 from app.services import r2_service
 
 # Per-voice tweaks: which archetype to lean on visually. Title-keyed.
+# Each entry MUST lead with "Subject: <gender>, <age band>" so Gemini anchors
+# the figure correctly — the archetype alone (e.g. "newsreader") biases male.
 _PERSONA_DIRECTION: dict[str, str] = {
     "Detective narrator": (
-        "Single figure in a noir-lit private-eye scene. Trench coat, fedora, "
-        "silhouette half-lost in shadow, smoke curling from a cigarette tip "
-        "lit by a single warm bulb. Mood: world-weary, smoky, hard-boiled."
+        "Subject: male, 40s. Single figure in a noir-lit private-eye scene. "
+        "Trench coat, fedora, silhouette half-lost in shadow, smoke curling "
+        "from a cigarette tip lit by a single warm bulb. Mood: world-weary, "
+        "smoky, hard-boiled."
     ),
     "Radio ID host": (
-        "Backlit silhouette at a late-night FM console. Glow of analog VU "
-        "meters and a 'ON AIR' filament bulb behind the figure. Warm-amber "
-        "studio. Mood: intimate, after-hours."
+        "Subject: male, late 30s. Backlit silhouette at a late-night FM "
+        "console. Glow of analog VU meters and a 'ON AIR' filament bulb "
+        "behind the figure. Warm-amber studio. Mood: intimate, after-hours."
     ),
     "Newsreader · cold": (
-        "Composed seated figure at a vintage broadcast desk, single ceiling "
-        "lamp casting a clean half-light, an empty news script in hand. Mood: "
-        "clipped, austere, wartime BBC."
+        "Subject: female, 30s, British RP newsreader. Composed seated woman "
+        "at a vintage broadcast desk, single ceiling lamp casting a clean "
+        "half-light, an empty news script in her hand. Mood: clipped, "
+        "austere, wartime BBC."
     ),
     "Tavern keep": (
-        "Weathered innkeeper behind a candle-lit wooden bar, leaning forward "
-        "with a tankard, hearth fire glowing in the deep background. Mood: "
-        "fantasy, gruff, ale-warm."
+        "Subject: male, 50s, weathered innkeeper. Behind a candle-lit "
+        "wooden bar, leaning forward with a tankard, hearth fire glowing "
+        "in the deep background. Mood: fantasy, gruff, ale-warm."
     ),
     "Corporate PR voice": (
-        "Polished poised figure framed head-and-shoulders in a sleek "
-        "corporate atrium with cool white-grey lighting and reflective glass. "
-        "Subject's full head and face are visible and centred in the frame. "
-        "Crisp business attire. Mood: bright, polished, mega-corp."
+        "Subject: female, early 30s. Polished poised woman framed "
+        "head-and-shoulders in a sleek corporate atrium with cool "
+        "white-grey lighting and reflective glass. Her full head and face "
+        "are visible and centred in the frame. Crisp business attire. "
+        "Mood: bright, polished, mega-corp."
     ),
 }
 

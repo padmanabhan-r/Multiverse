@@ -426,7 +426,7 @@ class Voice(Base):
     eleven_voice_id: Mapped[str] = mapped_column(String(96), nullable=False)
     preview_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     cover_art_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    price_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=80)
+    price_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=25)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
     tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     purchases_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

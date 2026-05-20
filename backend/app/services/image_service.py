@@ -25,17 +25,21 @@ _CATEGORY_STYLE: dict[str, str] = {
     "sfx": (
         "scene-illustrative concept art. Depict the literal SOURCE of the sound "
         "as a single dramatic scene — props, materials, environment. Painterly, "
-        "cinematic, photo-real-leaning. Examples of variety to aim for: a smashed "
-        "neon sign, a controller mid-button-press, a magnifying glass over a "
-        "comic-book POW panel, a clockwork brass mechanism, footstep impact "
-        "rings on wet concrete, an explosion shockwave, a meme-style giant "
-        "thumbs-up emoji floating in chiaroscuro. Never abstract waveforms."
+        "cinematic, photo-real-leaning. Lighting matches the source (daylight "
+        "kitchen, fluorescent office, neon arcade, wet street, ice rink, jungle "
+        "canopy, factory floor, daytime playground). Examples of variety: a "
+        "smashed neon sign, a controller mid-button-press, kitchen utensils "
+        "mid-clatter, a clockwork brass mechanism, footstep impact rings on "
+        "wet concrete, an explosion shockwave at midday, a market stall, "
+        "rainfall on glass. Bright scenes welcome when the source is bright. "
+        "Never abstract waveforms."
     ),
     "music": (
-        "evocative album cover photography. Moody, restrained, "
-        "single-subject composition. A lone Rhodes piano in shadow, a vinyl "
-        "record spinning, an analog synth lit by a single bulb, a smoky stage. "
-        "Cinematic. Never abstract waveforms."
+        "evocative album cover photography or illustration. Subject and "
+        "palette driven by genre — bright tropical golds for bossa, cool "
+        "cyan-magenta for electronic, sepia for vintage jazz, vivid pop for "
+        "modern pop, pastel for lo-fi, neon for synthwave. Single-subject "
+        "composition, painterly, cinematic. Never abstract waveforms."
     ),
     "voice_packs": (
         "character portrait — single figure, head and shoulders fully in "
@@ -47,9 +51,12 @@ _CATEGORY_STYLE: dict[str, str] = {
     ),
     "ambient": (
         "environmental landscape — wide painterly atmosphere, deep depth of "
-        "field, fog, distant horizon. Convey the literal place (rain on "
-        "asphalt → wet city street; tavern → candlelit interior; orbital → "
-        "ship corridor). Never abstract waveforms."
+        "field, distant horizon. Palette matches biome: rainforest → lush "
+        "green; arctic → blue-white; desert → ochre and bone; coastal → "
+        "turquoise and sand; urban-night → sodium-amber; tavern → candle "
+        "warm; orbital → cold steel and starlight. Convey the literal "
+        "place (rain on asphalt → wet city street; forest dawn → misty "
+        "evergreens). Never abstract waveforms."
     ),
     "radio_packs": (
         "vintage broadcast scene tied to the station's place + era. "
@@ -63,6 +70,146 @@ _CATEGORY_STYLE: dict[str, str] = {
 }
 
 _DELAY_SECONDS: float = 1.5
+
+# Music genre → concrete visual scene. First match wins. Keyword matched against
+# title + tags (lowercase substring). Lets Gemini render the genre, not just a
+# generic "smoky stage".
+_MUSIC_GENRE_CUES: list[tuple[str, str]] = [
+    (
+        "gypsy jazz",
+        "Hot Club de Paris, 1930s smoky cellar. A Selmer-Maccaferri acoustic "
+        "archtop guitar in the foreground, warm tungsten lamp glow, swirling "
+        "cigarette smoke, sepia tones, wooden chairs, lace curtains, vintage "
+        "Parisian café atmosphere, painterly Édouard Boubat photography.",
+    ),
+    (
+        "manouche",
+        "Hot Club Paris 1930s, manouche guitar leaning on bistro chair, smoke, "
+        "amber lamp, sepia, vintage Parisian café.",
+    ),
+    (
+        "lofi",
+        "Study desk at dusk, cassette tape, lo-fi vinyl turntable, indoor "
+        "plants, soft warm window light, anime-influenced painterly haze.",
+    ),
+    (
+        "lo-fi",
+        "Study desk at dusk, cassette tape, indoor plants, soft warm window "
+        "light, anime-influenced painterly haze.",
+    ),
+    (
+        "synthwave",
+        "1980s neon sunset grid, palm tree silhouettes, magenta-cyan gradient "
+        "sky, retro Lamborghini wedge silhouette, chrome reflections.",
+    ),
+    (
+        "retrowave",
+        "1980s neon sunset grid, palm trees, chrome, magenta sky.",
+    ),
+    (
+        "vaporwave",
+        "Pastel marble bust, palm tree, gradient pink-cyan, retro CRT glow.",
+    ),
+    (
+        "bossa nova",
+        "Rio de Janeiro beachside café at dusk, nylon-string guitar on chair, "
+        "warm gold-amber light, palm fronds, salt-air haze.",
+    ),
+    (
+        "blues",
+        "Mississippi roadside juke joint at night, neon beer sign, lone "
+        "resonator guitar, dim red bulb glow.",
+    ),
+    (
+        "techno",
+        "Berlin industrial warehouse, strobe lasers cutting through fog, "
+        "concrete pillars, single silhouette by the booth.",
+    ),
+    (
+        "house",
+        "Underground club booth, mirror ball reflections, magenta-cyan haze, "
+        "raised hands silhouettes.",
+    ),
+    (
+        "drum and bass",
+        "Rave warehouse, green laser sheets through smoke, dancer silhouettes.",
+    ),
+    (
+        "dnb",
+        "Rave warehouse, green laser sheets through smoke, dancer silhouettes.",
+    ),
+    (
+        "trap",
+        "Night city rooftop, sodium streetlight haze, gold chains catching "
+        "light, urban skyline.",
+    ),
+    (
+        "hip hop",
+        "Urban night street, golden hour sodium glow, brick walls, boombox on "
+        "the stoop, cinematic.",
+    ),
+    (
+        "hip-hop",
+        "Urban night street, golden hour sodium glow, brick walls, boombox on "
+        "the stoop, cinematic.",
+    ),
+    (
+        "classical",
+        "Grand piano on a cathedral stage, single overhead key light, dust "
+        "motes, dark velvet drapery.",
+    ),
+    (
+        "orchestral",
+        "Empty concert hall, single spotlight on conductor's podium, music "
+        "stands, gold-leaf balcony.",
+    ),
+    (
+        "cinematic",
+        "Wide cinematic landscape, dramatic god rays through clouds, distant "
+        "lone figure, painterly.",
+    ),
+    (
+        "folk",
+        "Wooden cabin interior, hearth fire glow, acoustic guitar on wooden "
+        "chair, woven rug, warm amber.",
+    ),
+    (
+        "country",
+        "Dusty highway at sunset, pickup truck silhouette, golden prairie, "
+        "lone acoustic guitar.",
+    ),
+    (
+        "metal",
+        "Stack of Marshall amplifiers, dim red stage light, smoke, electric "
+        "guitar leaning, chrome reflections.",
+    ),
+    (
+        "rock",
+        "Concert stage, single spotlight, Les Paul guitar, smoke, amp wall.",
+    ),
+    (
+        "ambient",
+        "Expansive misty horizon, single distant light source, painterly fog, "
+        "depth.",
+    ),
+    (
+        "drone",
+        "Vast empty plain, single monolithic shape, low fog, painterly.",
+    ),
+    (
+        "jazz",
+        "Smoky 1950s jazz club, brass saxophone leaning on stand, dim amber "
+        "lamp, half-empty whiskey glass, painterly.",
+    ),
+]
+
+
+def _music_genre_cue(title: str, tags: list[str] | None) -> str | None:
+    haystack = " ".join([title.lower(), *(t.lower() for t in (tags or []))])
+    for keyword, scene in _MUSIC_GENRE_CUES:
+        if keyword in haystack:
+            return scene
+    return None
 
 
 def _build_prompt(
@@ -90,13 +237,24 @@ def _build_prompt(
         parts.append(f"Tags: {pack_tags}.")
     if pack_moods:
         parts.append(f"Mood: {pack_moods}.")
+    if category == "music":
+        genre_scene = _music_genre_cue(title, tags)
+        if genre_scene:
+            parts.append(f"Scene: {genre_scene}")
     parts.append(f"Creative direction: {style}")
     parts.append(
-        "Palette: scene-appropriate to the subject. Cinematic, moody, "
-        "dark background overall, but lighting and accent colours match "
-        "the world (warm amber for noir / hearth, cool white for broadcast "
-        "or corporate, neon for cyberpunk, daylight for outdoor). No locked "
-        "single hue. No text, no logos, no brand marks. 1:1 square composition."
+        "Palette: lock to the dominant hue of the depicted subject. "
+        "Forest → greens. Water/snow/sky → cool blues and whites. "
+        "Pastoral/folk → warm daylight golds. Industrial → cold steel "
+        "and concrete grey. Period jazz → sepia. Synthwave → magenta "
+        "and cyan. Tropical → turquoise and coral. Bright daylight is "
+        "encouraged when the subject is non-moody (kitchens, sports, "
+        "kids, beaches, markets, daytime streets). Do NOT default to "
+        "amber or molten-orange unless the subject is explicitly "
+        "nocturnal-warm (candle, fire, sunset, lamp-lit interior, "
+        "vintage broadcast). Vary saturation and luminance across "
+        "packs — no two covers should share the same dominant look. "
+        "No text, no logos, no brand marks. 1:1 square composition."
     )
     return " ".join(parts)
 
@@ -297,6 +455,9 @@ def generate_cover_for_pack(
     except Exception:  # noqa: BLE001 — fall back to local static if R2 fails
         cover_url = f"/static/images/packs/{pack.id}.png"
 
+    # Cache-bust: R2 key is stable so browsers + CDNs cache the URL. Append a
+    # versioned query so each regen forces a refetch.
+    cover_url = f"{cover_url}?v={int(time.time())}"
     pack.cover_art_url = cover_url
     db.flush()
     return cover_url

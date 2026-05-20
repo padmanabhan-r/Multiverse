@@ -49,7 +49,7 @@ PERSONAS: list[dict] = [
             "deliberate pacing, long pauses between sentences, "
             "half-whispered confessional tone."
         ),
-        "price_credits": 50,
+        "price_credits": 25,
         "tags": ["noir", "narrator", "detective", "deep"],
     },
     {
@@ -66,7 +66,7 @@ PERSONAS: list[dict] = [
             "pacing, gentle smile in the voice, close-mic studio "
             "presence."
         ),
-        "price_credits": 50,
+        "price_credits": 25,
         "tags": ["radio", "host", "fm", "warm"],
     },
     {
@@ -83,7 +83,7 @@ PERSONAS: list[dict] = [
             "pitch, controlled tempo, zero affect, no theatrical "
             "delivery."
         ),
-        "price_credits": 50,
+        "price_credits": 25,
         "tags": ["news", "wartime", "neutral", "clipped"],
     },
     {
@@ -99,7 +99,7 @@ PERSONAS: list[dict] = [
             "hearty, knowing, gossipy. Coarse low-mid timbre, hearty "
             "pacing, throat-grit, ale-room warmth, occasional chuckle."
         ),
-        "price_credits": 50,
+        "price_credits": 25,
         "tags": ["fantasy", "npc", "tavern", "gruff"],
     },
     {
@@ -115,7 +115,7 @@ PERSONAS: list[dict] = [
             "Emotion: bright, reassuring, sterile. Even-bright timbre, "
             "brisk confident pacing, polished smile, ad-read cadence."
         ),
-        "price_credits": 50,
+        "price_credits": 25,
         "tags": ["corporate", "satire", "ad", "polished"],
     },
 ]
