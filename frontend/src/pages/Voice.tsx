@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-react";
 import { ApiError, api, type MarketplaceVoice } from "@/lib/api";
 import { plateFor } from "@/lib/stationArt";
 
@@ -13,7 +14,24 @@ export function Voice() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [coverBusy, setCoverBusy] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { user } = useUser();
+  const isCreator = !!user && !!voice && user.id === voice.creator_id;
+
+  async function regenCover() {
+    if (!voice) return;
+    setCoverBusy(true);
+    setErr(null);
+    try {
+      const { cover_art_url } = await api.regenVoiceCover(voice.id);
+      setVoice({ ...voice, cover_art_url });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "cover gen failed");
+    } finally {
+      setCoverBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!voiceId) return;
@@ -93,6 +111,24 @@ export function Voice() {
           }}
         >
           <span aria-hidden className="absolute inset-0 mvfm-grain opacity-40" />
+          {isCreator && (
+            <button
+              type="button"
+              data-testid="voice-cover-regen"
+              onClick={regenCover}
+              disabled={coverBusy}
+              className="
+                absolute top-4 left-4 px-3 py-1.5 rounded-md
+                bg-elev-2/80 border border-glass-soft text-warm
+                font-mono text-[10px] tracking-[0.18em] uppercase
+                hover:border-molten/50 hover:text-molten
+                disabled:opacity-50
+                transition-colors duration-fast ease-tune
+              "
+            >
+              {coverBusy ? "Generating…" : voice.cover_art_url ? "✨ Regen cover" : "✨ Generate cover"}
+            </button>
+          )}
           {voice.preview_url && (
             <>
               <button

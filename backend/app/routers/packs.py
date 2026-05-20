@@ -263,6 +263,7 @@ class PackPatchBody(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=160)
     description: str | None = Field(default=None, max_length=4000)
     tags: list[str] | None = None
+    moods: list[str] | None = None
     price_cents: int | None = Field(default=None, ge=0, le=1500)
     license_commercial_multiplier: float | None = Field(default=None, ge=1.0, le=10.0)
 
@@ -282,6 +283,7 @@ def patch_pack_endpoint(
             title=body.title,
             description=body.description,
             tags=body.tags,
+            moods=body.moods,
             price_cents=body.price_cents,
             license_commercial_multiplier=body.license_commercial_multiplier,
         )

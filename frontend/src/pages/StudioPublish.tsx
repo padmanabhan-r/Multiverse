@@ -34,6 +34,7 @@ export function StudioPublish() {
   const [description, setDescription] = useState(prefill.description ?? "");
   const [priceCredits, setPriceCredits] = useState("20");
   const [tagsRaw, setTagsRaw] = useState("");
+  const [moodsRaw, setMoodsRaw] = useState((prefill.moods ?? []).join(", "));
   const [multiplier, setMultiplier] = useState("3");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export function StudioPublish() {
         setDescription(p.description || "");
         setPriceCredits(String(p.price_credits ?? Math.round(p.price_cents / 10)));
         setTagsRaw((p.tags || []).join(", "));
+        setMoodsRaw((p.moods || []).join(", "));
         setMultiplier(String(p.license_commercial_multiplier || 3));
       })
       .catch((e) =>
@@ -75,6 +77,10 @@ export function StudioPublish() {
       .split(",")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
+    const moods = moodsRaw
+      .split(",")
+      .map((m) => m.trim().toLowerCase())
+      .filter(Boolean);
     const multiplierVal = parseFloat(multiplier) || 3;
 
     setBusy(true);
@@ -87,6 +93,7 @@ export function StudioPublish() {
           description: description.trim(),
           price_cents: price,
           tags,
+          moods,
           license_commercial_multiplier: multiplierVal,
         });
       } else {
@@ -97,7 +104,7 @@ export function StudioPublish() {
           description: description.trim(),
           price_cents: price,
           tags,
-          moods: prefill.moods ?? [],
+          moods,
           license_commercial_multiplier: multiplierVal,
           style_profile: {},
         });
@@ -206,6 +213,18 @@ export function StudioPublish() {
             value={tagsRaw}
             onChange={(e) => setTagsRaw(e.target.value)}
             placeholder="noir, rain, city"
+            className={inputCls}
+          />
+        </Field>
+
+        <Field label="Moods (comma-separated)" htmlFor="pub-moods">
+          <input
+            id="pub-moods"
+            data-testid="publish-moods"
+            type="text"
+            value={moodsRaw}
+            onChange={(e) => setMoodsRaw(e.target.value)}
+            placeholder="moody, upbeat, nostalgic"
             className={inputCls}
           />
         </Field>

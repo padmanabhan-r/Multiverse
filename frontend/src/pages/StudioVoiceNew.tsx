@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/cn";
 import { AudioDropZone } from "@/components/voicepack/AudioDropZone";
 import { MicRecorder } from "@/components/voicepack/MicRecorder";
+import { PromptEnhanceButton } from "@/components/PromptEnhanceButton";
 
 type Method = "design" | "ivc" | "pvc";
 type Step = "method" | "capture" | "previews" | "fork" | "job";
@@ -220,11 +221,21 @@ export function StudioVoiceNew() {
     if (!chosen) return;
     setBusy(true);
     setError(null);
+    // ElevenLabs voice_description must be a substantial string — fall back
+    // to the prompt (or a padded marketing line) when the buyer-facing
+    // description is empty / too short.
+    const rawDesc = description.trim();
+    const finalDesc =
+      rawDesc.length >= 20
+        ? rawDesc
+        : prompt.trim().length >= 20
+          ? prompt.trim()
+          : `${name.trim() || "Custom voice"}. ${prompt.trim() || rawDesc || "A character voice designed in Multiverse Studio."}`;
     try {
       const out: CreatedVoice = await api.designSave({
         generated_voice_id: chosen.generated_voice_id,
         name: name.trim(),
-        description: description.trim(),
+        description: finalDesc,
         audio_base_64: chosen.audio_base_64,
         publish_kind,
       });
@@ -235,16 +246,21 @@ export function StudioVoiceNew() {
         navigate("/creator");
       }
     } catch (e) {
-      if (e instanceof ApiError && e.status === 502) {
-        setError(
-          "Preview expired — regenerate previews and try again.",
-        );
+      const msg = e instanceof ApiError ? (e.message || String(e.status)) : (e instanceof Error ? e.message : "unknown");
+      // 502 with "preview" / "generated_voice_id" in the message means the
+      // single-use preview was already claimed or expired upstream.
+      const looksExpired =
+        e instanceof ApiError &&
+        e.status === 502 &&
+        /preview|generated_voice_id|404/i.test(msg);
+      if (looksExpired) {
+        setError("Preview expired — regenerate previews and try again.");
         clearCached();
         setPreviews([]);
         setSelectedPreviewId(null);
         setStep("capture");
       } else {
-        setError(`Save failed: ${e instanceof Error ? e.message : "unknown"}`);
+        setError(`Save failed: ${msg}`);
       }
     } finally {
       setBusy(false);
@@ -484,13 +500,22 @@ function DesignCaptureForm(props: {
         data-testid="design-name"
         className="w-full p-2 rounded-md bg-elev-2/60 border border-glass-soft text-warm"
       />
-      <textarea
-        placeholder="Describe the voice (timbre, mood, style…)"
-        value={props.prompt}
-        onChange={(e) => props.setPrompt(e.target.value)}
-        data-testid="design-prompt"
-        className="w-full min-h-28 p-2 rounded-md bg-elev-2/60 border border-glass-soft text-warm"
-      />
+      <div className="relative">
+        <textarea
+          placeholder="Describe the voice (timbre, mood, style…). Avoid real names or copyrighted characters — describe their vocal traits instead."
+          value={props.prompt}
+          onChange={(e) => props.setPrompt(e.target.value)}
+          data-testid="design-prompt"
+          className="w-full min-h-28 p-2 pr-12 rounded-md bg-elev-2/60 border border-glass-soft text-warm"
+        />
+        <div className="absolute right-2 top-2">
+          <PromptEnhanceButton
+            value={props.prompt}
+            kind="voice_design"
+            onAccept={(next) => props.setPrompt(next)}
+          />
+        </div>
+      </div>
       <textarea
         placeholder="Optional description shown to buyers"
         value={props.description}
@@ -636,6 +661,47 @@ function PublishForkPanel(props: {
   onPick: (k: PublishKind) => void;
   onBack: () => void;
 }) {
+  const [pickedKind, setPickedKind] = useState<PublishKind | null>(null);
+
+  function handlePick(k: PublishKind) {
+    setPickedKind(k);
+    props.onPick(k);
+  }
+
+  if (props.busy) {
+    return (
+      <div
+        className="space-y-4 p-6 rounded-lg border border-glass-soft bg-elev-2/30"
+        data-testid="fork-panel-busy"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="size-3 rounded-full bg-molten animate-pulse"
+          />
+          <h2 className="text-warm font-display text-xl">
+            {pickedKind === "marketplace_draft"
+              ? "Publishing to marketplace…"
+              : "Saving voice…"}
+          </h2>
+        </div>
+        <ul className="space-y-2 text-[12px] text-silver font-mono pl-6">
+          <li>· Claiming preview from ElevenLabs</li>
+          <li>· Uploading preview audio to R2</li>
+          <li>· Generating cover art with Gemini (~10s)</li>
+          {pickedKind === "marketplace_draft" && (
+            <li>· Publishing to /voices marketplace</li>
+          )}
+        </ul>
+        <p className="text-[11px] text-silver2 italic">
+          Hang tight — don't close this tab.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4" data-testid="fork-panel">
       <h2 className="text-warm font-display text-xl">
@@ -646,7 +712,7 @@ function PublishForkPanel(props: {
           type="button"
           data-testid="fork-private"
           disabled={props.busy}
-          onClick={() => props.onPick("private")}
+          onClick={() => handlePick("private")}
           className="text-left p-4 rounded-lg border border-glass-soft hover:border-warm/40 space-y-2"
         >
           <div className="text-warm font-display text-lg">Use privately</div>
@@ -659,14 +725,14 @@ function PublishForkPanel(props: {
           type="button"
           data-testid="fork-marketplace"
           disabled={props.busy}
-          onClick={() => props.onPick("marketplace_draft")}
+          onClick={() => handlePick("marketplace_draft")}
           className="text-left p-4 rounded-lg border border-glass-soft hover:border-warm/40 space-y-2"
         >
           <div className="text-warm font-display text-lg">
             Publish as marketplace asset
           </div>
           <p className="text-[12px] text-silver">
-            Creates a draft Voice you can price, describe and publish for buyers.
+            Creates a published Voice on /voices priced at 25 ⚡ by default.
           </p>
         </button>
       </div>

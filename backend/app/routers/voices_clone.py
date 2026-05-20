@@ -250,6 +250,28 @@ def design_save_endpoint(
             status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)
         ) from exc
 
+    # Auto-generate Gemini cover. Best-effort — a cover failure must not
+    # break voice creation. Creator can regenerate via the endpoint below.
+    try:
+        from app.services import voice_cover_service
+
+        voice_cover_service.generate_cover_for_voice(
+            db, voice_id=voice.id, requesting_user_id=None
+        )
+    except Exception:  # noqa: BLE001 — cover is non-critical
+        pass
+
+    # Selecting "marketplace_draft" means the creator wants this voice listed
+    # publicly. Flip status='published' so it shows up on /voices immediately.
+    # Private voices remain status='draft' and stay out of the listing.
+    if body.publish_kind == "marketplace_draft":
+        try:
+            voice_asset_service.publish(db, voice.id, user.user_id)
+        except voice_asset_service.VoiceNotPublishableError as exc:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)
+            ) from exc
+
     db.commit()
     db.refresh(voice)
     return _voice_to_dto(voice)
@@ -426,3 +448,36 @@ def publish_as_asset_endpoint(
     db.commit()
     db.refresh(voice)
     return _voice_to_dto(voice)
+
+
+# ─── Cover art regenerate ─────────────────────────────────────────────────
+
+
+class VoiceCoverResponse(BaseModel):
+    cover_art_url: str
+
+
+@router.post(
+    "/voices/{voice_id}/cover",
+    response_model=VoiceCoverResponse,
+)
+def regen_voice_cover_endpoint(
+    voice_id: str,
+    user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> VoiceCoverResponse:
+    """Creator-side: regenerate the Gemini cover for one of your voices."""
+    from app.services import voice_cover_service
+
+    try:
+        url = voice_cover_service.generate_cover_for_voice(
+            db, voice_id=voice_id, requesting_user_id=user.user_id
+        )
+    except voice_cover_service.VoiceCoverNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except voice_cover_service.VoiceCoverPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except voice_cover_service.VoiceCoverError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(exc)) from exc
+    db.commit()
+    return VoiceCoverResponse(cover_art_url=url)

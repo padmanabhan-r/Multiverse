@@ -20,8 +20,8 @@ import openai
 
 from app.config import get_settings
 
-SampleKind = Literal["sfx", "music", "voice", "ambient"]
-_VALID_KINDS = {"sfx", "music", "voice", "ambient"}
+SampleKind = Literal["sfx", "music", "voice", "ambient", "voice_design"]
+_VALID_KINDS = {"sfx", "music", "voice", "ambient", "voice_design"}
 
 _KIND_HINTS: dict[str, str] = {
     "sfx": (
@@ -39,6 +39,17 @@ _KIND_HINTS: dict[str, str] = {
     "ambient": (
         "Loopable ambient bed. Describe the space, materials, distance, "
         "subtle motion. No discrete events."
+    ),
+    "voice_design": (
+        "ElevenLabs Voice Design persona prompt. Describe the SPEAKER as a "
+        "generic archetype using timbre, age band, gender, accent, energy, "
+        "pacing, register, and emotional baseline. CRITICAL: never reference "
+        "real people, copyrighted or trademarked characters, brands, IP, "
+        "video-game heroes, film actors, musicians, or fictional names — "
+        "ElevenLabs will 403 the request. Translate any such reference into "
+        "the underlying vocal traits (e.g. 'Kratos from God of War' → "
+        "'deep gravelly male baritone, 40s, slow weary cadence, restrained "
+        "rage, scarred warrior register')."
     ),
 }
 

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/cover-pic.png" alt="Multiverse — AI-native audio marketplace + creator studio. Buy audio. Make your own. Sell it. Voices included. Get paid. Powered by ElevenLabs and Stripe." width="100%" />
+</p>
+
 # Multiverse (AI-Native Audio Marketplace)
 
 **Generate, publish and sell production-grade audio — voices, music, SFX, ambient — paid for in credits. Powered by ElevenLabs and Stripe.**

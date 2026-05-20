@@ -229,6 +229,7 @@ def update_pack_metadata(
     title: str | None = None,
     description: str | None = None,
     tags: list[str] | None = None,
+    moods: list[str] | None = None,
     price_cents: int | None = None,
     license_commercial_multiplier: float | None = None,
 ) -> Pack:
@@ -267,6 +268,8 @@ def update_pack_metadata(
         pack.description = description.strip()
     if tags is not None:
         pack.tags = list(tags)
+    if moods is not None:
+        pack.moods = list(moods)
     if price_cents is not None:
         if price_cents < 0 or price_cents > 1500:
             raise ValueError("price_cents must be 0–1500")

@@ -6,7 +6,7 @@ import type {
   Pack,
   PackListFilters,
   PackSample,
-  SampleKind,
+  PromptEnhanceKind,
 } from "@multiverse/shared";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -129,7 +129,7 @@ export interface ApiClient {
     sampleId: string,
     patch: { title?: string; position?: number },
   ) => Promise<PackSample>;
-  enhancePrompt: (prompt: string, kind: SampleKind) => Promise<EnhanceResponse>;
+  enhancePrompt: (prompt: string, kind: PromptEnhanceKind) => Promise<EnhanceResponse>;
   generateSfx: (body: {
     pack_id: string;
     prompt: string;
@@ -196,6 +196,7 @@ export interface ApiClient {
       title: string;
       description: string;
       tags: string[];
+      moods: string[];
       price_cents: number;
       license_commercial_multiplier: number;
     }>,
@@ -203,6 +204,7 @@ export interface ApiClient {
   deletePack: (packId: string) => Promise<void>;
   listMarketplaceVoices: () => Promise<MarketplaceVoice[]>;
   getMarketplaceVoice: (voiceId: string) => Promise<MarketplaceVoice>;
+  regenVoiceCover: (voiceId: string) => Promise<{ cover_art_url: string }>;
   purchaseVoice: (voiceId: string) => Promise<VoiceAccessRecord>;
   listOwnedVoices: () => Promise<MarketplaceVoice[]>;
   generateTts: (voiceId: string, text: string) => Promise<TTSResult>;
@@ -473,6 +475,11 @@ export function makeApi(opts: { getToken?: () => Promise<string | null>; fetcher
     listMarketplaceVoices: () => request<MarketplaceVoice[]>("/voices"),
     getMarketplaceVoice: (voiceId) =>
       request<MarketplaceVoice>(`/voices/${encodeURIComponent(voiceId)}`),
+    regenVoiceCover: (voiceId) =>
+      request<{ cover_art_url: string }>(
+        `/voices/${encodeURIComponent(voiceId)}/cover`,
+        { method: "POST" },
+      ),
     purchaseVoice: (voiceId) =>
       request<VoiceAccessRecord>(
         `/voices/${encodeURIComponent(voiceId)}/purchase`,

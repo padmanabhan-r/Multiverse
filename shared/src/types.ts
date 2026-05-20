@@ -166,6 +166,7 @@ export interface CartItem {
 // ─── Sh.1 — Pack samples + Bundles ─────────────────────────────────────────
 
 export type SampleKind = "sfx" | "music" | "voice" | "ambient";
+export type PromptEnhanceKind = SampleKind | "voice_design";
 
 export interface PackSample {
   id: string;

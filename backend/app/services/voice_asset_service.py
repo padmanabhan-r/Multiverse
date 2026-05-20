@@ -45,7 +45,7 @@ def create_draft(
     title: str,
     description: str,
     eleven_voice_id: str,
-    price_credits: int = 80,
+    price_credits: int = 25,
     preview_url: str | None = None,
     cover_art_url: str | None = None,
     tags: list[str] | None = None,

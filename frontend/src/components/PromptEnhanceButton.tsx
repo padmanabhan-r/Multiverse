@@ -1,11 +1,11 @@
 import { useState } from "react";
-import type { SampleKind } from "@multiverse/shared";
+import type { PromptEnhanceKind } from "@multiverse/shared";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
 interface Props {
   value: string;
-  kind: SampleKind;
+  kind: PromptEnhanceKind;
   onAccept: (next: string) => void;
 }
 
