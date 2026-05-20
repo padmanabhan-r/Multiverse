@@ -21,9 +21,8 @@
 >
 > **Multiverse fuses both halves into one marketplace.** Buyers discover audio, pay in credits, and use it. Creators design voices, generate packs, and earn royalties. One credit economy. One Stripe-backed checkout. One ElevenLabs pipeline behind every sound.
 
-<!-- Screenshot: Multiverse hero — replace with actual screenshot -->
 <p align="center">
-  <img src="images/multiverse-hero.png" alt="Multiverse — AI-native audio marketplace with voice design, TTS, and credit-based checkout" width="700" />
+  <img src="images/home-hero.png" alt="Multiverse home — Buy audio, make your own, sell it, voices too. Get paid. AI-native audio marketplace + creator studio." width="900" />
 </p>
 
 ---
@@ -244,31 +243,44 @@ Creator royalty: **70 %** of every purchase, credited to the seller's `CreditBal
 
 ## Screenshots
 
-<!-- Replace with actual screenshots -->
-
-**Voices marketplace — designed character voices**
+**Home — hero search + 6-category deck**
 <p align="center">
-  <img src="images/multiverse-voices.png" alt="Multiverse voices marketplace — 5 ElevenLabs-designed character voices with cover art and prices" width="700" />
+  <img src="images/home-hero.png" alt="Multiverse home — hero tagline, category-aware search bar, and category deck (Music, SFX, Voices, Ambient, Radio, Broadcast)" width="900" />
 </p>
 
-**Voice detail — preview, buy, use in Studio**
+**Home — featured pack + trending shelf**
 <p align="center">
-  <img src="images/multiverse-voice-detail.png" alt="Multiverse voice detail page — floating preview button, buy CTA, use-in-Studio link" width="700" />
+  <img src="images/home-featured.png" alt="Multiverse home — Featured pack hero (Gypsy Jazz) and trending music shelf with Gemini-generated covers" width="900" />
 </p>
 
-**Studio draft — name, generate, autosave**
+**Packs marketplace — `/browse`**
 <p align="center">
-  <img src="images/multiverse-studio-draft.png" alt="Multiverse Studio draft wizard — editable title, debounced autosave, 3-step rail" width="700" />
+  <img src="images/packs-marketplace.png" alt="Multiverse packs marketplace — All packs grid with category and price filters, search, and Gemini-generated covers" width="900" />
 </p>
 
-**Credits — Stripe-backed top-up tiles**
+**Voices marketplace — `/voices`**
 <p align="center">
-  <img src="images/multiverse-credits.png" alt="Multiverse credits page with four Stripe top-up tiles and a credit ledger table" width="700" />
+  <img src="images/voices-marketplace.png" alt="Multiverse voices marketplace — ElevenLabs-designed character voices with gender-anchored portraits and credit prices" width="900" />
 </p>
 
-**Browse — pack marketplace by category**
+**Studio — `/studio`**
 <p align="center">
-  <img src="images/multiverse-browse.png" alt="Multiverse pack marketplace — category-filtered grid with Gemini-generated covers" width="700" />
+  <img src="images/studio.png" alt="Multiverse Studio — four starting points (New pack, New voice, TTS composer, New bundle), drafts and published shelves" width="900" />
+</p>
+
+**Library — `/library`**
+<p align="center">
+  <img src="images/library.png" alt="Multiverse Library — owned voices and packs combined into one view, with Studio shortcuts and badges" width="900" />
+</p>
+
+**Creator dashboard — `/creator`**
+<p align="center">
+  <img src="images/creator-dashboard.png" alt="Multiverse creator dashboard — drafts, published, bundles, and sales counters, plus a tabbed catalogue" width="900" />
+</p>
+
+**Pricing — `/pricing`**
+<p align="center">
+  <img src="images/pricing.png" alt="Multiverse pricing — Free $0, Creator $9/mo, Pro Studio $29/mo subscription tiles plus one-time credit top-ups" width="900" />
 </p>
 
 ---
