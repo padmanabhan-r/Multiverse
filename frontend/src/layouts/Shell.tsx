@@ -27,7 +27,7 @@ export interface ShellProps {
 }
 
 const NAV_ITEMS = [
-  { key: "discover", label: "Discover", to: "/browse" },
+  { key: "discover", label: "Packs", to: "/browse" },
   { key: "voices", label: "Voices", to: "/voices" },
   { key: "studio", label: "Studio", to: "/studio" },
   { key: "library", label: "Library", to: "/library" },
@@ -69,9 +69,10 @@ export function Shell({ children, rightPanel = null, bottomPlayer = null }: Shel
           aria-label="Multiverse home"
         >
           <BrandMark />
-          <span className="mvfm-display text-warm text-[18px] sm:text-[20px] leading-none tracking-tight">
+          <span className="mvfm-display text-warm text-[19px] sm:text-[21px] leading-none tracking-widest">
             Multiverse
           </span>
+          <WaveBars />
         </NavLink>
 
         <nav
@@ -321,6 +322,31 @@ function SignedInCredits() {
     );
   }
   return <CreditBadge balance={balance} tierGrant={tierGrant} />;
+}
+
+const BAR_DELAYS = ["0ms", "160ms", "320ms", "100ms", "240ms"];
+const BAR_HEIGHTS = [10, 16, 14, 18, 12]; // max height px per bar
+
+function WaveBars() {
+  return (
+    <span
+      aria-hidden
+      className="flex items-end gap-[2px] h-[14px]"
+    >
+      {BAR_HEIGHTS.map((h, i) => (
+        <span
+          key={i}
+          className="mvfm-wavebar inline-block w-[2px] rounded-sm"
+          style={{
+            height: h,
+            background: "var(--mvfm-molten)",
+            animationDelay: BAR_DELAYS[i],
+            animationDuration: `${1.0 + i * 0.13}s`,
+          }}
+        />
+      ))}
+    </span>
+  );
 }
 
 function BrandMark() {

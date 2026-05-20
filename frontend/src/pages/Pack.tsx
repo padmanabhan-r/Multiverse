@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, NavLink, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { playExclusive, clearCurrent } from "@/lib/audioSingleton";
 import { cn } from "@/lib/cn";
 import { plateFor } from "@/lib/stationArt";
 import { BuyPackButton } from "@/components/BuyPackButton";
 import { usePack, usePackAccess, usePackSamples } from "@/lib/queries";
+import { useCart } from "@/stores/cartStore";
 import type { PackSample } from "@multiverse/shared";
 
 export function Pack() {
@@ -29,6 +30,8 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
   const { data: access } = usePackAccess(user ? pack.id : undefined);
   const owned = access?.owned ?? isOwner;
   const { data: samples } = usePackSamples(pack.id);
+  const cartAdd = useCart((s) => s.add);
+  const inCart = !!useCart((s) => s.itemFor(pack.id, "personal"));
   const previewRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -336,6 +339,32 @@ function PackView({ pack }: { pack: NonNullable<ReturnType<typeof usePack>["data
                 </span>
               </div>
               <BuyPackButton pack={pack} className="w-full flex flex-col gap-2" />
+
+              <div className="border-t border-glass-soft pt-3 space-y-2">
+                {inCart ? (
+                  <NavLink
+                    to="/cart"
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold transition-all duration-fast ease-tune text-molten border border-molten/40 hover:border-molten/70 hover:bg-molten/5"
+                  >
+                    <svg viewBox="0 0 12 12" fill="none" className="size-3" aria-hidden>
+                      <path d="M2 3l1.5 5.5h5L10 3H2zM5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zM7.5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    In cart · View cart →
+                  </NavLink>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => cartAdd(pack, "personal")}
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold transition-all duration-fast ease-tune text-warm border border-glass hover:border-glass-strong hover:bg-elev-2/60"
+                  >
+                    <svg viewBox="0 0 12 12" fill="none" className="size-3" aria-hidden>
+                      <path d="M2 3l1.5 5.5h5L10 3H2zM5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zM7.5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Add to cart · {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
+                  </button>
+                )}
+              </div>
+
               <p className="text-silver2 text-[10.5px] leading-[1.5]">
                 Royalty-free. Buyers spend credits to own a pack — no recurring
                 fees. Creators earn 70% of every purchase.

@@ -60,7 +60,10 @@ export function MarketplaceHero({
   }
 
   const plate = plateFor(pack.id);
-  const heroImage = pack.hero_art_url || pack.cover_art_url;
+  const apiBase = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+  const resolve = (u: string | null | undefined) =>
+    !u ? null : u.startsWith("http") ? u : `${apiBase}${u}`;
+  const heroImage = resolve(pack.cover_art_url) || resolve(pack.hero_art_url);
   const formattedPrice = `${pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡`;
 
   return (

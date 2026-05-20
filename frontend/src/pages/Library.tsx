@@ -71,7 +71,7 @@ export function Library() {
             Nothing here yet.
           </h1>
           <p className="text-silver text-[14px]">
-            Buy a pack from Discover or publish a pack from Studio to see it here.
+            Buy a pack from Packs or publish a pack from Studio to see it here.
           </p>
         </header>
         <Link

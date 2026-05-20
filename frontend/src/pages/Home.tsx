@@ -10,7 +10,7 @@ import { MarketplaceHero } from "@/components/MarketplaceHero";
 import { PackTile } from "@/components/PackTile";
 import { api, type MarketplaceVoice } from "@/lib/api";
 import { plateFor } from "@/lib/stationArt";
-import { usePacks } from "@/lib/queries";
+import { usePack, usePacks } from "@/lib/queries";
 
 export function Home() {
   const navigate = useNavigate();
@@ -31,9 +31,11 @@ export function Home() {
   const isComingSoon = (cat: Pack["category"]) =>
     cat === "radio_packs" || cat === "broadcast_packs";
 
+  const FEATURED_PACK_ID = "gypsy-jazz-cea97f2b";
+  const pinnedFeatured = usePack(FEATURED_PACK_ID);
   const heroPack =
+    pinnedFeatured.data ??
     featured.data?.find((p) => p.title === "Noir Rhodes nights") ??
-    featured.data?.find((p) => !isComingSoon(p.category)) ??
     featured.data?.find((p) => !isComingSoon(p.category)) ??
     null;
 

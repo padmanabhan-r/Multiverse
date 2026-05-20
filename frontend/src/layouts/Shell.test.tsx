@@ -54,7 +54,7 @@ describe("Shell", () => {
   it("topbar nav has 5 V3 entries linking to canonical routes", () => {
     renderShell();
     const nav = screen.getByTestId("topbar-nav");
-    const labels = ["Discover", "Studio", "Library", "Creator", "Pricing"];
+    const labels = ["Packs", "Studio", "Library", "Creator", "Pricing"];
     for (const label of labels) {
       expect(within(nav).getByText(label)).toBeInTheDocument();
     }
@@ -65,7 +65,7 @@ describe("Shell", () => {
     expect(within(nav).getByTestId("nav-pricing")).toHaveAttribute("href", "/pricing");
   });
 
-  it("Discover nav is active on /browse", () => {
+  it("Packs nav is active on /browse", () => {
     renderShell({}, "/browse");
     expect(screen.getByTestId("nav-discover").className).toMatch(/molten/);
   });
@@ -125,7 +125,7 @@ describe("Shell", () => {
     expect(screen.getByTestId("right-panel")).toHaveTextContent("panel");
   });
 
-  it("mobile bottom tabs have 4 entries (Discover/Studio/Library/Creator)", () => {
+  it("mobile bottom tabs have 4 entries (Packs/Studio/Library/Creator)", () => {
     renderShell();
     const tabs = screen.getByTestId("mobile-tabs");
     expect(within(tabs).getByTestId("mobile-nav-discover")).toBeInTheDocument();

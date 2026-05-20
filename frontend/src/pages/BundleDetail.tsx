@@ -3,6 +3,7 @@ import { useUser } from "@clerk/clerk-react";
 import { plateFor } from "@/lib/stationArt";
 import { cn } from "@/lib/cn";
 import { useBundle } from "@/lib/queries";
+import { useCart } from "@/stores/cartStore";
 import type { Pack } from "@multiverse/shared";
 
 export function BundleDetail() {
@@ -27,6 +28,11 @@ function BundleView({
   const { user } = useUser();
   const isOwner = !!user && user.id === bundle.creator_id;
   const plate = plateFor(bundle.id);
+  const cartAdd = useCart((s) => s.add);
+  const cartItems = useCart((s) => s.items);
+  const allInCart = packs.length > 0 && packs.every((p) =>
+    cartItems.some((i) => i.pack_id === p.id && i.license_kind === "personal"),
+  );
 
   const totalSamples = packs.reduce((n, p) => n + (p.sample_count ?? 0), 0);
   const savings = packs.reduce((n, p) => n + (p.price_cents ?? 0), 0) - bundle.price_cents;
@@ -165,7 +171,7 @@ function BundleView({
           <div className="flex items-baseline justify-between border-t border-glass-soft pt-3">
             <span className="font-mono text-silver2 text-[9px] tracking-[0.22em] uppercase">Price</span>
             <span className="font-mono text-warm text-[20px] tracking-[-0.005em] font-semibold">
-              ${(bundle.price_cents / 100).toFixed(2)}
+              {Math.round(bundle.price_cents / 10)} ⚡
             </span>
           </div>
 
@@ -179,18 +185,34 @@ function BundleView({
           )}
 
           {!isOwner && (
-            <button
-              type="button"
-              disabled
-              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold opacity-60 cursor-not-allowed"
-              style={{
-                color: "#1a0700",
-                background: "var(--mvfm-molten)",
-                boxShadow: "0 0 0 1px rgba(255,106,31,0.7), inset 0 1px 0 rgba(255,255,255,0.28)",
-              }}
-            >
-              Buy bundle
-            </button>
+            allInCart ? (
+              <button
+                type="button"
+                onClick={() => navigate("/cart")}
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold transition-all duration-fast ease-tune text-molten border border-molten/40 hover:border-molten/70 hover:bg-molten/5"
+              >
+                <svg viewBox="0 0 12 12" fill="none" className="size-3" aria-hidden>
+                  <path d="M2 3l1.5 5.5h5L10 3H2zM5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zM7.5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                In cart · View cart →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { packs.forEach((p) => cartAdd(p, "personal")); navigate("/cart"); }}
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-md font-mono text-[10.5px] tracking-[0.18em] uppercase font-semibold hover:brightness-110 transition-all duration-fast ease-tune"
+                style={{
+                  color: "#1a0700",
+                  background: "var(--mvfm-molten)",
+                  boxShadow: "0 0 0 1px rgba(255,106,31,0.7), inset 0 1px 0 rgba(255,255,255,0.28)",
+                }}
+              >
+                <svg viewBox="0 0 12 12" fill="none" className="size-3" aria-hidden>
+                  <path d="M2 3l1.5 5.5h5L10 3H2zM5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zM7.5 9.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Add bundle to cart
+              </button>
+            )
           )}
 
           <p className="text-silver2 text-[10.5px] leading-[1.5]">
@@ -239,7 +261,7 @@ function BundlePackRow({ pack, navigate }: { pack: Pack; navigate: ReturnType<ty
         </div>
       </div>
       <span className="font-mono text-silver2 text-[11px] flex-shrink-0">
-        ${(pack.price_cents / 100).toFixed(0)}
+        {pack.price_credits ?? Math.round(pack.price_cents / 10)} ⚡
       </span>
       <svg viewBox="0 0 12 12" fill="none" aria-hidden className="size-3 text-silver2 flex-shrink-0">
         <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

@@ -61,7 +61,7 @@ export function Browse() {
     <div data-testid="browse-page" className="space-y-6">
       <header className="space-y-1">
         <div className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase">
-          Discover
+          Packs
         </div>
         <h1
           data-testid="browse-heading"

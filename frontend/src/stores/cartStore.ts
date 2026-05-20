@@ -11,11 +11,11 @@ export interface CartState {
 }
 
 function unitPriceFor(pack: Pack, licenseKind: LicenseKind): number {
-  if (licenseKind === "commercial") {
-    const m = pack.license_commercial_multiplier || 1;
-    return Math.round(pack.price_cents * m);
-  }
-  return pack.price_cents;
+  // Canonical price = credits (matches every product display).
+  // Stored as cents-equivalent (credits * 10) so formatPrice (cents / 10) yields credits.
+  const baseCredits = pack.price_credits ?? Math.round(pack.price_cents / 10);
+  const m = licenseKind === "commercial" ? (pack.license_commercial_multiplier || 1) : 1;
+  return Math.round(baseCredits * 10 * m);
 }
 
 export function totalCents(items: CartItem[]): number {
@@ -59,6 +59,6 @@ export const useCart = create<CartState>()(
           (i) => i.pack_id === packId && i.license_kind === licenseKind,
         ),
     }),
-    { name: "multiverse-cart-v1" },
+    { name: "multiverse-cart-v2" },
   ),
 );

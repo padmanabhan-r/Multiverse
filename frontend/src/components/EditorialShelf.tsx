@@ -46,7 +46,7 @@ export function EditorialShelf({ packs }: Props) {
 
 function FeaturePack({ pack }: { pack: Pack }) {
   const plate = plateFor(pack.id);
-  const img = pack.hero_art_url || pack.cover_art_url;
+  const img = pack.cover_art_url || pack.hero_art_url;
   return (
     <Link
       to={`/p/${pack.id}`}
@@ -92,7 +92,7 @@ function FeaturePack({ pack }: { pack: Pack }) {
 
 function MediumPack({ pack }: { pack: Pack }) {
   const plate = plateFor(pack.id);
-  const img = pack.hero_art_url || pack.cover_art_url;
+  const img = pack.cover_art_url || pack.hero_art_url;
   return (
     <Link
       to={`/p/${pack.id}`}

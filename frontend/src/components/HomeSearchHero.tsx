@@ -111,7 +111,7 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
         relative w-full rounded-xl
         border border-glass-soft
         px-5 sm:px-10 lg:px-14
-        py-12 sm:py-16 lg:py-20
+        py-[36px] sm:py-[48px] lg:py-[60px]
       "
     >
       {/* Cycling hero background images — slow cross-fade, ken-burns drift. */}
@@ -181,17 +181,18 @@ export function HomeSearchHero({ onSubmit }: HomeSearchHeroProps) {
             data-testid="home-hero-eyebrow"
             className="font-mono text-silver2 text-[10px] tracking-[0.32em] uppercase"
           >
-            The first AI-native music, sound & voice marketplace
+            AI-native audio marketplace + creator studio
           </div>
           <h1
             data-testid="home-hero-headline"
             className="mvfm-display text-warm leading-[0.95]"
             style={{ fontSize: "clamp(30px, 4vw, 56px)" }}
           >
-            Sounds, music & voices for every creator.
+            Buy audio. Make your own. Sell it. Voices too. Get paid.
           </h1>
-          <p className="text-silver text-[13px] sm:text-[14px] max-w-2xl mx-auto font-body leading-snug">
-            Royalty-free AI audio for <span className="text-warm font-medium">videos, games and content creation</span>. Discover thousands of packs — or generate your own, publish and monetize.
+          <p className="text-silver text-[14px] sm:text-[15px] max-w-2xl mx-auto font-body leading-relaxed">
+            Royalty-free packs, music and voices for <span className="text-warm font-medium">videos, games and content</span>.
+            Or generate your own sounds and voice clones, then <span className="text-warm font-medium">publish, sell, keep 70%</span>.
           </p>
         </div>
 

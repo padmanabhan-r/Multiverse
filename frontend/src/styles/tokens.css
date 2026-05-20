@@ -212,4 +212,14 @@
   .mvfm-animate-fade-rise {
     animation: mvfm-fade-rise 600ms var(--mvfm-ease) both;
   }
+
+}
+
+@keyframes mvfm-bar {
+  0%, 100% { transform: scaleY(0.2); }
+  50%       { transform: scaleY(1); }
+}
+.mvfm-wavebar {
+  transform-origin: bottom;
+  animation: mvfm-bar 1.1s ease-in-out infinite;
 }

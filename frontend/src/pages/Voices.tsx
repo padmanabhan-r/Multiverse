@@ -49,23 +49,43 @@ export function Voices() {
         </p>
       </header>
 
-      <input
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search voices…"
-        aria-label="Search voices"
-        data-testid="voices-search"
-        className="
-          w-full max-w-sm px-3 py-2 rounded-md
-          bg-elev-2/60 border border-glass-soft
-          font-body text-warm text-[13px]
-          placeholder:text-silver2/70
-          focus:outline-none focus:border-molten/40
-          focus:shadow-[0_0_18px_-8px_var(--mvfm-molten-dim)]
-          transition-all duration-fast ease-tune
-        "
-      />
+      <div className="max-w-md space-y-2">
+        <label
+          htmlFor="voices-search"
+          className="font-mono text-silver2 text-[9px] tracking-[0.28em] uppercase"
+        >
+          Search
+        </label>
+        <div className="relative">
+          <svg
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-3 text-silver2 pointer-events-none"
+          >
+            <circle cx="5" cy="5" r="3" stroke="currentColor" strokeWidth="1.3" />
+            <path d="M7.5 7.5L10 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+          <input
+            id="voices-search"
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search voices…"
+            aria-label="Search voices"
+            data-testid="voices-search"
+            className="
+              w-full pl-8 pr-3 py-2.5 rounded-md
+              bg-elev-2/60 border border-glass-soft
+              font-body text-warm text-[13px]
+              placeholder:text-silver2/70
+              focus:outline-none focus:border-molten/40
+              focus:shadow-[0_0_18px_-8px_var(--mvfm-molten-dim)]
+              transition-all duration-fast ease-tune
+            "
+          />
+        </div>
+      </div>
 
       {filtered.length === 0 ? (
         <div className="text-silver italic text-[13px]" data-testid="voices-empty">
