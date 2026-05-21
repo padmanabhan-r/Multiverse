@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ClerkProvider } from "@clerk/clerk-react";
+import { Analytics } from "@vercel/analytics/react";
 import { App } from "./App";
 import { makeQueryClient } from "./lib/queryClient";
 import "./styles/index.css";
@@ -28,5 +29,6 @@ createRoot(rootEl).render(
     ) : (
       inner
     )}
+    <Analytics />
   </StrictMode>,
 );
