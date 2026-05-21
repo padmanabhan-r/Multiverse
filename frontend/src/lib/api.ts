@@ -161,9 +161,8 @@ export interface ApiClient {
   designPreviews: (body: {
     prompt: string;
     name: string;
-    gender?: string;
-    age?: string;
-    accent?: string;
+    loudness?: number;
+    guidance_scale?: number;
   }) => Promise<DesignPreviewsResponse>;
   designSave: (body: {
     generated_voice_id: string;

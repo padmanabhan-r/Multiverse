@@ -25,7 +25,14 @@ from app.services._eleven_client import eleven_client
 
 
 class VoiceDesignError(RuntimeError):
-    """ElevenLabs Voice Design call failed (network, 4xx, or 5xx)."""
+    """ElevenLabs Voice Design call failed (network, 4xx, or 5xx).
+
+    ``status_code`` is the upstream HTTP status if available, else ``None``.
+    """
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
 
 
 @dataclass(slots=True)
@@ -40,31 +47,12 @@ class DesignSavedVoice:
     eleven_voice_id: str
 
 
-def _build_description(
-    prompt: str,
-    gender: str | None,
-    age: str | None,
-    accent: str | None,
-) -> str:
-    bits: list[str] = []
-    if gender:
-        bits.append(gender)
-    if age:
-        bits.append(age)
-    if accent:
-        bits.append(f"{accent} accent")
-    if bits:
-        return f"{', '.join(bits)} — {prompt.strip()}"
-    return prompt.strip()
-
-
 def generate_previews(
     *,
     prompt: str,
     name: str,
-    gender: str | None = None,
-    age: str | None = None,
-    accent: str | None = None,
+    loudness: float = 0.75,
+    guidance_scale: float = 38.0,
 ) -> list[DesignedPreview]:
     """Generate 3 design previews. Caller debits credits before calling.
 
@@ -77,11 +65,12 @@ def generate_previews(
     if not name or not name.strip():
         raise ValueError("name must not be empty")
 
-    description = _build_description(prompt, gender, age, accent)
     settings = get_settings()
     body: dict[str, object] = {
-        "voice_description": description,
+        "voice_description": prompt.strip(),
         "auto_generate_text": True,
+        "loudness": loudness,
+        "guidance_scale": guidance_scale,
     }
 
     try:
@@ -91,8 +80,10 @@ def generate_previews(
         raise VoiceDesignError(f"network error: {exc}") from exc
 
     if resp.status_code >= 400:
+        body_text = resp.text[:500]
         raise VoiceDesignError(
-            f"elevenlabs voice-design returned {resp.status_code}"
+            f"elevenlabs voice-design returned {resp.status_code}: {body_text}",
+            status_code=resp.status_code,
         )
 
     try:
@@ -145,8 +136,10 @@ def save_from_preview(
         raise VoiceDesignError(f"network error: {exc}") from exc
 
     if resp.status_code >= 400:
+        body_text = resp.text[:500]
         raise VoiceDesignError(
-            f"elevenlabs text-to-voice returned {resp.status_code}"
+            f"elevenlabs text-to-voice returned {resp.status_code}: {body_text}",
+            status_code=resp.status_code,
         )
 
     try:

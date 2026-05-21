@@ -58,7 +58,7 @@ router = APIRouter(prefix="/studio", tags=["studio"])
 
 class EnhanceBody(BaseModel):
     prompt: str = Field(min_length=1, max_length=2000)
-    kind: Literal["sfx", "music", "voice", "ambient"]
+    kind: Literal["sfx", "music", "voice", "ambient", "voice_design"]
 
 
 class EnhanceResponse(BaseModel):

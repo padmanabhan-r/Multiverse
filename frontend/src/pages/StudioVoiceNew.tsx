@@ -73,9 +73,8 @@ export function StudioVoiceNew() {
   const [prompt, setPrompt] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [gender, setGender] = useState("");
-  const [age, setAge] = useState("");
-  const [accent, setAccent] = useState("");
+  const [loudness, setLoudness] = useState(0.75);
+  const [guidanceScale, setGuidanceScale] = useState(38);
   const [previews, setPreviews] = useState<DesignPreviewItem[]>([]);
   const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(
     null,
@@ -116,9 +115,8 @@ export function StudioVoiceNew() {
       const out = await api.designPreviews({
         prompt: prompt.trim(),
         name: name.trim(),
-        gender: gender || undefined,
-        age: age || undefined,
-        accent: accent || undefined,
+        loudness,
+        guidance_scale: guidanceScale,
       });
       setPreviews(out.previews);
       setSelectedPreviewId(out.previews[0]?.generated_voice_id ?? null);
@@ -301,12 +299,10 @@ export function StudioVoiceNew() {
           setName={setName}
           description={description}
           setDescription={setDescription}
-          gender={gender}
-          setGender={setGender}
-          age={age}
-          setAge={setAge}
-          accent={accent}
-          setAccent={setAccent}
+          loudness={loudness}
+          setLoudness={setLoudness}
+          guidanceScale={guidanceScale}
+          setGuidanceScale={setGuidanceScale}
           busy={busy}
           onSubmit={runDesign}
           onBack={() => setStep("method")}
@@ -480,12 +476,10 @@ function DesignCaptureForm(props: {
   setName: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
-  gender: string;
-  setGender: (v: string) => void;
-  age: string;
-  setAge: (v: string) => void;
-  accent: string;
-  setAccent: (v: string) => void;
+  loudness: number;
+  setLoudness: (v: number) => void;
+  guidanceScale: number;
+  setGuidanceScale: (v: number) => void;
   busy: boolean;
   onSubmit: () => void;
   onBack: () => void;
@@ -523,28 +517,47 @@ function DesignCaptureForm(props: {
         data-testid="design-description"
         className="w-full min-h-16 p-2 rounded-md bg-elev-2/60 border border-glass-soft text-warm"
       />
-      <div className="grid grid-cols-3 gap-2">
-        <input
-          placeholder="gender"
-          value={props.gender}
-          onChange={(e) => props.setGender(e.target.value)}
-          data-testid="design-gender"
-          className="p-2 rounded-md bg-elev-2/60 border border-glass-soft text-warm text-[12px]"
-        />
-        <input
-          placeholder="age"
-          value={props.age}
-          onChange={(e) => props.setAge(e.target.value)}
-          data-testid="design-age"
-          className="p-2 rounded-md bg-elev-2/60 border border-glass-soft text-warm text-[12px]"
-        />
-        <input
-          placeholder="accent"
-          value={props.accent}
-          onChange={(e) => props.setAccent(e.target.value)}
-          data-testid="design-accent"
-          className="p-2 rounded-md bg-elev-2/60 border border-glass-soft text-warm text-[12px]"
-        />
+      <div className="space-y-3 rounded-md border border-glass-soft bg-elev-2/40 p-3">
+        <div>
+          <div className="flex justify-between text-[10px] font-mono uppercase tracking-[0.18em] text-silver">
+            <span>Loudness</span>
+            <span data-testid="design-loudness-value">
+              {props.loudness.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={-1}
+            max={1}
+            step={0.05}
+            value={props.loudness}
+            onChange={(e) =>
+              props.setLoudness(Number.parseFloat(e.target.value))
+            }
+            data-testid="design-loudness"
+            className="w-full accent-molten"
+          />
+        </div>
+        <div>
+          <div className="flex justify-between text-[10px] font-mono uppercase tracking-[0.18em] text-silver">
+            <span>Guidance scale</span>
+            <span data-testid="design-guidance-value">
+              {props.guidanceScale.toFixed(1)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={0.5}
+            value={props.guidanceScale}
+            onChange={(e) =>
+              props.setGuidanceScale(Number.parseFloat(e.target.value))
+            }
+            data-testid="design-guidance"
+            className="w-full accent-molten"
+          />
+        </div>
       </div>
       <div className="flex justify-between items-center pt-2">
         <button

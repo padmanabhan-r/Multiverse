@@ -101,7 +101,7 @@ def test_generate_previews_network_error_raises() -> None:
             voice_design_service.generate_previews(prompt="x", name="Test")
 
 
-def test_generate_previews_sends_filters_when_provided() -> None:
+def test_generate_previews_sends_loudness_and_guidance() -> None:
     fake_audio = base64.b64encode(b"\x00").decode()
     previews = [
         {"generated_voice_id": f"g{i}", "audio_base_64": fake_audio}
@@ -112,18 +112,31 @@ def test_generate_previews_sends_filters_when_provided() -> None:
         "app.services.voice_design_service.eleven_client", return_value=mc
     ):
         voice_design_service.generate_previews(
-            prompt="warm forest spirit",
+            prompt="warm forest spirit, calm cadence",
             name="Sylph",
-            gender="female",
-            age="young",
-            accent="british",
+            loudness=0.25,
+            guidance_scale=12.0,
         )
     body = mc.post.call_args.kwargs["json"]
-    assert "warm forest spirit" in body["voice_description"]
-    flat = str(body).lower()
-    assert "female" in flat
-    assert "young" in flat
-    assert "british" in flat
+    assert body["voice_description"] == "warm forest spirit, calm cadence"
+    assert body["loudness"] == 0.25
+    assert body["guidance_scale"] == 12.0
+
+
+def test_generate_previews_defaults_loudness_and_guidance() -> None:
+    fake_audio = base64.b64encode(b"\x00").decode()
+    previews = [
+        {"generated_voice_id": f"g{i}", "audio_base_64": fake_audio}
+        for i in range(3)
+    ]
+    mc = _mock_client(_design_response(previews))
+    with patch(
+        "app.services.voice_design_service.eleven_client", return_value=mc
+    ):
+        voice_design_service.generate_previews(prompt="x", name="Test")
+    body = mc.post.call_args.kwargs["json"]
+    assert body["loudness"] == 0.5
+    assert body["guidance_scale"] == 5.0
 
 
 # ─── save_from_preview ────────────────────────────────────────────────────

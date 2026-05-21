@@ -48,9 +48,9 @@ PublishKind = Literal["private", "marketplace_draft"]
 class DesignPreviewBody(BaseModel):
     prompt: str = Field(min_length=1, max_length=2000)
     name: str = Field(min_length=1, max_length=80)
-    gender: str | None = Field(default=None, max_length=24)
-    age: str | None = Field(default=None, max_length=24)
-    accent: str | None = Field(default=None, max_length=48)
+    # ElevenLabs voice-design dials. Defaults match the EL console UI.
+    loudness: float = Field(default=0.75, ge=-1.0, le=1.0)
+    guidance_scale: float = Field(default=38.0, ge=0.0, le=100.0)
 
 
 class DesignPreviewItemDTO(BaseModel):
@@ -154,9 +154,8 @@ def design_previews_endpoint(
         previews = voice_design_service.generate_previews(
             prompt=body.prompt,
             name=body.name,
-            gender=body.gender,
-            age=body.age,
-            accent=body.accent,
+            loudness=body.loudness,
+            guidance_scale=body.guidance_scale,
         )
     except ValueError as exc:
         _refund(db, user.user_id, cost)
@@ -165,6 +164,13 @@ def design_previews_endpoint(
         ) from exc
     except voice_design_service.VoiceDesignError as exc:
         _refund(db, user.user_id, cost)
+        if exc.status_code == 403:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                "ElevenLabs rejected this voice prompt. "
+                "Try a different prompt variant — rephrase the description "
+                "or drop named celebrities / copyrighted characters.",
+            ) from exc
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY, f"voice design failed: {exc}"
         ) from exc
@@ -207,6 +213,12 @@ def design_save_endpoint(
             status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)
         ) from exc
     except voice_design_service.VoiceDesignError as exc:
+        if exc.status_code == 403:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                "ElevenLabs rejected this voice. "
+                "Try a different prompt variant and regenerate previews.",
+            ) from exc
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY, f"voice save failed: {exc}"
         ) from exc
