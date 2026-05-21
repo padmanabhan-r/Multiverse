@@ -684,31 +684,22 @@ function PublishForkPanel(props: {
   if (props.busy) {
     return (
       <div
-        className="space-y-4 p-6 rounded-lg border border-glass-soft bg-elev-2/30"
+        className="flex flex-col items-center justify-center gap-6 p-10 rounded-lg border border-glass-soft bg-elev-2/30"
         data-testid="fork-panel-busy"
         role="status"
         aria-live="polite"
       >
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className="size-3 rounded-full bg-molten animate-pulse"
-          />
-          <h2 className="text-warm font-display text-xl">
-            {pickedKind === "marketplace_draft"
-              ? "Publishing to marketplace…"
-              : "Saving voice…"}
-          </h2>
+        <div className="relative size-16" aria-hidden>
+          <span className="absolute inset-0 rounded-full border-2 border-molten/30" />
+          <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-molten animate-spin" />
+          <span className="absolute inset-3 rounded-full bg-molten/20 animate-pulse" />
         </div>
-        <ul className="space-y-2 text-[12px] text-silver font-mono pl-6">
-          <li>· Claiming preview from ElevenLabs</li>
-          <li>· Uploading preview audio to R2</li>
-          <li>· Generating cover art with Gemini (~10s)</li>
-          {pickedKind === "marketplace_draft" && (
-            <li>· Publishing to /voices marketplace</li>
-          )}
-        </ul>
-        <p className="text-[11px] text-silver2 italic">
+        <h2 className="text-warm font-display text-xl">
+          {pickedKind === "marketplace_draft"
+            ? "Publishing to marketplace…"
+            : "Saving voice…"}
+        </h2>
+        <p className="text-[12px] text-silver font-mono">
           Hang tight — don't close this tab.
         </p>
       </div>
